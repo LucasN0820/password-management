@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>密码管理器</title>
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    /* Spotlight search: transparent background */
+    html.spotlight,
+    body.spotlight {
+      background: transparent !important;
+    }
+  </style>
+  <script>
+    if (window.location.pathname === 'search') {
+      document.documentElement.classList.add('spotlight');
+      document.body.classList.add('spotlight');
+    }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>

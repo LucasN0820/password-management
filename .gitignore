@@ -1,0 +1,9 @@
+node_modules
+.env
+dist-electron
+yarn.lock
+.turbo
+*.tsbuildinfo
+dist
+.DS_Store
+Makefile
