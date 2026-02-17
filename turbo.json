@@ -6,9 +6,6 @@
       "cache": false,
       "persistent": true
     },
-    "typegen": {
-      "dependsOn": ["^typegen"]
-    },
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["$TURBO_DEFAULT$", ".env*"]
