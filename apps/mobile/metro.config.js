@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 const path = require("node:path")
+const { withNativeWind } = require("nativewind/metro");
 const { wrapWithReanimatedMetroConfig } = require("react-native-reanimated/metro-config")
 const { getDefaultConfig } = require("expo/metro-config")
 
@@ -7,6 +8,7 @@ const { getDefaultConfig } = require("expo/metro-config")
 const projectRoot = __dirname
 const workspaceRoot = path.resolve(__dirname, "../..")
 
+/** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(projectRoot)
 
 config.watchFolders = [
@@ -24,4 +26,4 @@ config.resolver.nodeModulesPaths = [
 ]
 config.resolver.disableHierarchicalLookup = true
 
-module.exports = wrapWithReanimatedMetroConfig(config)
+module.exports = wrapWithReanimatedMetroConfig(withNativeWind(config, { input: './global.css' }))
