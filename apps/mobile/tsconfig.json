@@ -2,12 +2,12 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "module": "esnext",
     "paths": {
-      "@/*": [
-        "./*"
-      ]
-    }
+      "@/*": ["./src/*"],
+      "tailwind.config": ["./tailwind.config.js"]
+    },
+    "jsx": "preserve",
+    "jsxImportSource": "react"
   },
   "include": [
     "**/*.ts",

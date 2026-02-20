@@ -14,13 +14,15 @@
     "format": "prettier --write \"**/*.{ts,tsx,js,md}\""
   },
   "devDependencies": {
-    "prettier": "^3.2.5",
-    "turbo": "^2.5.3",
-    "typescript": "^5.3.3",
+    "@eslint/eslintrc": "^3.2.0",
     "@typescript-eslint/eslint-plugin": "^7.0.2",
     "@typescript-eslint/parser": "^7.0.2",
     "eslint": "^8.57.0",
+    "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-react-hooks": "^4.6.0",
-    "eslint-plugin-react-refresh": "^0.4.5"
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "prettier": "^3.2.5",
+    "turbo": "^2.5.3",
+    "typescript": "^5.3.3"
   }
 }

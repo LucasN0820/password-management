@@ -1,4 +1,4 @@
-import { RootScreen } from '@/src/screens/root';
+import { RootScreen } from '@/screens/root';
 
 export {
   // Catch any errors thrown by the Layout component.
