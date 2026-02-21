@@ -6,7 +6,8 @@
       "@/*": ["./src/*"],
       "tailwind.config": ["./tailwind.config.js"]
     },
-    "jsx": "preserve",
+    "module": "es2022",
+    "jsx": "react-native",
     "jsxImportSource": "react"
   },
   "include": [
