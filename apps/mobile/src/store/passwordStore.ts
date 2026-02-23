@@ -4,16 +4,16 @@ import { createContext, useContext } from 'react'
 
 export interface Password {
   id: number
+  created_at: string
+  updated_at: string
   title: string
   username: string
   password: string
-  url: string
-  notes: string
   category: string
   favorite: number
-  icon?: string
-  created_at: string
-  updated_at: string
+  url: string | null
+  notes: string | null
+  icon: string | null
 }
 
 interface PasswordState {
@@ -108,8 +108,8 @@ export function createStore(db: SQLiteDatabase) {
 
       set({ isLoading: true })
       try {
-        const result = await db.getAllAsync('SELECT * FROM passwords ORDER BY updated_at DESC')
-        set({ passwords: result as Password[] })
+        const result = await db.getAllAsync<Password>('SELECT * FROM passwords ORDER BY updated_at DESC')
+        set({ passwords: result })
         get().applyFilters()
       } catch (error) {
         console.error('Error loading passwords:', error)
@@ -125,8 +125,8 @@ export function createStore(db: SQLiteDatabase) {
       }
 
       try {
-        const result = await db.getAllAsync('SELECT DISTINCT category FROM passwords WHERE category != "all"')
-        const categories = result.map((row: any) => row.category)
+        const result = await db.getAllAsync<Password>('SELECT DISTINCT category FROM passwords WHERE category != "all"')
+        const categories = result.map((row) => row.category)
         set({ categories: ['all', 'favorites', ...categories] })
       } catch (error) {
         console.error('Error loading categories:', error)
@@ -222,12 +222,12 @@ export function createStore(db: SQLiteDatabase) {
       }
 
       try {
-        const result = await db.getAllAsync(`
+        const result = await db.getAllAsync<Password>(`
         SELECT * FROM passwords 
         WHERE title LIKE ? OR username LIKE ? OR url LIKE ? OR notes LIKE ?
         ORDER BY updated_at DESC
       `, `%${query}%`, `%${query}%`, `%${query}%`, `%${query}%`)
-        set({ filteredPasswords: result as Password[] })
+        set({ filteredPasswords: result })
       } catch (error) {
         console.error('Error searching passwords:', error)
       }

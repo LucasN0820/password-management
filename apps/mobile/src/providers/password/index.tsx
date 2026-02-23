@@ -1,6 +1,7 @@
 import { ReactNode, useMemo } from "react";
-import { PasswordContext, createStore } from "../store/passwordStore";
+import { PasswordContext, createStore } from "@/store/passwordStore";
 import { useSQLiteContext } from "expo-sqlite";
+import { Monitor } from "./monitor";
 
 export function PasswordProvider({ children }: { children: ReactNode }) {
   const db = useSQLiteContext();
@@ -8,7 +9,9 @@ export function PasswordProvider({ children }: { children: ReactNode }) {
 
   return (
     <PasswordContext.Provider value={store}>
-      {children}
+      <Monitor>
+        {children}
+      </Monitor>
     </PasswordContext.Provider>
   )
 }

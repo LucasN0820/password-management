@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { PasswordForm } from '../password-form';
+import { PasswordForm } from '@/components/password-form';
 import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Button } from '../ui/button';
-import { Text } from '../ui/text';
+import { Button } from '@/components/ui/button';
+import { Text } from '@/components/ui/text';
 import { useMutation } from '@tanstack/react-query';
-import { usePasswordStore } from '@/store/passwordStore';
-import { PasswordFormRef, FormType } from '../password-form';
+import { Password, usePasswordStore } from '@/store/passwordStore';
+import { PasswordFormRef, FormType } from '@/components/password-form';
 import { X } from 'lucide-react-native';
 
 
@@ -22,7 +22,7 @@ export function Render({ initialValue, onClose, id }: { initialValue: FormType, 
   const formRef = useRef<PasswordFormRef>(null)
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (data: FormType) => {
+    mutationFn: async (data: Omit<Password, 'id' | 'created_at' | 'updated_at'>) => {
       await updatePassword(id, data)
     },
     onSuccess: () => {

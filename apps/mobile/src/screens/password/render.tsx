@@ -3,9 +3,10 @@ import { useStore } from "./context";
 import { Password, usePasswordStore } from "@/store/passwordStore";
 import { Alert } from "react-native";
 import * as Clipboard from "expo-clipboard";
-import { View, Text, FlatList, TouchableOpacity, RefreshControl, TextInput, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
 import { Search, Plus, Star, Copy, Eye, EyeOff } from 'lucide-react-native';
 import { ModalController } from "./modal-controller";
+import { TabViewContainer } from "./tab-view-container";
 
 export function Render() {
   const [searchVisible, setSearchVisible] = useState(false);
@@ -13,16 +14,10 @@ export function Render() {
   const setModal = useStore(s => s.setModal)
 
   const {
-    filteredPasswords,
-    isLoading,
     searchQuery,
-    selectedCategory,
-    categories,
     setSearchQuery,
-    setSelectedCategory,
     toggleFavorite,
-    deletePassword,
-    loadPasswords
+    deletePassword
   } = usePasswordStore();
 
   const handleCopyToClipboard = async (text: string, label: string) => {
@@ -122,87 +117,62 @@ export function Render() {
     </View>
   );
 
-  const renderCategoryFilter = () => (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryFilter}>
-      {categories.map((category) => (
-        <TouchableOpacity
-          key={category}
-          onPress={() => setSelectedCategory(category)}
-          style={[
-            styles.categoryChip,
-            selectedCategory === category && styles.categoryChipActive
-          ]}
-        >
-          <Text
-            style={[
-              styles.categoryChipText,
-              selectedCategory === category && styles.categoryChipTextActive
-            ]}
-          >
-            {category === 'all' ? '全部' :
-              category === 'favorites' ? '收藏' : category}
-          </Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
-  );
-
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>密码管理</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity
-              onPress={() => setSearchVisible(!searchVisible)}
-              style={styles.iconButton}
-            >
-              <Search size={20} color="#6b7280" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => setModal({ type: 'add-password' })}
-              style={styles.iconButton}
-            >
-              <Plus size={20} color="#6b7280" />
-            </TouchableOpacity>
+    <>
+      <View style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <View style={styles.headerRow}>
+            <Text style={styles.headerTitle}>密码管理</Text>
+            <View style={styles.headerActions}>
+              <TouchableOpacity
+                onPress={() => setSearchVisible(!searchVisible)}
+                style={styles.iconButton}
+              >
+                <Search size={20} color="#6b7280" />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => setModal({ type: 'add-password' })}
+                style={styles.iconButton}
+              >
+                <Plus size={20} color="#6b7280" />
+              </TouchableOpacity>
+            </View>
           </View>
+
+          {searchVisible && (
+            <TextInput
+              style={styles.searchInput}
+              placeholder="搜索密码..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          )}
         </View>
-
-        {searchVisible && (
-          <TextInput
-            style={styles.searchInput}
-            placeholder="搜索密码..."
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-          />
-        )}
+        {/* Password List */}
+        {/* <FlatList
+          data={filteredPasswords}
+          renderItem={renderPasswordItem}
+          keyExtractor={(item) => item.id.toString()}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={loadPasswords}
+            />
+          }
+          ListEmptyComponent={
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>
+                {searchQuery ? '没有找到匹配的密码' : '还没有密码，点击 + 添加第一个密码'}
+              </Text>
+            </View>
+          }
+        /> */}
+        <TabViewContainer />
       </View>
-
-      {/* Category Filter */}
-      {renderCategoryFilter()}
-
-      {/* Password List */}
-      <FlatList
-        data={filteredPasswords}
-        renderItem={renderPasswordItem}
-        keyExtractor={(item) => item.id.toString()}
-        refreshControl={
-          <RefreshControl
-            refreshing={isLoading}
-            onRefresh={loadPasswords}
-          />
-        }
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>
-              {searchQuery ? '没有找到匹配的密码' : '还没有密码，点击 + 添加第一个密码'}
-            </Text>
-          </View>
-        }
-      />
       <ModalController />
-    </View>
+    </>
+
   );
 }
 

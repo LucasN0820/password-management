@@ -11,8 +11,8 @@ export function ModalController() {
     case "edit-password": {
       return <ModalEditPassword modal={modal} />
     }
-    case undefined:
-    case "delete-password": {
+    case "delete-password":
+    case undefined: {
       return null
     }
   }

@@ -1,8 +1,7 @@
-import { ComponentProps, ReactNode } from "react";
+import { ComponentProps, JSX } from "react";
 import { FieldValues, Path, UseFormReturn } from "react-hook-form";
 import { InputProps, Input } from "@/components/ui/input";
 import { Controller } from "react-hook-form";
-import { LucideProps } from "lucide-react-native";
 import { ComponentType } from "react";
 
 interface Props<T extends FieldValues> extends ComponentProps<typeof Input> {
