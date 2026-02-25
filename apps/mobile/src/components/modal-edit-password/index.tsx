@@ -24,6 +24,6 @@ export function ModalEditPassword(props: Props) {
     return <Redirect href="/" />
   }
 
-  return <Render {...props} initialValue={data} />
+  return <Render {...props} initialValue={{ ...data, url: data.url ?? undefined, icon: data.icon ?? undefined, notes: data.notes ?? undefined }} />
 }
 

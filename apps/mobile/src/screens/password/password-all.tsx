@@ -4,6 +4,7 @@ import { PasswordItem } from "@/components/password-item";
 
 export function AllPassword() {
   const { passwords } = usePasswordStore()
+  console.debug('passwords', passwords)
   return (
     <View className="flex gap-2">
       {

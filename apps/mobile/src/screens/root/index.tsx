@@ -1,3 +1,4 @@
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useMemo } from 'react';
@@ -32,14 +33,16 @@ export function RootScreen() {
   }
 
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <DBProvider>
-          <ThemeProvider>
-            <Render />
-          </ThemeProvider>
-        </DBProvider>
-      </QueryClientProvider>
-    </SafeAreaProvider>
+    <GestureHandlerRootView>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <DBProvider>
+            <ThemeProvider>
+              <Render />
+            </ThemeProvider>
+          </DBProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
