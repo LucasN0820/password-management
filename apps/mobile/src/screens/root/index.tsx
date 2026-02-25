@@ -6,6 +6,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DBProvider } from '@/providers/db';
 import { ThemeProvider } from '@/providers/theme';
+import { PasswordProvider } from '@/providers/password';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Render } from './render';
 
@@ -17,7 +18,7 @@ export function RootScreen() {
     SpaceMono: require('../../../assets/fonts/SpaceMono-Regular.ttf'),
     ...FontAwesome.font,
   });
-  const queryClient = useMemo(() => new QueryClient(), [])
+  const queryClient = useMemo(() => new QueryClient(), []);
 
   // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
@@ -37,9 +38,11 @@ export function RootScreen() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <DBProvider>
-            <ThemeProvider>
-              <Render />
-            </ThemeProvider>
+            <PasswordProvider>
+              <ThemeProvider>
+                <Render />
+              </ThemeProvider>
+            </PasswordProvider>
           </DBProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

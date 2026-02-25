@@ -1,24 +1,28 @@
-import { useState } from "react";
-import { useStore } from "./context";
-import { Password, usePasswordStore } from "@/store/passwordStore";
-import { Alert } from "react-native";
-import * as Clipboard from "expo-clipboard";
-import { View, Text, TouchableOpacity, TextInput, StyleSheet } from 'react-native';
+import { useState } from 'react';
+import { useStore } from './context';
+import { Password, usePasswordStore } from '@/store/passwordStore';
+import { Alert } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  StyleSheet,
+} from 'react-native';
 import { Search, Plus, Star, Copy, Eye, EyeOff } from 'lucide-react-native';
-import { ModalController } from "./modal-controller";
-import { TabViewContainer } from "./tab-view-container";
+import { ModalController } from './modal-controller';
+import { TabViewContainer } from './tab-view-container';
 
 export function Render() {
   const [searchVisible, setSearchVisible] = useState(false);
-  const [showPasswords, setShowPasswords] = useState<{ [key: number]: boolean }>({});
-  const setModal = useStore(s => s.setModal)
+  const [showPasswords, setShowPasswords] = useState<{
+    [key: number]: boolean;
+  }>({});
+  const setModal = useStore(s => s.setModal);
 
-  const {
-    searchQuery,
-    setSearchQuery,
-    toggleFavorite,
-    deletePassword
-  } = usePasswordStore();
+  const { searchQuery, setSearchQuery, toggleFavorite, deletePassword } =
+    usePasswordStore();
 
   const handleCopyToClipboard = async (text: string, label: string) => {
     try {
@@ -30,92 +34,22 @@ export function Render() {
   };
 
   const handleDeletePassword = (password: Password) => {
-    Alert.alert(
-      '删除密码',
-      `确定要删除 "${password.title}" 吗？`,
-      [
-        { text: '取消', style: 'cancel' },
-        {
-          text: '删除',
-          style: 'destructive',
-          onPress: () => deletePassword(password.id)
-        }
-      ]
-    );
+    Alert.alert('删除密码', `确定要删除 "${password.title}" 吗？`, [
+      { text: '取消', style: 'cancel' },
+      {
+        text: '删除',
+        style: 'destructive',
+        onPress: () => deletePassword(password.id),
+      },
+    ]);
   };
 
   const togglePasswordVisibility = (id: number) => {
     setShowPasswords(prev => ({
       ...prev,
-      [id]: !prev[id]
+      [id]: !prev[id],
     }));
   };
-
-  const renderPasswordItem = ({ item }: { item: Password }) => (
-    <View style={styles.card}>
-      <View style={styles.cardContent}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title}>{item.title}</Text>
-          <TouchableOpacity onPress={() => toggleFavorite(item)}>
-            {item.favorite ? (
-              <Star size={20} fill="#fbbf24" color="#fbbf24" />
-            ) : (
-              <Star size={20} color="#9ca3af" />
-            )}
-          </TouchableOpacity>
-        </View>
-
-        {item.username && (
-          <Text style={styles.username}>{item.username}</Text>
-        )}
-
-        {item.url && (
-          <Text style={styles.url}>{item.url}</Text>
-        )}
-
-        <View style={styles.passwordRow}>
-          <Text style={styles.password}>
-            {showPasswords[item.id] ? item.password : '••••••••'}
-          </Text>
-          <View style={styles.passwordActions}>
-            <TouchableOpacity
-              onPress={() => togglePasswordVisibility(item.id)}
-              style={styles.iconButton}
-            >
-              {showPasswords[item.id] ? (
-                <EyeOff size={18} color="#6b7280" />
-              ) : (
-                <Eye size={18} color="#6b7280" />
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleCopyToClipboard(item.password, '密码')}
-              style={styles.iconButton}
-            >
-              <Copy size={18} color="#6b7280" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <View style={styles.footerRow}>
-          <Text style={styles.category}>{item.category}</Text>
-          <View style={styles.actionButtons}>
-            <TouchableOpacity
-              style={styles.viewButton}
-            >
-              <Text style={styles.buttonText}>查看</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => handleDeletePassword(item)}
-              style={styles.deleteButton}
-            >
-              <Text style={styles.buttonText}>删除</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </View>
-    </View>
-  );
 
   return (
     <>
@@ -149,33 +83,12 @@ export function Render() {
             />
           )}
         </View>
-        {/* Password List */}
-        {/* <FlatList
-          data={filteredPasswords}
-          renderItem={renderPasswordItem}
-          keyExtractor={(item) => item.id.toString()}
-          refreshControl={
-            <RefreshControl
-              refreshing={isLoading}
-              onRefresh={loadPasswords}
-            />
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>
-                {searchQuery ? '没有找到匹配的密码' : '还没有密码，点击 + 添加第一个密码'}
-              </Text>
-            </View>
-          }
-        /> */}
         <TabViewContainer />
       </View>
       <ModalController />
     </>
-
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

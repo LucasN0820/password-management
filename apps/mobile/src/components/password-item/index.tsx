@@ -1,11 +1,21 @@
-import { Password, usePasswordStore } from "@/store/passwordStore";
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from "react-native";
-import Animated, { useSharedValue, useAnimatedStyle, withSpring, interpolate } from "react-native-reanimated"
-import { Gesture, GestureDetector, Pressable } from 'react-native-gesture-handler';
+import { Password, usePasswordStore } from '@/store/passwordStore';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  interpolate,
+} from 'react-native-reanimated';
+import {
+  Gesture,
+  GestureDetector,
+  Pressable,
+} from 'react-native-gesture-handler';
 import { useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Edit, Trash2, Star, Globe } from 'lucide-react-native';
 import { useColor } from '@/hooks/useColor';
+import { useRouter } from 'expo-router';
 
 interface Props {
   password: Password;
@@ -17,14 +27,15 @@ function clamp(val: number, min: number, max: number) {
 
 export function PasswordItem({ password }: Props) {
   const { deletePassword, toggleFavorite } = usePasswordStore();
+  const router = useRouter();
   const translateX = useSharedValue(0);
   const lastOffset = useRef(0);
 
-  const backgroundColor = useColor("background");
+  const backgroundColor = useColor('background');
   const textColor = useColor('text');
   const primaryColor = useColor('primary');
   const destructiveColor = useColor('red');
-  const itemBackgroundColor = useColor("card");
+  const itemBackgroundColor = useColor('card');
 
   const { mutate: deleteMutate } = useMutation({
     mutationFn: async () => {
@@ -47,86 +58,51 @@ export function PasswordItem({ password }: Props) {
         {
           text: '删除',
           style: 'destructive',
-          onPress: () => deleteMutate()
-        }
+          onPress: () => deleteMutate(),
+        },
       ]
     );
   };
 
   const handleEdit = () => {
-    // TODO: Implement edit modal
-    console.log('Edit password:', password.id);
+    router.push({
+      pathname: '/password/[id]',
+      params: {
+        id: password.id,
+      },
+    });
     resetSwipe(1300);
   };
 
-
   const animatedStyles = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-    ],
+    transform: [{ translateX: translateX.value }],
   }));
 
   const actionButtonsStyle = useAnimatedStyle(() => {
     // Action buttons should appear from right to left as user swipes left
-    const buttonOpacity = interpolate(
-      translateX.value,
-      [-120, -100, -80, -60, -40, -20, 0],
-      [1, 1, 0.9, 0.6, 0.3, 0.1, 0]
-    );
-
     const buttonTranslateX = interpolate(
       translateX.value,
       [-120, -100, -80, -60, -40, -20, 0],
       [0, 20, 40, 60, 80, 100, 120]
     );
 
-    // Add scale effect for buttons when fully revealed
-    const buttonScale = interpolate(
-      translateX.value,
-      [-120, -100, -80],
-      [1, 1.05, 1]
-    );
-
     return {
-      opacity: buttonOpacity,
-      transform: [
-        { translateX: buttonTranslateX },
-        { scale: buttonScale }
-      ],
-    };
-  });
-
-  // Individual button animations for more dynamic effect
-  const editButtonStyle = useAnimatedStyle(() => {
-    const editOpacity = interpolate(
-      translateX.value,
-      [-120, -80, -40, 0],
-      [1, 0.8, 0.2, 0]
-    );
-
-    return {
-      opacity: editOpacity,
-    };
-  });
-
-  const deleteButtonStyle = useAnimatedStyle(() => {
-    const deleteOpacity = interpolate(
-      translateX.value,
-      [-120, -100, -60, -20, 0],
-      [1, 0.9, 0.5, 0.1, 0]
-    );
-
-    return {
-      opacity: deleteOpacity,
+      transform: [{ translateX: buttonTranslateX }],
     };
   });
 
   const resetSwipe = (stiffness: number = 100) => {
     translateX.value = withSpring(0, {
       stiffness,
-    })
+    });
     lastOffset.current = 0;
   };
+
+  const tap = Gesture.Tap()
+    .onEnd(() => {
+      handleEdit();
+    })
+    .runOnJS(true);
 
   const pan = Gesture.Pan()
     .minDistance(1)
@@ -147,24 +123,26 @@ export function PasswordItem({ password }: Props) {
       let shouldSnapOpen = false;
 
       // Snap open if swiped far enough or with sufficient velocity
-      if (currentTranslation < -80 || (currentTranslation < -40 && velocityX < -500)) {
+      if (
+        currentTranslation < -80 ||
+        (currentTranslation < -40 && velocityX < -500)
+      ) {
         shouldSnapOpen = true;
       }
 
       // Apply spring animation to snap position
-      translateX.value = withSpring(
-        shouldSnapOpen ? -120 : 0,
-        {
-          damping: 20,
-          stiffness: 100,
-          mass: 1,
-        }
-      );
+      translateX.value = withSpring(shouldSnapOpen ? -120 : 0, {
+        damping: 20,
+        stiffness: 100,
+        mass: 1,
+      });
 
       // Update last offset
       lastOffset.current = shouldSnapOpen ? -120 : 0;
     })
     .runOnJS(true);
+
+  const gesture = Gesture.Exclusive(pan, tap);
 
   const getDomainIcon = () => {
     if (password.url) {
@@ -180,94 +158,98 @@ export function PasswordItem({ password }: Props) {
 
   return (
     <View style={[styles.container, { backgroundColor }]}>
-      <Animated.View>
-        {/* Action buttons - hidden by default, revealed on left swipe */}
-        <Animated.View
-          style={[styles.actionButtons, actionButtonsStyle]}
+      {/* Action buttons - hidden by default, revealed on left swipe */}
+      <Animated.View style={[styles.actionButtons, actionButtonsStyle]}>
+        <Pressable
+          style={[
+            styles.actionButton,
+            styles.editButton,
+            { backgroundColor: primaryColor },
+          ]}
+          onPress={() => {
+            handleEdit();
+          }}
         >
-          <Animated.View style={editButtonStyle}>
-            <Pressable
-              style={[styles.actionButton, styles.editButton, { backgroundColor: primaryColor }]}
-              onPress={() => {
-                handleEdit()
-              }}
-            >
-              <Edit size={20} color="white" />
-            </Pressable>
-          </Animated.View>
-          <Animated.View style={deleteButtonStyle}>
-            <Pressable
-              style={[styles.actionButton, styles.deleteButton, { backgroundColor: destructiveColor }]}
-              onPress={() => {
-                handleDelete()
-              }}
-            >
-              <Trash2 size={20} color="white" />
-            </Pressable>
-          </Animated.View>
-        </Animated.View>
-
-        {/* Main content */}
-        <GestureDetector gesture={pan}>
-          <TouchableOpacity
-            activeOpacity={0.9}
+          <Edit size={20} color="white" />
+        </Pressable>
+        <Pressable
+          style={[
+            styles.actionButton,
+            styles.deleteButton,
+            { backgroundColor: destructiveColor },
+          ]}
+          onPress={() => {
+            handleDelete();
+          }}
+        >
+          <Trash2 size={20} color="white" />
+        </Pressable>
+      </Animated.View>
+      {/* Main content */}
+      <GestureDetector gesture={gesture}>
+        <TouchableOpacity activeOpacity={0.9}>
+          <Animated.View
+            style={[
+              styles.content,
+              {
+                backgroundColor: itemBackgroundColor,
+              },
+              animatedStyles,
+            ]}
           >
-            <Animated.View
-              style={[
-                styles.content,
-                {
-                  backgroundColor: itemBackgroundColor,
-                },
-                animatedStyles
-              ]}
-            >
-              <View style={styles.leftSection}>
-                <View style={styles.iconContainer}>
-                  <Text style={[styles.iconText]}>
-                    {getDomainIcon()}
-                  </Text>
-                </View>
+            <View style={styles.leftSection}>
+              <View style={styles.iconContainer}>
+                <Text style={[styles.iconText]}>{getDomainIcon()}</Text>
               </View>
+            </View>
 
-              <View style={styles.middleSection}>
-                <View style={styles.titleRow}>
-                  <Text style={[styles.title, { color: textColor }]} numberOfLines={1}>
-                    {password.title}
-                  </Text>
-                  {password.favorite === 1 && (
-                    <Star size={16} color="#f59e0b" fill="#f59e0b" />
-                  )}
-                </View>
-                <Text style={[styles.subtitle, { color: `${textColor}80` }]} numberOfLines={1}>
-                  {password.username}
+            <View style={styles.middleSection}>
+              <View style={styles.titleRow}>
+                <Text
+                  style={[styles.title, { color: textColor }]}
+                  numberOfLines={1}
+                >
+                  {password.title}
                 </Text>
-                {password.url && (
-                  <View style={styles.urlRow}>
-                    <Globe size={12} color={`${textColor}60`} />
-                    <Text style={[styles.url, { color: `${textColor}60` }]} numberOfLines={1}>
-                      {password.url}
-                    </Text>
-                  </View>
+                {password.favorite === 1 && (
+                  <Star size={16} color="#f59e0b" fill="#f59e0b" />
                 )}
               </View>
-
-              <TouchableOpacity
-                style={styles.favoriteButton}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  favoriteMutate();
-                }}
+              <Text
+                style={[styles.subtitle, { color: `${textColor}80` }]}
+                numberOfLines={1}
               >
-                <Star
-                  size={18}
-                  color={password.favorite === 1 ? '#f59e0b' : `${textColor}40`}
-                  fill={password.favorite === 1 ? '#f59e0b' : 'none'}
-                />
-              </TouchableOpacity>
-            </Animated.View>
-          </TouchableOpacity>
-        </GestureDetector>
-      </Animated.View>
+                {password.username}
+              </Text>
+              {password.url && (
+                <View style={styles.urlRow}>
+                  <Globe size={12} color={`${textColor}60`} />
+                  <Text
+                    style={[styles.url, { color: `${textColor}60` }]}
+                    numberOfLines={1}
+                  >
+                    {password.url}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={styles.favoriteButton}
+              onPress={e => {
+                e.stopPropagation();
+                favoriteMutate();
+              }}
+            >
+              <Star
+                size={18}
+                color={password.favorite === 1 ? '#f59e0b' : `${textColor}40`}
+                fill={password.favorite === 1 ? '#f59e0b' : 'none'}
+              />
+            </TouchableOpacity>
+          </Animated.View>
+        </TouchableOpacity>
+      </GestureDetector>
     </View>
   );
 }
@@ -291,7 +273,6 @@ const styles = StyleSheet.create({
     height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-
   },
   editButton: {
     marginRight: 0,
@@ -349,5 +330,5 @@ const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
     backgroundColor: '#ffffff',
-  }
+  },
 });
