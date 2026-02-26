@@ -1,9 +1,27 @@
 import { Password, usePasswordStore } from '@/store/passwordStore';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Redirect, Stack } from 'expo-router';
-import { View, ScrollView, TouchableOpacity, Alert, Share, StyleSheet } from 'react-native';
+import {
+  View,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+  Share,
+  StyleSheet,
+} from 'react-native';
 import { Text } from '@/components/ui/text';
-import { Copy, Eye, EyeOff, Edit, Trash2, Star, Globe, User, Key, FileText } from 'lucide-react-native';
+import {
+  Copy,
+  Eye,
+  EyeOff,
+  Edit,
+  Trash2,
+  Star,
+  Globe,
+  User,
+  Key,
+  FileText,
+} from 'lucide-react-native';
 import { useColor } from '@/hooks/useColor';
 import { useState } from 'react';
 
@@ -11,9 +29,11 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   const { deletePassword, toggleFavorite } = usePasswordStore();
   const [showPassword, setShowPassword] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
-  const [optimisticFavorite, setOptimisticFavorite] = useState<boolean | null>(null);
+  const [optimisticFavorite, setOptimisticFavorite] = useState<boolean | null>(
+    null
+  );
 
-  const qc = useQueryClient()
+  const qc = useQueryClient();
 
   const backgroundColor = useColor('background');
   const cardColor = useColor('card');
@@ -22,7 +42,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   const primaryColor = useColor('primary');
   const destructiveColor = useColor('red');
 
-  const { id, title, username, password, url, notes, favorite } = passwordItem
+  const { id, title, username, password, url, notes, favorite } = passwordItem;
 
   const styles = StyleSheet.create({
     header: {
@@ -184,8 +204,6 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
     },
   });
 
-
-
   const handleCopyPassword = async () => {
     try {
       await Share.share({
@@ -213,22 +231,18 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   };
 
   const handleDelete = () => {
-    Alert.alert(
-      '删除密码',
-      `确定要删除 "${title}" 吗？此操作无法撤销。`,
-      [
-        { text: '取消', style: 'cancel' },
-        {
-          text: '删除',
-          style: 'destructive',
-          onPress: async () => {
-            await deletePassword(id);
-            // Navigate back after deletion
-            // This will be handled by the router
-          }
-        }
-      ]
-    );
+    Alert.alert('删除密码', `确定要删除 "${title}" 吗？此操作无法撤销。`, [
+      { text: '取消', style: 'cancel' },
+      {
+        text: '删除',
+        style: 'destructive',
+        onPress: async () => {
+          await deletePassword(id);
+          // Navigate back after deletion
+          // This will be handled by the router
+        },
+      },
+    ]);
   };
 
   const handleEdit = () => {
@@ -257,7 +271,8 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   };
 
   // Use optimistic favorite state if available, otherwise use data
-  const currentFavorite = optimisticFavorite !== null ? optimisticFavorite : (favorite === 1);
+  const currentFavorite =
+    optimisticFavorite !== null ? optimisticFavorite : favorite === 1;
 
   const getFavoriteButtonStyle = () => ({
     padding: 4,
@@ -291,14 +306,10 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
         {/* Header Section */}
         <View style={styles.headerSection}>
           <View style={styles.iconContainer}>
-            <Text style={styles.iconText}>
-              {getDomainIcon()}
-            </Text>
+            <Text style={styles.iconText}>{getDomainIcon()}</Text>
           </View>
 
-          <Text style={styles.title}>
-            {title}
-          </Text>
+          <Text style={styles.title}>{title}</Text>
 
           <View style={styles.headerMeta}>
             <TouchableOpacity
@@ -311,25 +322,23 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
                 fill={currentFavorite ? '#f59e0b' : 'none'}
               />
             </TouchableOpacity>
-            {url && (
-              <Globe size={16} color={`${textColor}60`} />
-            )}
+            {url && <Globe size={16} color={`${textColor}60`} />}
           </View>
         </View>
 
         {/* Username Section */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <User size={16} color={`${textColor}60`} style={{ marginRight: 8 }} />
-            <Text style={styles.sectionTitle}>
-              用户名
-            </Text>
+            <User
+              size={16}
+              color={`${textColor}60`}
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.sectionTitle}>用户名</Text>
           </View>
 
           <View style={styles.sectionContent}>
-            <Text style={styles.contentText}>
-              {username}
-            </Text>
+            <Text style={styles.contentText}>{username}</Text>
             <TouchableOpacity
               onPress={handleCopyUsername}
               style={styles.copyButton}
@@ -342,10 +351,12 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
         {/* Password Section */}
         <View style={styles.sectionCard}>
           <View style={styles.sectionHeader}>
-            <Key size={16} color={`${textColor}60`} style={{ marginRight: 8 }} />
-            <Text style={styles.sectionTitle}>
-              密码
-            </Text>
+            <Key
+              size={16}
+              color={`${textColor}60`}
+              style={{ marginRight: 8 }}
+            />
+            <Text style={styles.sectionTitle}>密码</Text>
           </View>
 
           <View style={styles.sectionContent}>
@@ -377,10 +388,12 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
         {url && (
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <Globe size={16} color={`${textColor}60`} style={{ marginRight: 8 }} />
-              <Text style={styles.sectionTitle}>
-                网址
-              </Text>
+              <Globe
+                size={16}
+                color={`${textColor}60`}
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.sectionTitle}>网址</Text>
             </View>
 
             <TouchableOpacity
@@ -390,9 +403,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
               }}
               style={styles.urlContent}
             >
-              <Text style={styles.urlText}>
-                {url}
-              </Text>
+              <Text style={styles.urlText}>{url}</Text>
               <View style={styles.iconButton}>
                 <Globe size={16} color={primaryColor} />
               </View>
@@ -404,47 +415,35 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
         {notes && (
           <View style={styles.sectionCard}>
             <View style={styles.sectionHeader}>
-              <FileText size={16} color={`${textColor}60`} style={{ marginRight: 8 }} />
-              <Text style={styles.sectionTitle}>
-                备注
-              </Text>
+              <FileText
+                size={16}
+                color={`${textColor}60`}
+                style={{ marginRight: 8 }}
+              />
+              <Text style={styles.sectionTitle}>备注</Text>
             </View>
 
-            <Text style={styles.notesText}>
-              {notes}
-            </Text>
+            <Text style={styles.notesText}>{notes}</Text>
           </View>
         )}
 
         {/* Action Buttons */}
         <View style={styles.actionButtons}>
-          <TouchableOpacity
-            onPress={handleEdit}
-            style={styles.editButton}
-          >
+          <TouchableOpacity onPress={handleEdit} style={styles.editButton}>
             <Edit size={18} color="white" />
-            <Text style={styles.buttonText}>
-              编辑
-            </Text>
+            <Text style={styles.buttonText}>编辑</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            onPress={handleDelete}
-            style={styles.deleteButton}
-          >
+          <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
             <Trash2 size={18} color="white" />
-            <Text style={styles.buttonText}>
-              删除
-            </Text>
+            <Text style={styles.buttonText}>删除</Text>
           </TouchableOpacity>
         </View>
 
         {/* Copied Feedback */}
         {showCopied && (
           <View style={styles.copiedFeedback}>
-            <Text style={styles.copiedText}>
-              已复制到剪贴板
-            </Text>
+            <Text style={styles.copiedText}>已复制到剪贴板</Text>
           </View>
         )}
       </ScrollView>

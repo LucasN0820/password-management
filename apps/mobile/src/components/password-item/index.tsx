@@ -5,6 +5,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   interpolate,
+  runOnJS,
 } from 'react-native-reanimated';
 import {
   Gesture,
@@ -19,14 +20,15 @@ import { useRouter } from 'expo-router';
 
 interface Props {
   password: Password;
-  onEdit?: (id: number) => void
+  onEdit?: (id: number) => void;
+  onDelete?: (id: number, title: string) => void;
 }
 
 function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max);
 }
 
-export function PasswordItem({ password, onEdit }: Props) {
+export function PasswordItem({ password, onEdit, onDelete }: Props) {
   const { deletePassword, toggleFavorite } = usePasswordStore();
   const router = useRouter();
   const translateX = useSharedValue(0);
@@ -51,22 +53,11 @@ export function PasswordItem({ password, onEdit }: Props) {
   });
 
   const handleDelete = () => {
-    Alert.alert(
-      '删除密码',
-      `确定要删除 "${password.title}" 吗？此操作无法撤销。`,
-      [
-        { text: '取消', style: 'cancel' },
-        {
-          text: '删除',
-          style: 'destructive',
-          onPress: () => deleteMutate(),
-        },
-      ]
-    );
+    onDelete?.(password.id, password.title);
   };
 
   const handleEdit = () => {
-    onEdit?.(password.id)
+    onEdit?.(password.id);
     resetSwipe(1300);
   };
 
@@ -94,6 +85,7 @@ export function PasswordItem({ password, onEdit }: Props) {
     lastOffset.current = 0;
   };
 
+  // gesture提供的手势和对应的回调默认运行在UI线程，因此如果想要在回调中访问只存在于JS线程上的东西例如useState这些，则需要使用runOnJs让这段代码可以访问JS线程上的东西
   const tap = Gesture.Tap()
     .onEnd(() => {
       router.push({
@@ -102,10 +94,12 @@ export function PasswordItem({ password, onEdit }: Props) {
           id: password.id,
         },
       });
+
       resetSwipe(1300);
     })
     .runOnJS(true);
 
+  //同理： 运行在UI线程
   const pan = Gesture.Pan()
     .minDistance(1)
     .onStart(() => {
