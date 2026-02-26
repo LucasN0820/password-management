@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useStore } from './context';
-import { Password, usePasswordStore } from '@/store/passwordStore';
-import { Alert } from 'react-native';
-import * as Clipboard from 'expo-clipboard';
+import { usePasswordStore } from '@/store/passwordStore';
 import {
   View,
   Text,
@@ -10,46 +8,16 @@ import {
   TextInput,
   StyleSheet,
 } from 'react-native';
-import { Search, Plus, Star, Copy, Eye, EyeOff } from 'lucide-react-native';
+import { Search, Plus } from 'lucide-react-native';
 import { ModalController } from './modal-controller';
 import { TabViewContainer } from './tab-view-container';
 
 export function Render() {
   const [searchVisible, setSearchVisible] = useState(false);
-  const [showPasswords, setShowPasswords] = useState<{
-    [key: number]: boolean;
-  }>({});
   const setModal = useStore(s => s.setModal);
 
-  const { searchQuery, setSearchQuery, toggleFavorite, deletePassword } =
+  const { searchQuery, setSearchQuery } =
     usePasswordStore();
-
-  const handleCopyToClipboard = async (text: string, label: string) => {
-    try {
-      await Clipboard.setStringAsync(text);
-      Alert.alert('已复制', `${label}已复制到剪贴板`);
-    } catch (error) {
-      Alert.alert('错误', '复制失败');
-    }
-  };
-
-  const handleDeletePassword = (password: Password) => {
-    Alert.alert('删除密码', `确定要删除 "${password.title}" 吗？`, [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '删除',
-        style: 'destructive',
-        onPress: () => deletePassword(password.id),
-      },
-    ]);
-  };
-
-  const togglePasswordVisibility = (id: number) => {
-    setShowPasswords(prev => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
-  };
 
   return (
     <>

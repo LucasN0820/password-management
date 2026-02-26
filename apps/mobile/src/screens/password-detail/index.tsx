@@ -1,8 +1,8 @@
 import { usePasswordStore } from '@/store/passwordStore';
 import { useQuery } from '@tanstack/react-query';
-import { Redirect, Stack } from 'expo-router';
-import { View } from 'react-native';
-import { Text } from '@/components/ui/text';
+import { Redirect } from 'expo-router';
+import { LoadingSkeleton } from '@/components/loading-skeleton';
+import { Render } from './render';
 
 export function PasswordDetailScreen({ id }: { id: number }) {
   const { findPassword } = usePasswordStore();
@@ -15,20 +15,13 @@ export function PasswordDetailScreen({ id }: { id: number }) {
   });
 
   if (isLoading) {
-    return <View />;
+    return <LoadingSkeleton className='p-4' />;
   }
 
   if (!data) {
     return <Redirect href="/+not-found" />;
   }
 
-  return (
-    <>
-      <Stack.Screen options={{ headerTitle: data.title }} />
-      <View>
-        <Text>{data.username}</Text>
-        <Text>{data.password}</Text>
-      </View>
-    </>
-  );
+
+  return <Render passwordItem={data} />
 }

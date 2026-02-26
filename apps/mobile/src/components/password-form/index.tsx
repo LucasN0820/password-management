@@ -1,5 +1,5 @@
 import { forwardRef, useImperativeHandle } from "react";
-import { FormType } from "./form";
+import { FormType, defaultValues } from "./form";
 import { useValidatedForm } from "./form";
 import { FormProvider } from "react-hook-form";
 import { View } from "react-native";
@@ -17,7 +17,7 @@ export interface PasswordFormRef {
 export * from "./form"
 
 interface PasswordFormProps {
-  initialValue?: FormType
+  initialValue?: Partial<FormType>
   onSubmit?: (data: Omit<Password, 'id' | 'created_at' | 'updated_at'>) => void
 }
 
@@ -25,7 +25,10 @@ export const PasswordForm = forwardRef<PasswordFormRef, PasswordFormProps>((prop
   const { initialValue, onSubmit } = props
 
   const form = useValidatedForm({
-    defaultValues: initialValue,
+    defaultValues: {
+      ...defaultValues,
+      ...initialValue
+    },
     mode: "onChange"
   })
 

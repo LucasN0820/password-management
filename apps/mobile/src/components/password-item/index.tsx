@@ -19,13 +19,14 @@ import { useRouter } from 'expo-router';
 
 interface Props {
   password: Password;
+  onEdit?: (id: number) => void
 }
 
 function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max);
 }
 
-export function PasswordItem({ password }: Props) {
+export function PasswordItem({ password, onEdit }: Props) {
   const { deletePassword, toggleFavorite } = usePasswordStore();
   const router = useRouter();
   const translateX = useSharedValue(0);
@@ -65,12 +66,7 @@ export function PasswordItem({ password }: Props) {
   };
 
   const handleEdit = () => {
-    router.push({
-      pathname: '/password/[id]',
-      params: {
-        id: password.id,
-      },
-    });
+    onEdit?.(password.id)
     resetSwipe(1300);
   };
 
@@ -100,7 +96,13 @@ export function PasswordItem({ password }: Props) {
 
   const tap = Gesture.Tap()
     .onEnd(() => {
-      handleEdit();
+      router.push({
+        pathname: '/password/[id]',
+        params: {
+          id: password.id,
+        },
+      });
+      resetSwipe(1300);
     })
     .runOnJS(true);
 
@@ -157,7 +159,7 @@ export function PasswordItem({ password }: Props) {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor }]}>
+    <View style={[{ backgroundColor }]}>
       {/* Action buttons - hidden by default, revealed on left swipe */}
       <Animated.View style={[styles.actionButtons, actionButtonsStyle]}>
         <Pressable
@@ -211,9 +213,6 @@ export function PasswordItem({ password }: Props) {
                 >
                   {password.title}
                 </Text>
-                {password.favorite === 1 && (
-                  <Star size={16} color="#f59e0b" fill="#f59e0b" />
-                )}
               </View>
               <Text
                 style={[styles.subtitle, { color: `${textColor}80` }]}
@@ -233,32 +232,28 @@ export function PasswordItem({ password }: Props) {
                 </View>
               )}
             </View>
-
-            <TouchableOpacity
-              style={styles.favoriteButton}
-              onPress={e => {
-                e.stopPropagation();
-                favoriteMutate();
-              }}
-            >
-              <Star
-                size={18}
-                color={password.favorite === 1 ? '#f59e0b' : `${textColor}40`}
-                fill={password.favorite === 1 ? '#f59e0b' : 'none'}
-              />
-            </TouchableOpacity>
           </Animated.View>
         </TouchableOpacity>
       </GestureDetector>
+
+      {/* Favorite button outside gesture detector */}
+      <Pressable
+        style={styles.favoriteButton}
+        onPress={() => {
+          favoriteMutate();
+        }}
+      >
+        <Star
+          size={18}
+          color={password.favorite === 1 ? '#f59e0b' : `${textColor}40`}
+          fill={password.favorite === 1 ? '#f59e0b' : 'none'}
+        />
+      </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    // marginHorizontal: 16,
-    // marginVertical: 4,
-  },
   actionButtons: {
     position: 'absolute',
     right: 0,
@@ -324,11 +319,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   favoriteButton: {
+    position: 'absolute',
+    right: 16,
+    top: 16,
     padding: 8,
-    marginLeft: 8,
-  },
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#ffffff',
+    zIndex: 10,
   },
 });

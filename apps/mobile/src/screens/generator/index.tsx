@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { RefreshCw, Copy, Check } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
+import { useColor } from '@/hooks/useColor';
 
 export function GeneratorScreen() {
   const [length, setLength] = useState(16);
@@ -11,6 +12,14 @@ export function GeneratorScreen() {
   const [includeSymbols, setIncludeSymbols] = useState(true);
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // Color system
+  const backgroundColor = useColor('background');
+  const cardColor = useColor('card');
+  const textColor = useColor('text');
+  const borderColor = useColor('border');
+  const primaryColor = useColor('primary');
+  const mutedTextColor = `${textColor}60`;
 
   const generatePassword = () => {
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -66,6 +75,167 @@ export function GeneratorScreen() {
       <Text style={styles.optionLabel}>{label}</Text>
     </TouchableOpacity>
   );
+
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: backgroundColor,
+    },
+    header: {
+      padding: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: borderColor,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: textColor,
+    },
+    content: {
+      flex: 1,
+      padding: 20,
+    },
+    passwordDisplay: {
+      backgroundColor: cardColor,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 24,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderWidth: 1,
+      borderColor: borderColor,
+    },
+    passwordText: {
+      flex: 1,
+      fontSize: 16,
+      fontFamily: 'monospace',
+      color: textColor,
+      marginRight: 12,
+      fontWeight: '500',
+    },
+    copyButton: {
+      backgroundColor: primaryColor,
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 8,
+      gap: 6,
+    },
+    copyButtonDisabled: {
+      backgroundColor: mutedTextColor,
+    },
+    copyButtonText: {
+      color: '#ffffff',
+      fontSize: 14,
+      fontWeight: '500',
+    },
+    section: {
+      marginBottom: 24,
+    },
+    sectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      marginBottom: 16,
+      color: textColor,
+    },
+    slider: {
+      width: '100%',
+      height: 40,
+    },
+    thumb: {
+      width: 20,
+      height: 20,
+      backgroundColor: primaryColor,
+    },
+    lengthControl: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 16,
+      marginVertical: 12,
+    },
+    lengthButton: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: primaryColor,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    lengthButtonText: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: '#ffffff',
+    },
+    lengthValue: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: textColor,
+      minWidth: 40,
+      textAlign: 'center',
+    },
+    lengthLabels: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginTop: -8,
+    },
+    lengthLabel: {
+      fontSize: 12,
+      color: mutedTextColor,
+    },
+    optionRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: 12,
+      backgroundColor: cardColor,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      marginBottom: 8,
+      borderWidth: 1,
+      borderColor: borderColor,
+    },
+    checkbox: {
+      width: 20,
+      height: 20,
+      borderWidth: 2,
+      borderColor: borderColor,
+      borderRadius: 4,
+      marginRight: 12,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    checkboxChecked: {
+      backgroundColor: primaryColor,
+      borderColor: primaryColor,
+    },
+    checkmark: {
+      color: '#ffffff',
+      fontSize: 12,
+      fontWeight: 'bold',
+    },
+    optionLabel: {
+      fontSize: 16,
+      color: textColor,
+      fontWeight: '500',
+    },
+    generateButton: {
+      backgroundColor: primaryColor,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 16,
+      borderRadius: 12,
+      gap: 8,
+      marginTop: 'auto',
+    },
+    generateButtonText: {
+      color: '#ffffff',
+      fontSize: 16,
+      fontWeight: '600',
+    },
+  });
 
   return (
     <View style={styles.container}>
@@ -160,154 +330,3 @@ export function GeneratorScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  header: {
-    padding: 20,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  content: {
-    flex: 1,
-    padding: 20,
-  },
-  passwordDisplay: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  passwordText: {
-    flex: 1,
-    fontSize: 16,
-    fontFamily: 'monospace',
-    color: '#1f2937',
-    marginRight: 12,
-  },
-  copyButton: {
-    backgroundColor: '#3b82f6',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    gap: 6,
-  },
-  copyButtonDisabled: {
-    backgroundColor: '#9ca3af',
-  },
-  copyButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  section: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 16,
-    color: '#1f2937',
-  },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-  thumb: {
-    width: 20,
-    height: 20,
-    backgroundColor: '#3b82f6',
-  },
-  lengthControl: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-    marginVertical: 12,
-  },
-  lengthButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#3b82f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  lengthButtonText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffffff',
-  },
-  lengthValue: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
-    minWidth: 40,
-    textAlign: 'center',
-  },
-  lengthLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: -8,
-  },
-  lengthLabel: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 2,
-    borderColor: '#d1d5db',
-    borderRadius: 4,
-    marginRight: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: '#3b82f6',
-    borderColor: '#3b82f6',
-  },
-  checkmark: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  optionLabel: {
-    fontSize: 16,
-    color: '#374151',
-  },
-  generateButton: {
-    backgroundColor: '#3b82f6',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
-    marginTop: 'auto',
-  },
-  generateButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});

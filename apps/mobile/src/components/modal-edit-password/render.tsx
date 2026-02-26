@@ -30,7 +30,6 @@ export function Render({ initialValue, onClose, id }: { initialValue: FormType, 
     }
   })
 
-
   useEffect(() => {
     // On Android, onClose is not called.
     if (Platform.OS === "android" && !visible) {
