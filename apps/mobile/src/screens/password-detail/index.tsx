@@ -3,9 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { Redirect } from 'expo-router';
 import { LoadingSkeleton } from '@/components/loading-skeleton';
 import { Render } from './render';
+import { useMemo } from 'react';
+import { StoreContext, createStore } from './context';
+import { ModalController } from './modal-controller';
 
 export function PasswordDetailScreen({ id }: { id: number }) {
   const { findPassword } = usePasswordStore();
+  const store = useMemo(() => createStore(), []);
 
   const { isLoading, data } = useQuery({
     queryKey: ['findPassword', id],
@@ -15,13 +19,17 @@ export function PasswordDetailScreen({ id }: { id: number }) {
   });
 
   if (isLoading) {
-    return <LoadingSkeleton className='p-4' />;
+    return <LoadingSkeleton className="p-4" />;
   }
 
   if (!data) {
     return <Redirect href="/+not-found" />;
   }
 
-
-  return <Render passwordItem={data} />
+  return (
+    <StoreContext.Provider value={store}>
+      <Render passwordItem={data} />
+      <ModalController />
+    </StoreContext.Provider>
+  );
 }

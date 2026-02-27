@@ -24,6 +24,7 @@ import {
 } from 'lucide-react-native';
 import { useColor } from '@/hooks/useColor';
 import { useState } from 'react';
+import { useStore } from './context';
 
 export function Render({ passwordItem }: { passwordItem: Password }) {
   const { deletePassword, toggleFavorite } = usePasswordStore();
@@ -32,6 +33,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   const [optimisticFavorite, setOptimisticFavorite] = useState<boolean | null>(
     null
   );
+  const setModal = useStore(s => s.setModal);
 
   const qc = useQueryClient();
 
@@ -231,23 +233,18 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   };
 
   const handleDelete = () => {
-    Alert.alert('删除密码', `确定要删除 "${title}" 吗？此操作无法撤销。`, [
-      { text: '取消', style: 'cancel' },
-      {
-        text: '删除',
-        style: 'destructive',
-        onPress: async () => {
-          await deletePassword(id);
-          // Navigate back after deletion
-          // This will be handled by the router
-        },
-      },
-    ]);
+    setModal({
+      type: 'delete-password',
+      id: passwordItem.id,
+      title: passwordItem.title,
+    });
   };
 
   const handleEdit = () => {
-    // TODO: Navigate to edit screen
-    console.log('Edit password:', id);
+    setModal({
+      type: 'edit-password',
+      id: passwordItem.id,
+    });
   };
 
   const handleToggleFavorite = async () => {
