@@ -136,7 +136,7 @@ export function PasswordGeneratorPage() {
     }
 
     if (settings.excludeSimilar) {
-      charset = charset.replace(/[il1o0]/gi, '');
+      charset = charset.replaceAll(/[il1o0]/gi, '');
     }
 
     if (!charset) {
