@@ -15,11 +15,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: 20
+          # 注意：在 Yarn 4 中，缓存需要通过 corepack 准备好环境后再处理，
+          # 或者直接使用 actions/setup-node 的内建缓存功能
           cache: 'yarn'
 
+      - name: Enable Corepack
+        # Corepack 是 Node.js 官方提供的工具，用于根据 package.json 自动下载对应的 yarn 版本
+        run: corepack enable
+
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        # 此时运行 yarn，Corepack 会自动识别并下载 4.13.0
+        run: yarn install --immutable
 
       - name: Run type check
         run: yarn tsc
