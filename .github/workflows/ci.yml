@@ -15,17 +15,27 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          # 注意：在 Yarn 4 中，缓存需要通过 corepack 准备好环境后再处理，
-          # 或者直接使用 actions/setup-node 的内建缓存功能
-          cache: 'yarn'
+          node-version: 22
 
       - name: Enable Corepack
-        # Corepack 是 Node.js 官方提供的工具，用于根据 package.json 自动下载对应的 yarn 版本
-        run: corepack enable
+        run: |
+          corepack enable
+          corepack prepare yarn@4.13.0 --activate
+
+      # ✅ 手动配置缓存 (针对 Yarn 4 / Berry)
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+
+      - name: Restore Yarn cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
 
       - name: Install dependencies
-        # 此时运行 yarn，Corepack 会自动识别并下载 4.13.0
         run: yarn install --immutable
 
       - name: Run type check
