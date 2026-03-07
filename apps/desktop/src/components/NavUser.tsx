@@ -8,7 +8,6 @@ import {
   LogOut,
   Sparkles,
 } from "lucide-react"
-
 import {
   Avatar,
   AvatarFallback,
@@ -30,15 +29,17 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 
-export function NavUser({
-  user,
-}: {
-  user: {
+interface InlineInterface2 {
     name: string
     email: string
     avatar: string
   }
-}) {
+interface InlineInterface {
+  user: InlineInterface2
+}
+export function NavUser({
+  user,
+}: InlineInterface) {
   const { isMobile } = useSidebar()
 
   return (
@@ -65,7 +66,6 @@ export function NavUser({
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             align="end"
-            sideOffset={4}
           >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">

@@ -4,7 +4,6 @@ import { Pressable } from 'react-native';
 import { Colors } from '@/theme/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
@@ -28,7 +27,7 @@ export default function TabLayout() {
           name="index"
           options={{
             title: 'Password',
-            tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+            tabBarIcon: ({ color }) => <TabBarIcon name="key" color={color} />,
             headerRight: () => (
               <Link href="/modal" asChild>
                 <Pressable>
@@ -49,7 +48,9 @@ export default function TabLayout() {
           name="generator"
           options={{
             title: 'Generator',
-            tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+            tabBarIcon: ({ color }) => (
+              <TabBarIcon name="shield" color={color} />
+            ),
           }}
         />
       </Tabs>

@@ -1,6 +1,6 @@
 import { Password, usePasswordStore } from '@/store/passwordStore';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Redirect, Stack } from 'expo-router';
+import { useQueryClient } from '@tanstack/react-query';
+import { Stack } from 'expo-router';
 import {
   View,
   ScrollView,
@@ -27,7 +27,7 @@ import { useState } from 'react';
 import { useStore } from './context';
 
 export function Render({ passwordItem }: { passwordItem: Password }) {
-  const { deletePassword, toggleFavorite } = usePasswordStore();
+  const { toggleFavorite } = usePasswordStore();
   const [showPassword, setShowPassword] = useState(false);
   const [showCopied, setShowCopied] = useState(false);
   const [optimisticFavorite, setOptimisticFavorite] = useState<boolean | null>(

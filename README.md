@@ -131,7 +131,7 @@ password-management/
 - Node.js 18+
 - Expo CLI
 - iOS/Android 开发环境
-- Yarn v1.22.22
+- Yarn v4.13.0
 
 ### 安装依赖
 

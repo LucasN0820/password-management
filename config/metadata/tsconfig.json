@@ -1,0 +1,4 @@
+{
+  "extends": "@repo/ts-config",
+  "include": ["./src/index.ts"]
+}

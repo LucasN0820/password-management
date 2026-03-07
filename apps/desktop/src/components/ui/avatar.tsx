@@ -1,15 +1,15 @@
-import * as React from "react"
 import { Avatar as AvatarPrimitive } from "radix-ui"
-
+import type * as React from "react"
 import { cn } from "@/lib/utils"
 
+interface InlineInterface {
+  size?: "default" | "sm" | "lg"
+}
 function Avatar({
   className,
   size = "default",
   ...props
-}: React.ComponentProps<typeof AvatarPrimitive.Root> & {
-  size?: "default" | "sm" | "lg"
-}) {
+}: React.ComponentProps<typeof AvatarPrimitive.Root> & InlineInterface) {
   return (
     <AvatarPrimitive.Root
       data-slot="avatar"
@@ -99,9 +99,9 @@ function AvatarGroupCount({
 
 export {
   Avatar,
-  AvatarImage,
-  AvatarFallback,
   AvatarBadge,
+  AvatarFallback,
   AvatarGroup,
   AvatarGroupCount,
+  AvatarImage,
 }

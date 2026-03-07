@@ -15,9 +15,7 @@ import { TabViewContainer } from './tab-view-container';
 export function Render() {
   const [searchVisible, setSearchVisible] = useState(false);
   const setModal = useStore(s => s.setModal);
-
-  const { searchQuery, setSearchQuery } =
-    usePasswordStore();
+  const { searchQuery, setSearchQuery } = usePasswordStore();
 
   return (
     <>
@@ -47,7 +45,7 @@ export function Render() {
               style={styles.searchInput}
               placeholder="搜索密码..."
               value={searchQuery}
-              onChangeText={setSearchQuery}
+              onChangeText={text => setSearchQuery(text.trim())}
             />
           )}
         </View>

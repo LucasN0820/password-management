@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Lock, Shield, Key, Zap, BarChart3, Plus, Command } from 'lucide-react'
+import { AnimatePresence,motion } from 'framer-motion'
+import { BarChart3, Command,Key, Lock, Plus, Search, Shield, Zap } from 'lucide-react'
+import { useEffect,useState } from 'react'
+import { useNavigate } from 'react-router'
 import { Input } from '@/components/ui/input'
 import { usePasswordStore } from '@/store/passwordStore'
-import { useNavigate } from 'react-router'
 
 export function HomePage() {
   const [searchQuery, setSearchQuery] = useState('')
@@ -183,7 +183,7 @@ export function HomePage() {
           className="max-w-2xl mx-auto mb-16"
           variants={itemVariants}
         >
-          <form onSubmit={handleSearch} className="relative">
+          <form className="relative" onSubmit={handleSearch}>
             <motion.div
               className="relative"
               whileFocus={{
@@ -196,8 +196,8 @@ export function HomePage() {
                 type="text"
                 placeholder="搜索密码、网站或标签..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-12 pr-4 h-14 text-base bg-background/80 backdrop-blur-sm border-0 shadow-lg rounded-2xl focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+                onChange={(e) => { setSearchQuery(e.target.value); }}
               />
             </motion.div>
             <motion.div
@@ -278,14 +278,14 @@ export function HomePage() {
             快速操作
           </motion.h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {quickActions.map((action, index) => (
-              <motion.div
+            {quickActions.map((action, index) => 
+              { return <motion.div
                 key={index}
                 variants={itemVariants}
                 whileHover="hover"
                 whileTap="tap"
-                onClick={action.action}
                 className="cursor-pointer"
+                onClick={action.action}
               >
                 <div className="bg-background/60 backdrop-blur-sm border-0 shadow-lg rounded-2xl p-6 h-full group">
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors duration-200">
@@ -294,8 +294,8 @@ export function HomePage() {
                   <h3 className="font-semibold text-foreground mb-2 text-center">{action.title}</h3>
                   <p className="text-sm text-muted-foreground text-center">{action.description}</p>
                 </div>
-              </motion.div>
-            ))}
+              </motion.div> }
+            )}
           </div>
         </motion.div>
 
@@ -316,8 +316,8 @@ export function HomePage() {
             <div className="space-y-3">
               <AnimatePresence>
                 {recentPasswords.length > 0 ? (
-                  recentPasswords.map((password) => (
-                    <motion.div
+                  recentPasswords.map((password) => 
+                    { return <motion.div
                       key={password.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -325,8 +325,8 @@ export function HomePage() {
                       transition={{ duration: 0.3 }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => navigate('/password')}
                       className="cursor-pointer"
+                      onClick={() => navigate('/password')}
                     >
                       <div className="bg-background/60 backdrop-blur-sm border-0 shadow rounded-2xl p-4 group hover:shadow-lg transition-all duration-200">
                         <div className="flex items-center gap-3">
@@ -352,8 +352,8 @@ export function HomePage() {
                           )}
                         </div>
                       </div>
-                    </motion.div>
-                  ))
+                    </motion.div> }
+                  )
                 ) : (
                   <motion.div
                     initial={{ opacity: 0 }}
@@ -380,8 +380,8 @@ export function HomePage() {
             <div className="space-y-3">
               <AnimatePresence>
                 {favoritePasswords.length > 0 ? (
-                  favoritePasswords.map((password) => (
-                    <motion.div
+                  favoritePasswords.map((password) => 
+                    { return <motion.div
                       key={password.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
@@ -389,8 +389,8 @@ export function HomePage() {
                       transition={{ duration: 0.3 }}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => navigate('/password')}
                       className="cursor-pointer"
+                      onClick={() => navigate('/password')}
                     >
                       <div className="bg-background/60 backdrop-blur-sm border-0 shadow rounded-2xl p-4 group hover:shadow-lg transition-all duration-200">
                         <div className="flex items-center gap-3">
@@ -414,8 +414,8 @@ export function HomePage() {
                           </motion.div>
                         </div>
                       </div>
-                    </motion.div>
-                  ))
+                    </motion.div> }
+                  )
                 ) : (
                   <motion.div
                     initial={{ opacity: 0 }}

@@ -23,7 +23,9 @@ interface PasswordState {
   categories: string[]
   isLoading: boolean
 
-  // Actions
+  /**
+   * Actions.
+   */
   setPasswords: (passwords: Password[]) => void
   setFilteredPasswords: (passwords: Password[]) => void
   setSelectedPassword: (password: Password | null) => void
@@ -33,7 +35,9 @@ interface PasswordState {
   setIsLoading: (loading: boolean) => void
   applyFilters: () => void
 
-  // Async actions
+  /**
+   * Async actions.
+   */
   loadPasswords: () => Promise<void>
   loadCategories: () => Promise<void>
   addPassword: (data: Omit<Password, 'id' | 'created_at' | 'updated_at'>) => Promise<void>
@@ -43,7 +47,7 @@ interface PasswordState {
   toggleFavorite: (password: Password) => Promise<void>
 }
 
-export const usePasswordStore = create<PasswordState>((set, get) => ({
+export const usePasswordStore = create<PasswordState>((set, get) => { return {
   passwords: [],
   filteredPasswords: [],
   selectedPassword: null,
@@ -57,9 +61,9 @@ export const usePasswordStore = create<PasswordState>((set, get) => ({
     get().applyFilters()
   },
 
-  setFilteredPasswords: (filteredPasswords) => set({ filteredPasswords }),
+  setFilteredPasswords: (filteredPasswords) => { set({ filteredPasswords }); },
 
-  setSelectedPassword: (selectedPassword) => set({ selectedPassword }),
+  setSelectedPassword: (selectedPassword) => { set({ selectedPassword }); },
 
   setSelectedCategory: (selectedCategory) => {
     set({ selectedCategory })
@@ -75,9 +79,9 @@ export const usePasswordStore = create<PasswordState>((set, get) => ({
     }
   },
 
-  setCategories: (categories) => set({ categories }),
+  setCategories: (categories) => { set({ categories }); },
 
-  setIsLoading: (isLoading) => set({ isLoading }),
+  setIsLoading: (isLoading) => { set({ isLoading }); },
 
   applyFilters: () => {
     const { passwords, selectedCategory } = get()
@@ -96,6 +100,7 @@ export const usePasswordStore = create<PasswordState>((set, get) => ({
     set({ isLoading: true })
     try {
       const data = await window.electronAPI.getPasswords()
+
       set({ passwords: data })
       get().applyFilters()
     } finally {
@@ -105,6 +110,7 @@ export const usePasswordStore = create<PasswordState>((set, get) => ({
 
   loadCategories: async () => {
     const cats = await window.electronAPI.getCategories()
+
     set({ categories: cats })
   },
 
@@ -122,6 +128,7 @@ export const usePasswordStore = create<PasswordState>((set, get) => ({
   deletePassword: async (id) => {
     await window.electronAPI.deletePassword(id)
     const { selectedPassword } = get()
+
     if (selectedPassword?.id === id) {
       set({ selectedPassword: null })
     }
@@ -131,9 +138,11 @@ export const usePasswordStore = create<PasswordState>((set, get) => ({
   searchPasswords: async (query) => {
     if (!query.trim()) {
       get().applyFilters()
+
       return
     }
     const results = await window.electronAPI.searchPasswords(query)
+
     set({ filteredPasswords: results })
   },
 
@@ -144,10 +153,11 @@ export const usePasswordStore = create<PasswordState>((set, get) => ({
     })
     await get().loadPasswords()
     const { selectedPassword } = get()
+
     if (selectedPassword?.id === password.id) {
       set({
         selectedPassword: { ...selectedPassword, favorite: password.favorite ? 0 : 1 }
       })
     }
   }
-}))
+} })

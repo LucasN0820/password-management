@@ -1,7 +1,6 @@
-import * as React from "react"
 import { cva, type VariantProps } from "class-variance-authority"
 import { Slot } from "radix-ui"
-
+import type * as React from "react"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
@@ -38,6 +37,9 @@ const buttonVariants = cva(
   }
 )
 
+interface InlineInterface {
+    asChild?: boolean
+  }
 function Button({
   className,
   variant = "default",
@@ -45,9 +47,7 @@ function Button({
   asChild = false,
   ...props
 }: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
+  VariantProps<typeof buttonVariants> & InlineInterface) {
   const Comp = asChild ? Slot.Root : "button"
 
   return (

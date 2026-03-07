@@ -1,9 +1,9 @@
 import { createBrowserRouter } from "react-router";
-import { HomePage } from "./routes/Home";
 import App from "./App";
+import { HomePage } from "./routes/Home";
 import PasswordPage from "./routes/Password";
-import { SearchPage } from "./routes/Search";
 import { PasswordGeneratorPage } from "./routes/PasswordGenerator";
+import { SearchPage } from "./routes/Search";
 
 export const router = createBrowserRouter([
   {

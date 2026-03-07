@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react'
-import { X, Star, Upload, Image } from 'lucide-react'
-import { Password } from '../store/passwordStore'
+import { Image,Star, Upload, X } from 'lucide-react'
+import { useEffect, useRef,useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import type { Password } from '../store/passwordStore'
 
 interface EditPasswordModalProps {
   password: Password
@@ -32,15 +32,19 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
 
   const handleIconUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+
     if (file) {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         alert('图标文件大小不能超过5MB')
+
         return
       }
 
       const reader = new FileReader()
+
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string
+
         setFormData({ ...formData, icon: dataUrl })
       }
       reader.readAsDataURL(file)
@@ -79,6 +83,7 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
     e.preventDefault()
     const category = showNewCategory && newCategory ? newCategory : formData.category
     const data = { ...formData, category }
+
     onSave(password.id, data)
     onClose()
   }
@@ -99,7 +104,7 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
           </Button>
         </CardHeader>
         <CardContent className="space-y-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form className="space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <Label>图标</Label>
               <div className="flex items-center gap-4">
@@ -119,8 +124,8 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
                     ref={fileInputRef}
                     type="file"
                     accept="image/*"
-                    onChange={handleIconUpload}
                     className="hidden"
+                    onChange={handleIconUpload}
                   />
                   <Button
                     type="button"
@@ -151,11 +156,11 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
             <div className="space-y-2">
               <Label htmlFor="title">标题 *</Label>
               <Input
+                required
                 id="title"
                 value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="例如：GitHub"
-                required
+                onChange={(e) => { setFormData({ ...formData, title: e.target.value }); }}
               />
             </div>
 
@@ -164,20 +169,20 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
               <Input
                 id="username"
                 value={formData.username}
-                onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 placeholder="用户名或邮箱"
+                onChange={(e) => { setFormData({ ...formData, username: e.target.value }); }}
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="password">密码 *</Label>
               <Input
+                required
                 id="password"
                 type="password"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="输入密码"
-                required
+                onChange={(e) => { setFormData({ ...formData, password: e.target.value }); }}
               />
             </div>
 
@@ -187,8 +192,8 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
                 id="url"
                 type="url"
                 value={formData.url}
-                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                 placeholder="https://..."
+                onChange={(e) => { setFormData({ ...formData, url: e.target.value }); }}
               />
             </div>
 
@@ -196,11 +201,11 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
               <Label htmlFor="category">分类</Label>
               {showNewCategory ? (
                 <Input
+                  autoFocus
                   id="category"
                   value={newCategory}
-                  onChange={(e) => setNewCategory(e.target.value)}
                   placeholder="输入新分类名称"
-                  autoFocus
+                  onChange={(e) => { setNewCategory(e.target.value); }}
                 />
               ) : (
                 <select
@@ -230,9 +235,9 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
                 id="notes"
                 className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 resize-none"
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 placeholder="添加备注信息..."
                 rows={3}
+                onChange={(e) => { setFormData({ ...formData, notes: e.target.value }); }}
               />
             </div>
 
@@ -241,8 +246,8 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
                 type="checkbox"
                 id="favorite"
                 checked={formData.favorite === 1}
-                onChange={(e) => setFormData({ ...formData, favorite: e.target.checked ? 1 : 0 })}
                 className="h-4 w-4 rounded border border-primary text-primary focus:ring-2 focus:ring-ring"
+                onChange={(e) => { setFormData({ ...formData, favorite: e.target.checked ? 1 : 0 }); }}
               />
               <Label htmlFor="favorite" className="flex items-center gap-2 cursor-pointer">
                 <Star className={cn("h-4 w-4", formData.favorite === 1 && "fill-foreground text-foreground")} />

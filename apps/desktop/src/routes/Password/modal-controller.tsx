@@ -1,7 +1,7 @@
 import { AddPasswordModal } from "@/components/AddPasswordModal";
-import { useStore } from "./context";
-import { usePasswordStore } from "@/store/passwordStore";
 import { EditPasswordModal } from "@/components/EditPasswordModal";
+import { usePasswordStore } from "@/store/passwordStore";
+import { useStore } from "./context";
 
 export function ModalController() {
   const { modal, setModal } = useStore()
@@ -13,15 +13,15 @@ export function ModalController() {
 
   if (modal.type === 'edit-password') {
     return (
-      <EditPasswordModal onClose={() => { setModal(null) }} onSave={(id, data) => {
+      <EditPasswordModal existingCategories={categories} password={modal.password} onClose={() => { setModal(null) }} onSave={(id, data) => {
         updatePassword(id, data)
-      }} existingCategories={categories} password={modal.password} />
+      }} />
     )
   }
 
   return (
-    <AddPasswordModal onClose={() => { setModal(null) }} onSave={(data) => {
+    <AddPasswordModal existingCategories={categories} onClose={() => { setModal(null) }} onSave={(data) => {
       addPassword(data)
-    }} existingCategories={categories} />
+    }} />
   )
 }

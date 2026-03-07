@@ -10,34 +10,43 @@ import { Password, usePasswordStore } from '@/store/passwordStore';
 import { PasswordFormRef, FormType } from '@/components/password-form';
 import { X } from 'lucide-react-native';
 
-
-export function Render({ initialValue, onClose, id }: { initialValue: FormType, onClose: () => void, id: number }) {
-  const { updatePassword } = usePasswordStore()
+export function Render({
+  initialValue,
+  onClose,
+  id,
+}: {
+  initialValue: FormType;
+  onClose: () => void;
+  id: number;
+}) {
+  const { updatePassword } = usePasswordStore();
   const handleClose = useCallback(() => {
-    setVisible(false)
+    setVisible(false);
   }, []);
 
-  const [visible, setVisible] = useState(true)
+  const [visible, setVisible] = useState(true);
 
-  const formRef = useRef<PasswordFormRef>(null)
+  const formRef = useRef<PasswordFormRef>(null);
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (data: Omit<Password, 'id' | 'created_at' | 'updated_at'>) => {
-      await updatePassword(id, data)
+    mutationFn: async (
+      data: Omit<Password, 'id' | 'created_at' | 'updated_at'>
+    ) => {
+      await updatePassword(id, data);
     },
     onSuccess: () => {
-      handleClose()
-    }
-  })
+      handleClose();
+    },
+  });
 
   useEffect(() => {
     // On Android, onClose is not called.
-    if (Platform.OS === "android" && !visible) {
+    if (Platform.OS === 'android' && !visible) {
       setTimeout(() => {
-        onClose?.()
-      }, 300)
+        onClose?.();
+      }, 300);
     }
-  }, [visible, onClose])
+  }, [visible, onClose]);
 
   return (
     <Modal
@@ -47,7 +56,7 @@ export function Render({ initialValue, onClose, id }: { initialValue: FormType, 
       onRequestClose={handleClose}
       onDismiss={onClose}
     >
-      <SafeAreaView edges={['top', 'bottom']} className='flex-1'>
+      <SafeAreaView edges={['top', 'bottom']} className="flex-1">
         <View style={styles.header}>
           <Text style={styles.title}>编辑密码</Text>
           <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
@@ -55,15 +64,22 @@ export function Render({ initialValue, onClose, id }: { initialValue: FormType, 
           </TouchableOpacity>
         </View>
         <View style={styles.form}>
-          <PasswordForm ref={formRef} onSubmit={mutate} initialValue={initialValue} />
+          <PasswordForm
+            ref={formRef}
+            onSubmit={mutate}
+            initialValue={initialValue}
+          />
         </View>
         <View style={styles.actions}>
           <Button variant="outline" onPress={handleClose} disabled={isPending}>
             <Text>取消</Text>
           </Button>
-          <Button onPress={() => {
-            formRef.current?.requestSubmit()
-          }} loading={isPending}>
+          <Button
+            onPress={() => {
+              formRef.current?.requestSubmit();
+            }}
+            loading={isPending}
+          >
             <Text>保存</Text>
           </Button>
         </View>
@@ -71,7 +87,6 @@ export function Render({ initialValue, onClose, id }: { initialValue: FormType, 
     </Modal>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {

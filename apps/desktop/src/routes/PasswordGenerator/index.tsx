@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Copy, RefreshCw, Shield, Zap, Settings, Check, Save, Upload } from 'lucide-react'
+import { AnimatePresence,motion } from 'framer-motion'
+import { Check, Copy, RefreshCw, Save, Settings, Shield, Upload,Zap } from 'lucide-react'
+import { useCallback,useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Slider } from '@/components/ui/slider'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Slider } from '@/components/ui/slider'
+import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useToast } from '@/hooks/use-toast'
 import { usePasswordStore } from '@/store/passwordStore'
@@ -45,36 +45,40 @@ export function PasswordGeneratorPage() {
   })
 
   const calculateStrength = useCallback((pwd: string) => {
-    if (!pwd) return 0
+    if (!pwd) {return 0}
 
     let score = 0
-    const length = pwd.length
+    const {length} = pwd
 
     // Length bonus
-    if (length >= 8) score += 25
-    if (length >= 12) score += 25
-    if (length >= 16) score += 25
+    if (length >= 8) {score = score + 25}
+    if (length >= 12) {score = score + 25}
+    if (length >= 16) {score = score + 25}
 
     // Character variety
-    if (/[a-z]/.test(pwd)) score += 10
-    if (/[A-Z]/.test(pwd)) score += 10
-    if (/[0-9]/.test(pwd)) score += 10
-    if (/[^a-zA-Z0-9]/.test(pwd)) score += 15
+    if (/[a-z]/.test(pwd)) {score = score + 10}
+    if (/[A-Z]/.test(pwd)) {score = score + 10}
+    if (/\d/.test(pwd)) {score = score + 10}
+    if (/[^a-z0-9]/i.test(pwd)) {score = score + 15}
 
     return Math.min(100, score)
   }, [])
 
   const handleIconUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+
     if (file) {
       if (file.size > 5 * 1024 * 1024) { // 5MB limit
         alert('图标文件大小不能超过5MB')
+
         return
       }
 
       const reader = new FileReader()
+
       reader.onload = (e) => {
         const dataUrl = e.target?.result as string
+
         setSaveIcon(dataUrl)
       }
       reader.readAsDataURL(file)
@@ -92,13 +96,13 @@ export function PasswordGeneratorPage() {
     let charset = ''
     let password = ''
 
-    if (settings.includeLowercase) charset += 'abcdefghijklmnopqrstuvwxyz'
-    if (settings.includeUppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-    if (settings.includeNumbers) charset += '0123456789'
-    if (settings.includeSymbols) charset += settings.customSymbols
+    if (settings.includeLowercase) {charset = `${charset  }abcdefghijklmnopqrstuvwxyz`}
+    if (settings.includeUppercase) {charset = `${charset  }ABCDEFGHIJKLMNOPQRSTUVWXYZ`}
+    if (settings.includeNumbers) {charset = `${charset  }0123456789`}
+    if (settings.includeSymbols) {charset = charset + settings.customSymbols}
 
     if (settings.excludeSimilar) {
-      charset = charset.replace(/[ilLI1oO0]/g, '')
+      charset = charset.replaceAll(/[il1o0]/gi, '')
     }
 
     if (!charset) {
@@ -107,11 +111,12 @@ export function PasswordGeneratorPage() {
         description: "请至少选择一种字符类型",
         variant: "destructive"
       })
+
       return
     }
 
     for (let i = 0; i < settings.length; i++) {
-      password += charset.charAt(Math.floor(Math.random() * charset.length))
+      password = password + charset.charAt(Math.floor(Math.random() * charset.length))
     }
 
     setPassword(password)
@@ -119,7 +124,7 @@ export function PasswordGeneratorPage() {
   }, [settings, calculateStrength, toast])
 
   const copyToClipboard = async () => {
-    if (!password) return
+    if (!password) {return}
 
     try {
       await navigator.clipboard.writeText(password)
@@ -128,8 +133,8 @@ export function PasswordGeneratorPage() {
         title: "已复制",
         description: "密码已复制到剪贴板"
       })
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
+      setTimeout(() => { setCopied(false); }, 2000)
+    } catch (error) {
       toast({
         title: "复制失败",
         description: "无法复制到剪贴板",
@@ -145,14 +150,14 @@ export function PasswordGeneratorPage() {
   }
 
   const savePassword = async () => {
-    if (!password) return
+    if (!password) {return}
 
     try {
       // 只传递PasswordInput接口中定义的字段，不包含icon字段
       const passwordData = {
         title: saveTitle || `生成的密码 ${new Date().toLocaleDateString()}`,
         username: saveUsername,
-        password: password,
+        password,
         url: '',
         icon: saveIcon,
         notes: saveNotes || '由密码生成器创建',
@@ -167,8 +172,8 @@ export function PasswordGeneratorPage() {
         description: "密码已保存到密码库"
       })
       setShowSaveDialog(false)
-    } catch (err) {
-      console.error('保存密码失败:', err)
+    } catch (error) {
+      console.error('保存密码失败:', error)
       toast({
         title: "保存失败",
         description: "无法保存密码",
@@ -178,16 +183,18 @@ export function PasswordGeneratorPage() {
   }
 
   const getStrengthColor = (strength: number) => {
-    if (strength < 30) return 'text-red-500'
-    if (strength < 60) return 'text-yellow-500'
-    if (strength < 80) return 'text-blue-500'
+    if (strength < 30) {return 'text-red-500'}
+    if (strength < 60) {return 'text-yellow-500'}
+    if (strength < 80) {return 'text-blue-500'}
+
     return 'text-green-500'
   }
 
   const getStrengthText = (strength: number) => {
-    if (strength < 30) return '弱'
-    if (strength < 60) return '中等'
-    if (strength < 80) return '强'
+    if (strength < 30) {return '弱'}
+    if (strength < 60) {return '中等'}
+    if (strength < 80) {return '强'}
+
     return '非常强'
   }
 
@@ -339,9 +346,9 @@ export function PasswordGeneratorPage() {
                     }}
                   >
                     <Input
+                      readOnly
                       type="text"
                       value={password}
-                      readOnly
                       className="text-lg font-mono pr-24 h-14 bg-muted/50 rounded-xl"
                       placeholder="点击生成密码..."
                     />
@@ -356,8 +363,8 @@ export function PasswordGeneratorPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={copyToClipboard}
                         className="h-10 w-10"
+                        onClick={copyToClipboard}
                       >
                         <AnimatePresence>
                           {copied ? (
@@ -388,8 +395,8 @@ export function PasswordGeneratorPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        onClick={generatePassword}
                         className="h-10 w-10"
+                        onClick={generatePassword}
                       >
                         <RefreshCw className="w-4 h-4" />
                       </Button>
@@ -413,13 +420,13 @@ export function PasswordGeneratorPage() {
                   </div>
                   <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                     <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${strength}%` }}
+                      transition={{ duration: 0.8, ease: "easeOut" }}
                       className={`h-2 rounded-full ${strength < 30 ? 'bg-red-500' :
                         strength < 60 ? 'bg-yellow-500' :
                           strength < 80 ? 'bg-blue-500' : 'bg-green-500'
                         }`}
-                      initial={{ width: 0 }}
-                      animate={{ width: `${strength}%` }}
-                      transition={{ duration: 0.8, ease: "easeOut" }}
                     />
                   </div>
                 </div>
@@ -431,7 +438,7 @@ export function PasswordGeneratorPage() {
                     whileTap={{ scale: 0.95 }}
                     className="flex-1"
                   >
-                    <Button onClick={generatePassword} className="w-full h-12">
+                    <Button className="w-full h-12" onClick={generatePassword}>
                       <motion.div
                         animate={copied ? { rotate: 360 } : { rotate: 0 }}
                         transition={{ duration: 0.5 }}
@@ -445,7 +452,7 @@ export function PasswordGeneratorPage() {
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                   >
-                    <Button onClick={openSaveDialog} variant="outline" className="h-12">
+                    <Button variant="outline" className="h-12" onClick={openSaveDialog}>
                       <Save className="w-4 h-4 mr-2" />
                       保存到密码库
                     </Button>
@@ -483,11 +490,11 @@ export function PasswordGeneratorPage() {
                     >
                       <Button
                         variant="outline"
+                        className="h-12"
                         onClick={() => {
                           setSettings({ ...settings, length: 8, includeSymbols: false })
                           setTimeout(generatePassword, 100)
                         }}
-                        className="h-12"
                       >
                         8位数字+字母
                       </Button>
@@ -498,11 +505,11 @@ export function PasswordGeneratorPage() {
                     >
                       <Button
                         variant="outline"
+                        className="h-12"
                         onClick={() => {
                           setSettings({ ...settings, length: 12, includeSymbols: false })
                           setTimeout(generatePassword, 100)
                         }}
-                        className="h-12"
                       >
                         12位数字+字母
                       </Button>
@@ -518,11 +525,11 @@ export function PasswordGeneratorPage() {
                     >
                       <Button
                         variant="outline"
+                        className="h-12"
                         onClick={() => {
                           setSettings({ ...settings, length: 16 })
                           setTimeout(generatePassword, 100)
                         }}
-                        className="h-12"
                       >
                         16位平衡
                       </Button>
@@ -533,11 +540,11 @@ export function PasswordGeneratorPage() {
                     >
                       <Button
                         variant="outline"
+                        className="h-12"
                         onClick={() => {
                           setSettings({ ...settings, length: 20 })
                           setTimeout(generatePassword, 100)
                         }}
-                        className="h-12"
                       >
                         20位平衡
                       </Button>
@@ -553,11 +560,11 @@ export function PasswordGeneratorPage() {
                     >
                       <Button
                         variant="outline"
+                        className="h-12"
                         onClick={() => {
                           setSettings({ ...settings, length: 24, excludeSimilar: true })
                           setTimeout(generatePassword, 100)
                         }}
-                        className="h-12"
                       >
                         24位强密码
                       </Button>
@@ -568,11 +575,11 @@ export function PasswordGeneratorPage() {
                     >
                       <Button
                         variant="outline"
+                        className="h-12"
                         onClick={() => {
                           setSettings({ ...settings, length: 32, excludeSimilar: true })
                           setTimeout(generatePassword, 100)
                         }}
-                        className="h-12"
                       >
                         32位强密码
                       </Button>
@@ -588,11 +595,11 @@ export function PasswordGeneratorPage() {
                     >
                       <Button
                         variant="outline"
+                        className="h-12"
                         onClick={() => {
                           setSettings({ ...settings, length: 48, excludeSimilar: true })
                           setTimeout(generatePassword, 100)
                         }}
-                        className="h-12"
                       >
                         48位最大
                       </Button>
@@ -603,11 +610,11 @@ export function PasswordGeneratorPage() {
                     >
                       <Button
                         variant="outline"
+                        className="h-12"
                         onClick={() => {
                           setSettings({ ...settings, length: 64, excludeSimilar: true })
                           setTimeout(generatePassword, 100)
                         }}
-                        className="h-12"
                       >
                         64位最大
                       </Button>
@@ -648,11 +655,11 @@ export function PasswordGeneratorPage() {
                   </div>
                   <Slider
                     value={[settings.length]}
-                    onValueChange={([value]: number[]) => setSettings({ ...settings, length: value })}
                     max={64}
                     min={4}
                     step={1}
                     className="w-full"
+                    onValueChange={([value]: number[]) => { setSettings({ ...settings, length: value }); }}
                   />
                 </div>
 
@@ -665,7 +672,7 @@ export function PasswordGeneratorPage() {
                     <Switch
                       id="uppercase"
                       checked={settings.includeUppercase}
-                      onCheckedChange={(checked) => setSettings({ ...settings, includeUppercase: checked })}
+                      onCheckedChange={(checked) => { setSettings({ ...settings, includeUppercase: checked }); }}
                     />
                   </div>
 
@@ -674,7 +681,7 @@ export function PasswordGeneratorPage() {
                     <Switch
                       id="lowercase"
                       checked={settings.includeLowercase}
-                      onCheckedChange={(checked) => setSettings({ ...settings, includeLowercase: checked })}
+                      onCheckedChange={(checked) => { setSettings({ ...settings, includeLowercase: checked }); }}
                     />
                   </div>
 
@@ -683,7 +690,7 @@ export function PasswordGeneratorPage() {
                     <Switch
                       id="numbers"
                       checked={settings.includeNumbers}
-                      onCheckedChange={(checked) => setSettings({ ...settings, includeNumbers: checked })}
+                      onCheckedChange={(checked) => { setSettings({ ...settings, includeNumbers: checked }); }}
                     />
                   </div>
 
@@ -692,7 +699,7 @@ export function PasswordGeneratorPage() {
                     <Switch
                       id="symbols"
                       checked={settings.includeSymbols}
-                      onCheckedChange={(checked) => setSettings({ ...settings, includeSymbols: checked })}
+                      onCheckedChange={(checked) => { setSettings({ ...settings, includeSymbols: checked }); }}
                     />
                   </div>
                 </div>
@@ -709,9 +716,9 @@ export function PasswordGeneratorPage() {
                     <Input
                       id="custom-symbols"
                       value={settings.customSymbols}
-                      onChange={(e) => setSettings({ ...settings, customSymbols: e.target.value })}
                       placeholder="输入自定义特殊字符..."
                       className="text-sm"
+                      onChange={(e) => { setSettings({ ...settings, customSymbols: e.target.value }); }}
                     />
                   </motion.div>
                 )}
@@ -725,7 +732,7 @@ export function PasswordGeneratorPage() {
                     <Switch
                       id="exclude-similar"
                       checked={settings.excludeSimilar}
-                      onCheckedChange={(checked) => setSettings({ ...settings, excludeSimilar: checked })}
+                      onCheckedChange={(checked) => { setSettings({ ...settings, excludeSimilar: checked }); }}
                     />
                   </div>
                 </div>
@@ -734,7 +741,7 @@ export function PasswordGeneratorPage() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <Button onClick={generatePassword} className="w-full h-12">
+                  <Button className="w-full h-12" onClick={generatePassword}>
                     <motion.div
                       animate={{ rotate: [0, 360] }}
                       transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
@@ -789,7 +796,7 @@ export function PasswordGeneratorPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
-            onClick={() => setShowSaveDialog(false)}
+            onClick={() => { setShowSaveDialog(false); }}
           >
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
@@ -797,7 +804,7 @@ export function PasswordGeneratorPage() {
               exit={{ scale: 0.8, opacity: 0 }}
               transition={{ duration: 0.3 }}
               className="w-full max-w-md mx-4"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); }}
             >
               <div className="bg-background rounded-2xl p-6 shadow-2xl">
                 <div className="flex items-center gap-2 mb-6">
@@ -811,8 +818,8 @@ export function PasswordGeneratorPage() {
                     <Input
                       id="save-title"
                       value={saveTitle}
-                      onChange={(e) => setSaveTitle(e.target.value)}
                       placeholder="输入密码标题..."
+                      onChange={(e) => { setSaveTitle(e.target.value); }}
                     />
                   </div>
 
@@ -821,8 +828,8 @@ export function PasswordGeneratorPage() {
                     <Input
                       id="save-username"
                       value={saveUsername}
-                      onChange={(e) => setSaveUsername(e.target.value)}
                       placeholder="输入用户名（可选）"
+                      onChange={(e) => { setSaveUsername(e.target.value); }}
                     />
                   </div>
 
@@ -831,15 +838,15 @@ export function PasswordGeneratorPage() {
                     <select
                       id="save-category"
                       value={saveCategory}
-                      onChange={(e) => setSaveCategory(e.target.value)}
                       className="w-full h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                      onChange={(e) => { setSaveCategory(e.target.value); }}
                     >
                       <option value="all">全部分类</option>
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
+                      {categories.map((cat) => 
+                        { return <option key={cat} value={cat}>
                           {cat}
-                        </option>
-                      ))}
+                        </option> }
+                      )}
                     </select>
                   </div>
 
@@ -868,8 +875,8 @@ export function PasswordGeneratorPage() {
                           ref={iconInputRef}
                           type="file"
                           accept="image/*"
-                          onChange={handleIconUpload}
                           className="hidden"
+                          onChange={handleIconUpload}
                         />
                         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                           <Button
@@ -903,10 +910,10 @@ export function PasswordGeneratorPage() {
                     <textarea
                       id="save-notes"
                       value={saveNotes}
-                      onChange={(e) => setSaveNotes(e.target.value)}
                       placeholder="添加备注信息..."
                       rows={3}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 resize-none"
+                      onChange={(e) => { setSaveNotes(e.target.value); }}
                     />
                   </div>
 
@@ -918,8 +925,8 @@ export function PasswordGeneratorPage() {
                     >
                       <Button
                         variant="outline"
-                        onClick={() => setShowSaveDialog(false)}
                         className="w-full h-12"
+                        onClick={() => { setShowSaveDialog(false); }}
                       >
                         取消
                       </Button>
@@ -929,7 +936,7 @@ export function PasswordGeneratorPage() {
                       whileTap={{ scale: 0.98 }}
                       className="flex-1"
                     >
-                      <Button onClick={savePassword} className="w-full h-12">
+                      <Button className="w-full h-12" onClick={savePassword}>
                         <motion.div
                           animate={{ rotate: [0, 360] }}
                           transition={{ duration: 2, repeat: Infinity, ease: "linear" }}

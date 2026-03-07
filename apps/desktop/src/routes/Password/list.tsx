@@ -1,7 +1,7 @@
-import { Search, Star, Globe, Lock } from 'lucide-react'
-import { usePasswordStore } from '@/store/passwordStore'
-import { cn } from '@/lib/utils'
+import { Globe, Lock,Search, Star } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { cn } from '@/lib/utils'
+import { usePasswordStore } from '@/store/passwordStore'
 import { ButtonAddPassword } from './button-add-password'
 
 export function PasswordList() {
@@ -24,8 +24,8 @@ export function PasswordList() {
               type="text"
               placeholder="搜索密码..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-9 pr-4 h-10 rounded-lg border-border/50 bg-background/50 backdrop-blur-sm text-sm transition-all duration-200 focus:border-border focus:bg-background focus:shadow-sm placeholder:text-muted-foreground/60"
+              onChange={(e) => { setSearchQuery(e.target.value); }}
             />
           </div>
           <ButtonAddPassword />
@@ -41,8 +41,8 @@ export function PasswordList() {
           </div>
         ) : (
           <ul className="divide-y divide-border/20">
-            {filteredPasswords.map((password) => (
-              <li key={password.id}>
+            {filteredPasswords.map((password) => 
+              { return <li key={password.id}>
                 <div
                   className={cn(
                     "group flex items-center gap-3 px-3 py-3 cursor-pointer transition-all duration-200",
@@ -51,7 +51,7 @@ export function PasswordList() {
                       ? "bg-accent border-l-2 border-primary"
                       : "border-l-2 border-transparent hover:border-primary/30"
                   )}
-                  onClick={() => setSelectedPassword(password)}
+                  onClick={() => { setSelectedPassword(password); }}
                 >
                   <div className="w-10 h-10 rounded-lg border border-border/40 bg-card/50 backdrop-blur-sm flex items-center justify-center text-muted-foreground shrink-0 overflow-hidden transition-all duration-200 group-hover:border-border group-hover:shadow-md">
                     {password.icon ? (
@@ -99,8 +99,8 @@ export function PasswordList() {
                     />
                   </button>
                 </div>
-              </li>
-            ))}
+              </li> }
+            )}
           </ul>
         )}
       </div>

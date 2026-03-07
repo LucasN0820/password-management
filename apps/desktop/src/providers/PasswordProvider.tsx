@@ -1,7 +1,8 @@
 import { useEffect } from "react"
 import { usePasswordStore } from "../store/passwordStore"
 
-export function PasswordProvider({ children }: { children: React.ReactNode }) {
+interface InlineInterface { children: React.ReactNode }
+export function PasswordProvider({ children }: InlineInterface) {
   const { loadPasswords, loadCategories } = usePasswordStore()
 
   useEffect(() => {

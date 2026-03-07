@@ -1,9 +1,9 @@
+import { Check,Copy, RefreshCw, X } from 'lucide-react'
 import { useState } from 'react'
-import { X, Copy, RefreshCw, Check } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface PasswordGeneratorProps {
   onClose: () => void
@@ -25,19 +25,22 @@ export default function PasswordGenerator({ onClose }: PasswordGeneratorProps) {
     const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?'
 
     let chars = ''
-    if (includeUppercase) chars += uppercase
-    if (includeLowercase) chars += lowercase
-    if (includeNumbers) chars += numbers
-    if (includeSymbols) chars += symbols
+
+    if (includeUppercase) {chars = chars + uppercase}
+    if (includeLowercase) {chars = chars + lowercase}
+    if (includeNumbers) {chars = chars + numbers}
+    if (includeSymbols) {chars = chars + symbols}
 
     if (chars === '') {
       setGeneratedPassword('')
+
       return
     }
 
     let password = ''
+
     for (let i = 0; i < length; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length))
+      password = password + chars.charAt(Math.floor(Math.random() * chars.length))
     }
     setGeneratedPassword(password)
     setCopied(false)
@@ -47,7 +50,7 @@ export default function PasswordGenerator({ onClose }: PasswordGeneratorProps) {
     if (generatedPassword) {
       navigator.clipboard.writeText(generatedPassword)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setTimeout(() => { setCopied(false); }, 2000)
     }
   }
 
@@ -65,16 +68,16 @@ export default function PasswordGenerator({ onClose }: PasswordGeneratorProps) {
             <Label htmlFor="generated-password">生成的密码</Label>
             <div className="flex gap-2">
               <Input
+                readOnly
                 id="generated-password"
                 value={generatedPassword}
-                readOnly
                 placeholder="点击生成按钮创建密码"
                 className="flex-1"
               />
               <Button
                 variant="outline"
-                onClick={copyToClipboard}
                 disabled={!generatedPassword}
+                onClick={copyToClipboard}
               >
                 {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 {copied ? '已复制' : '复制'}
@@ -92,8 +95,8 @@ export default function PasswordGenerator({ onClose }: PasswordGeneratorProps) {
                   min="4"
                   max="64"
                   value={length}
-                  onChange={(e) => setLength(parseInt(e.target.value))}
                   className="flex-1 h-2 bg-secondary rounded-lg appearance-none cursor-pointer"
+                  onChange={(e) => { setLength(parseInt(e.target.value)); }}
                 />
                 <span className="text-sm text-muted-foreground w-8 text-right">{length}</span>
               </div>
@@ -105,8 +108,8 @@ export default function PasswordGenerator({ onClose }: PasswordGeneratorProps) {
                   type="checkbox"
                   id="uppercase"
                   checked={includeUppercase}
-                  onChange={(e) => setIncludeUppercase(e.target.checked)}
                   className="h-4 w-4 rounded border border-primary text-primary focus:ring-2 focus:ring-ring"
+                  onChange={(e) => { setIncludeUppercase(e.target.checked); }}
                 />
                 <Label htmlFor="uppercase" className="text-sm font-medium cursor-pointer">
                   大写字母 (A-Z)
@@ -118,8 +121,8 @@ export default function PasswordGenerator({ onClose }: PasswordGeneratorProps) {
                   type="checkbox"
                   id="lowercase"
                   checked={includeLowercase}
-                  onChange={(e) => setIncludeLowercase(e.target.checked)}
                   className="h-4 w-4 rounded border border-primary text-primary focus:ring-2 focus:ring-ring"
+                  onChange={(e) => { setIncludeLowercase(e.target.checked); }}
                 />
                 <Label htmlFor="lowercase" className="text-sm font-medium cursor-pointer">
                   小写字母 (a-z)
@@ -131,8 +134,8 @@ export default function PasswordGenerator({ onClose }: PasswordGeneratorProps) {
                   type="checkbox"
                   id="numbers"
                   checked={includeNumbers}
-                  onChange={(e) => setIncludeNumbers(e.target.checked)}
                   className="h-4 w-4 rounded border border-primary text-primary focus:ring-2 focus:ring-ring"
+                  onChange={(e) => { setIncludeNumbers(e.target.checked); }}
                 />
                 <Label htmlFor="numbers" className="text-sm font-medium cursor-pointer">
                   数字 (0-9)
@@ -144,8 +147,8 @@ export default function PasswordGenerator({ onClose }: PasswordGeneratorProps) {
                   type="checkbox"
                   id="symbols"
                   checked={includeSymbols}
-                  onChange={(e) => setIncludeSymbols(e.target.checked)}
                   className="h-4 w-4 rounded border border-primary text-primary focus:ring-2 focus:ring-ring"
+                  onChange={(e) => { setIncludeSymbols(e.target.checked); }}
                 />
                 <Label htmlFor="symbols" className="text-sm font-medium cursor-pointer">
                   特殊符号 (!@#$...)

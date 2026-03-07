@@ -8,7 +8,8 @@
     },
     "module": "es2022",
     "jsx": "react-native",
-    "jsxImportSource": "react"
+    "jsxImportSource": "react",
+    "resolveJsonModule": true
   },
   "include": [
     "**/*.ts",

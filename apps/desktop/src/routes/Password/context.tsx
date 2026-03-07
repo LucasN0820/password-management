@@ -1,6 +1,6 @@
-import { create } from "zustand"
 import { createContext, useContext } from "react"
-import { Password } from "@/store/passwordStore"
+import { create } from "zustand"
+import type { Password } from "@/store/passwordStore"
 
 interface ModalAddPassword {
   type: 'add-password'
@@ -22,7 +22,7 @@ export function createStore() {
   return create<State>((set) => {
     return {
       modal: null,
-      setModal: (modal: ModalData | null) => set({ modal })
+      setModal: (modal: ModalData | null) => { set({ modal }); }
     }
   })
 }

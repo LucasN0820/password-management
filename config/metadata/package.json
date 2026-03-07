@@ -1,0 +1,17 @@
+{
+  "name": "@repo/metadata",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "tsc": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/ts-config": "workspace:*",
+    "eslint-config-sheriff": "^31.3.0"
+  }
+}

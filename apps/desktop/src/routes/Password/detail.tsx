@@ -1,7 +1,7 @@
+import { Copy, Edit,ExternalLink, Eye, EyeOff, FileText, Globe, Lock, Trash2, User } from 'lucide-react'
 import { useState } from 'react'
-import { Trash2, Copy, Eye, EyeOff, Globe, User, Lock, FileText, ExternalLink, Edit } from 'lucide-react'
-import { usePasswordStore } from '@/store/passwordStore'
 import { Button } from '@/components/ui/button'
+import { usePasswordStore } from '@/store/passwordStore'
 import { useStore } from './context'
 
 
@@ -64,7 +64,7 @@ export function PasswordDetail() {
             variant="ghost"
             size="icon"
             className="text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all duration-200 hover:scale-105 active:scale-95"
-            onClick={() => setModal({ type: 'edit-password', password: selectedPassword })}
+            onClick={() => { setModal({ type: 'edit-password', password: selectedPassword }); }}
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -96,16 +96,16 @@ export function PasswordDetail() {
             </label>
             <div className="flex gap-2">
               <input
+                readOnly
                 type="text"
                 value={selectedPassword.username || ''}
-                readOnly
                 className="flex-1 px-3 py-2 rounded-lg border border-border/50 bg-background/50 text-sm"
               />
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => copyToClipboard(selectedPassword.username || '')}
                 className="hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 hover:scale-105 active:scale-95"
+                onClick={() => { copyToClipboard(selectedPassword.username || ''); }}
               >
                 <Copy className="h-4 w-4" />
               </Button>
@@ -123,24 +123,24 @@ export function PasswordDetail() {
             </label>
             <div className="flex gap-2">
               <input
+                readOnly
                 type={showPassword ? 'text' : 'password'}
                 value={selectedPassword.password}
-                readOnly
                 className="flex-1 px-3 py-2 rounded-lg border border-border/50 bg-background/50 text-sm"
               />
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => copyToClipboard(selectedPassword.password)}
                 className="hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 hover:scale-105 active:scale-95"
+                onClick={() => { copyToClipboard(selectedPassword.password); }}
               >
                 <Copy className="h-4 w-4" />
               </Button>
               <Button
                 variant="outline"
                 size="icon"
-                onClick={() => setShowPassword(!showPassword)}
                 className="hover:bg-primary hover:text-primary-foreground hover:border-primary transition-all duration-200 hover:scale-105 active:scale-95"
+                onClick={() => { setShowPassword(!showPassword); }}
               >
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
@@ -158,8 +158,8 @@ export function PasswordDetail() {
                 备注
               </label>
               <textarea
-                value={selectedPassword.notes}
                 readOnly
+                value={selectedPassword.notes}
                 rows={3}
                 className="w-full px-3 py-2 rounded-lg border border-border/50 bg-background/50 text-sm resize-none"
               />

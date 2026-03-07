@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { Search, Lock, Globe, Star, X } from 'lucide-react'
-import type { Password } from '../App'
+import { Globe, Lock, Search, Star, X } from 'lucide-react'
+import { useCallback, useEffect, useRef,useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
+import type { Password } from '../App'
 import { usePasswordStore } from '../store/passwordStore'
 
 export default function SpotlightSearch() {
@@ -16,11 +16,13 @@ export default function SpotlightSearch() {
   const searchPasswords = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {
       setResults(passwords)
+
       return
     }
 
     try {
       const searchResults = await window.electronAPI.searchPasswords(searchQuery)
+
       setResults(searchResults)
     } catch (error) {
       console.error('Search failed:', error)
@@ -46,6 +48,7 @@ export default function SpotlightSearch() {
   useEffect(() => {
     if (results.length > 0 && selectedIndex >= 0) {
       const selectedItem = document.querySelector(`[data-selected-index="${selectedIndex}"]`)
+
       if (selectedItem) {
         selectedItem.scrollIntoView({
           behavior: 'smooth',
@@ -58,34 +61,38 @@ export default function SpotlightSearch() {
   const handleSelect = useCallback((password: Password) => {
     navigator.clipboard.writeText(password.password).then(() => {
       window.close()
-    }).catch(err => {
-      console.error('Failed to copy password:', err)
+    }).catch(error => {
+      console.error('Failed to copy password:', error)
     })
   }, [])
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     switch (e.key) {
-      case 'ArrowDown':
+      case 'ArrowDown': {
         e.preventDefault()
         if (results.length > 0) {
           setSelectedIndex(prev => (prev + 1) % results.length)
         }
         break
-      case 'ArrowUp':
+      }
+      case 'ArrowUp': {
         e.preventDefault()
         if (results.length > 0) {
           setSelectedIndex(prev => (prev - 1 + results.length) % results.length)
         }
         break
-      case 'Enter':
+      }
+      case 'Enter': {
         e.preventDefault()
         if (results.length > 0 && results[selectedIndex]) {
           handleSelect(results[selectedIndex])
         }
         break
-      case 'Escape':
+      }
+      case 'Escape': {
         window.close()
         break
+      }
     }
   }, [results, selectedIndex, handleSelect])
 
@@ -100,7 +107,9 @@ export default function SpotlightSearch() {
     // 在document上监听键盘事件
     document.addEventListener('keydown', handleGlobalKeyDown)
 
-    // 清理函数
+    /**
+     * 清理函数.
+     */
     return () => {
       document.removeEventListener('keydown', handleGlobalKeyDown)
     }
@@ -124,15 +133,15 @@ export default function SpotlightSearch() {
           <div className="flex items-center gap-3 p-4 border-b">
             <Search className="h-5 w-5 text-muted-foreground" />
             <Input
+              autoFocus
               type="text"
               placeholder="搜索密码..."
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
               className="border-0 bg-transparent shadow-none focus-visible:ring-0 flex-1"
-              autoFocus
               ref={inputRef}
+              onChange={(e) => { setQuery(e.target.value); }}
             />
-            <Button variant="ghost" size="icon" onClick={onClose} type="button">
+            <Button variant="ghost" size="icon" type="button" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -147,15 +156,15 @@ export default function SpotlightSearch() {
               </div>
             ) : (
               <ul className="divide-y">
-                {results.map((password: Password, index: number) => (
-                  <li
+                {results.map((password: Password, index: number) => 
+                  { return <li
                     key={password.id}
                     data-selected-index={index}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-accent/50",
                       selectedIndex === index ? "bg-accent" : ""
                     )}
-                    onClick={() => handleSelect(password)}
+                    onClick={() => { handleSelect(password); }}
                   >
                     <div className="w-8 h-8 rounded-md border border-border bg-card flex items-center justify-center text-muted-foreground shrink-0 overflow-hidden">
                       {password.icon ? (
@@ -179,8 +188,8 @@ export default function SpotlightSearch() {
                       </div>
                       <p className="text-sm text-muted-foreground truncate">{password.username || '无用户名'}</p>
                     </div>
-                  </li>
-                ))}
+                  </li> }
+                )}
               </ul>
             )}
           </div>

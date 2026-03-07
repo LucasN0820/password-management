@@ -1,7 +1,7 @@
-import { usePasswordStore } from '../store/passwordStore'
+import { ChevronRight,Hash, Key, Plus, Settings, Shield, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Plus, Key, Star, Shield, Settings, Hash, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { usePasswordStore } from '../store/passwordStore'
 
 const categoryIcons: Record<string, React.ReactNode> = {
   all: <Shield className="h-4 w-4" />,
@@ -20,8 +20,9 @@ export default function Sidebar() {
   const favoriteCount = passwords.filter(p => p.favorite === 1).length
 
   const getCategoryCount = (cat: string) => {
-    if (cat === 'all') return passwordCount
-    if (cat === 'favorites') return favoriteCount
+    if (cat === 'all') {return passwordCount}
+    if (cat === 'favorites') {return favoriteCount}
+
     return passwords.filter(p => p.category === cat).length
   }
 
@@ -49,8 +50,8 @@ export default function Sidebar() {
             分类
           </span>
           <ul className="space-y-1">
-            {allCategories.map((category) => (
-              <li key={category}>
+            {allCategories.map((category) => 
+              { return <li key={category}>
                 <button
                   className={cn(
                     'w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors',
@@ -58,7 +59,7 @@ export default function Sidebar() {
                       ? 'bg-primary text-primary-foreground'
                       : 'hover:bg-accent hover:text-accent-foreground'
                   )}
-                  onClick={() => setSelectedCategory(category)}
+                  onClick={() => { setSelectedCategory(category); }}
                 >
                   <span className="shrink-0">
                     {categoryIcons[category] || <Hash className="h-4 w-4" />}
@@ -69,8 +70,8 @@ export default function Sidebar() {
                   <span className="text-xs opacity-70">{getCategoryCount(category)}</span>
                   <ChevronRight className="h-3 w-3 opacity-50" />
                 </button>
-              </li>
-            ))}
+              </li> }
+            )}
           </ul>
         </div>
 

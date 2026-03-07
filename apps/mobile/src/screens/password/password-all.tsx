@@ -4,12 +4,12 @@ import { PasswordItem } from '@/components/password-item';
 import { useStore } from './context';
 
 export function AllPassword() {
-  const { passwords } = usePasswordStore();
+  const { filteredPasswords } = usePasswordStore();
   const setModal = useStore(s => s.setModal);
 
   return (
     <View className="flex gap-1">
-      {passwords.map(p => (
+      {filteredPasswords.map(p => (
         <PasswordItem
           key={p.id}
           password={p}

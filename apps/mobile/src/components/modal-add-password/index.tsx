@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { useMutation } from '@tanstack/react-query';
 import { Password, usePasswordStore } from '@/store/passwordStore';
-import { PasswordFormRef, FormType } from '@/components/password-form';
+import { PasswordFormRef } from '@/components/password-form';
 import { X } from 'lucide-react-native';
 
 interface Props {
@@ -15,31 +15,33 @@ interface Props {
 }
 
 export function ModalAddPassword({ onClose }: Props) {
-  const [visible, setVisible] = useState(true)
-  const { addPassword } = usePasswordStore()
-  const formRef = useRef<PasswordFormRef>(null)
+  const [visible, setVisible] = useState(true);
+  const { addPassword } = usePasswordStore();
+  const formRef = useRef<PasswordFormRef>(null);
 
   const handleClose = useCallback(() => {
-    setVisible(false)
+    setVisible(false);
   }, []);
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (data: Omit<Password, 'id' | 'created_at' | 'updated_at'>) => {
-      await addPassword(data)
+    mutationFn: async (
+      data: Omit<Password, 'id' | 'created_at' | 'updated_at'>
+    ) => {
+      await addPassword(data);
     },
     onSuccess: () => {
-      handleClose()
-    }
-  })
+      handleClose();
+    },
+  });
 
   useEffect(() => {
     // On Android, onClose is not called.
-    if (Platform.OS === "android" && !visible) {
+    if (Platform.OS === 'android' && !visible) {
       setTimeout(() => {
-        onClose?.()
-      }, 300)
+        onClose?.();
+      }, 300);
     }
-  }, [visible, onClose])
+  }, [visible, onClose]);
 
   return (
     <Modal
@@ -63,9 +65,12 @@ export function ModalAddPassword({ onClose }: Props) {
           <Button variant="outline" onPress={handleClose} disabled={isPending}>
             <Text>取消</Text>
           </Button>
-          <Button onPress={() => {
-            formRef.current?.requestSubmit()
-          }} loading={isPending}>
+          <Button
+            onPress={() => {
+              formRef.current?.requestSubmit();
+            }}
+            loading={isPending}
+          >
             <Text>添加</Text>
           </Button>
         </View>
