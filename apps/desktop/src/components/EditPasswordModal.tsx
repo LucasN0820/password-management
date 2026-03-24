@@ -22,7 +22,7 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
     url: '',
     notes: '',
     category: 'all',
-    favorite: 0,
+    isFavorite: false,
     icon: ''
   })
   const [newCategory, setNewCategory] = useState('')
@@ -66,7 +66,7 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
       url: password.url || '',
       notes: password.notes || '',
       category: password.category || 'all',
-      favorite: password.favorite,
+      isFavorite: password.isFavorite,
       icon: password.icon || ''
     })
   }, [password])
@@ -244,13 +244,13 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
             <div className="flex items-center space-x-2">
               <input
                 type="checkbox"
-                id="favorite"
-                checked={formData.favorite === 1}
+                id="isFavorite"
+                checked={formData.isFavorite}
                 className="h-4 w-4 rounded border border-primary text-primary focus:ring-2 focus:ring-ring"
-                onChange={(e) => { setFormData({ ...formData, favorite: e.target.checked ? 1 : 0 }); }}
+                onChange={(e) => { setFormData({ ...formData, isFavorite: e.target.checked }); }}
               />
-              <Label htmlFor="favorite" className="flex items-center gap-2 cursor-pointer">
-                <Star className={cn("h-4 w-4", formData.favorite === 1 && "fill-foreground text-foreground")} />
+              <Label htmlFor="isFavorite" className="flex items-center gap-2 cursor-pointer">
+                <Star className={cn("h-4 w-4", formData.isFavorite && "fill-foreground text-foreground")} />
                 添加到收藏
               </Label>
             </div>

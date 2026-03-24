@@ -21,6 +21,7 @@
     "@legendapp/motion": "^2.3.0",
     "@radix-ui/react-compose-refs": "^1.1.1",
     "@react-navigation/native": "^7.1.28",
+    "@repo/db": "workspace:*",
     "@repo/metadata": "workspace:*",
     "@tanstack/react-query": "^5.90.21",
     "expo": "~54.0.33",

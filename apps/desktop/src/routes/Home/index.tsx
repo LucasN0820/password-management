@@ -15,7 +15,7 @@ export function HomePage() {
   }, [loadPasswords])
 
   const recentPasswords = passwords.slice(0, 6)
-  const favoritePasswords = passwords.filter(p => p.favorite === 1).slice(0, 4)
+  const favoritePasswords = passwords.filter(p => p.isFavorite).slice(0, 4)
   const totalPasswords = passwords.length
   const totalCategories = categories.length
 
@@ -341,7 +341,7 @@ export function HomePage() {
                             <h4 className="font-medium text-foreground truncate">{password.title}</h4>
                             <p className="text-sm text-muted-foreground truncate">{password.username || '无用户名'}</p>
                           </div>
-                          {password.favorite === 1 && (
+                          {password.isFavorite && (
                             <motion.div
                               initial={{ scale: 0 }}
                               animate={{ scale: 1 }}

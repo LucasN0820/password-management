@@ -11,7 +11,7 @@ export interface Password {
   url: string;
   notes: string;
   category: string;
-  favorite: number;
+  isFavorite: boolean;
   icon?: string;
   created_at: string;
   updated_at: string;

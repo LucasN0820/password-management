@@ -205,7 +205,7 @@ export function PasswordGeneratorPage() {
         icon: saveIcon,
         notes: saveNotes || '由密码生成器创建',
         category: saveCategory,
-        favorite: 0,
+        isFavorite: false,
       };
 
       await addPassword(passwordData);

@@ -17,7 +17,7 @@ export default function Sidebar() {
   const { categories, selectedCategory, setSelectedCategory, passwords } = usePasswordStore()
 
   const passwordCount = passwords.length
-  const favoriteCount = passwords.filter(p => p.favorite === 1).length
+  const favoriteCount = passwords.filter(p => p.isFavorite).length
 
   const getCategoryCount = (cat: string) => {
     if (cat === 'all') {return passwordCount}
