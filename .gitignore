@@ -36,3 +36,5 @@ yarn-error.*
 # generated native folders
 ios
 android
+
+.yarn/cache

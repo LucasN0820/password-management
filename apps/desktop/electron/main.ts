@@ -3,6 +3,7 @@ import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import Database from 'better-sqlite3'
 import { existsSync, mkdirSync } from 'fs'
+import { PASSWORDS_TABLE_DDL, PASSWORDS_ICON_MIGRATION } from '@repo/db'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -24,28 +25,11 @@ function initDatabase() {
 
     db = new Database(dbPath)
 
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS passwords (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        username TEXT,
-        password TEXT NOT NULL,
-        url TEXT,
-        notes TEXT,
-        category TEXT DEFAULT 'all',
-        favorite INTEGER DEFAULT 0,
-        icon TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-      );
-      
-      CREATE INDEX IF NOT EXISTS idx_category ON passwords(category);
-      CREATE INDEX IF NOT EXISTS idx_favorite ON passwords(favorite);
-    `)
+    db.exec(PASSWORDS_TABLE_DDL)
 
     // Add icon column to existing table if it doesn't exist
     try {
-      db.exec(`ALTER TABLE passwords ADD COLUMN icon TEXT`)
+      db.exec(PASSWORDS_ICON_MIGRATION)
     } catch (error) {
       // Column already exists, ignore error
     }

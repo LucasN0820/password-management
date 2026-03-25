@@ -20,7 +20,7 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src", "vite/client", "electron/preload.ts"],
+  "include": ["src", "vite/client", "electron"],
   "exclude": ["./src/components/ui/**/*.tsx"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

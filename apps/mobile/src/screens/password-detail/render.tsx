@@ -44,7 +44,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   const primaryColor = useColor('primary');
   const destructiveColor = useColor('red');
 
-  const { id, title, username, password, url, notes, favorite } = passwordItem;
+  const { id, title, username, password, url, notes, isFavorite } = passwordItem;
 
   const styles = StyleSheet.create({
     header: {
@@ -248,8 +248,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   };
 
   const handleToggleFavorite = async () => {
-    const currentFavorite = favorite === 1;
-    const newFavorite = !currentFavorite;
+    const newFavorite = !isFavorite;
 
     // Optimistic update: immediately update UI
     setOptimisticFavorite(newFavorite);
@@ -269,7 +268,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
 
   // Use optimistic favorite state if available, otherwise use data
   const currentFavorite =
-    optimisticFavorite !== null ? optimisticFavorite : favorite === 1;
+    optimisticFavorite !== null ? optimisticFavorite : isFavorite;
 
   const getFavoriteButtonStyle = () => ({
     padding: 4,

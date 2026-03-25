@@ -10,7 +10,7 @@ export function FavoritePassword() {
   return (
     <View className="flex gap-1">
       {filteredPasswords
-        .filter(p => p.favorite)
+        .filter(p => p.isFavorite)
         .map(p => (
           <PasswordItem
             key={p.id}

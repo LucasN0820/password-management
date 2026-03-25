@@ -10,7 +10,7 @@ export const formSchema = z.object({
   notes: z.string().optional(),
   icon: z.string().optional(), // base 64 string
   category: z.string().min(1).default('all'),
-  favorite: z.number().default(0) // 0 - no favorite, 1 - favorite
+  isFavorite: z.boolean().default(false)
 })
 
 export type FormType = z.infer<typeof formSchema>
@@ -23,7 +23,7 @@ export const defaultValues: FormType = {
   notes: undefined,
   icon: undefined,
   category: 'all',
-  favorite: 0,
+  isFavorite: false,
 }
 
 export function useValidatedForm(args: Omit<UseFormProps<FormType>, "resolver">): UseFormReturn<FormType> {

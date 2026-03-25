@@ -76,7 +76,7 @@ export function PasswordList() {
                     </p>
                   </div>
 
-                  {password.favorite === 1 && (
+                  {password.isFavorite && (
                     <div className="shrink-0">
                       <Star className="h-3.5 w-3.5 fill-primary text-primary opacity-70" />
                     </div>
@@ -92,7 +92,7 @@ export function PasswordList() {
                     <Star
                       className={cn(
                         "h-4 w-4 transition-all duration-300",
-                        password.favorite === 1
+                        password.isFavorite
                           ? "fill-primary text-primary"
                           : "text-muted-foreground hover:text-primary"
                       )}

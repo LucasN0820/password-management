@@ -1,35 +1,38 @@
-import { clipboard,contextBridge, ipcRenderer } from 'electron'
+import { clipboard, contextBridge, ipcRenderer } from 'electron'
 
-export interface Password {
+/** Raw SQLite row shape (favorite is INTEGER 0|1) */
+export interface PasswordRow {
   id: number
   title: string
   username: string
   password: string
-  url: string
-  notes: string
+  url: string | null
+  notes: string | null
   category: string
   favorite: number
+  icon: string | null
   created_at: string
   updated_at: string
 }
 
-export interface PasswordInput {
+export interface PasswordRowInput {
   title: string
   username: string
   password: string
-  url: string
-  notes: string
+  url: string | null
+  notes: string | null
   category: string
   favorite: number
+  icon: string | null
 }
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  getPasswords: (): Promise<Password[]> => ipcRenderer.invoke('get-passwords'),
-  getPasswordById: (id: number): Promise<Password | null> => { return ipcRenderer.invoke('get-password-by-id', id) },
-  addPassword: (data: PasswordInput): Promise<Password | null> => { return ipcRenderer.invoke('add-password', data) },
-  updatePassword: (id: number, data: PasswordInput): Promise<Password | null> => { return ipcRenderer.invoke('update-password', id, data) },
+  getPasswords: (): Promise<PasswordRow[]> => ipcRenderer.invoke('get-passwords'),
+  getPasswordById: (id: number): Promise<PasswordRow | null> => { return ipcRenderer.invoke('get-password-by-id', id) },
+  addPassword: (data: PasswordRowInput): Promise<PasswordRow | null> => { return ipcRenderer.invoke('add-password', data) },
+  updatePassword: (id: number, data: PasswordRowInput): Promise<PasswordRow | null> => { return ipcRenderer.invoke('update-password', id, data) },
   deletePassword: (id: number): Promise<boolean> => { return ipcRenderer.invoke('delete-password', id) },
-  searchPasswords: (query: string): Promise<Password[]> => { return ipcRenderer.invoke('search-passwords', query) },
+  searchPasswords: (query: string): Promise<PasswordRow[]> => { return ipcRenderer.invoke('search-passwords', query) },
   getCategories: (): Promise<string[]> => ipcRenderer.invoke('get-categories'),
   copyToClipboard: (text: string): Promise<void> => {
     clipboard.writeText(text)
@@ -41,12 +44,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
 declare global {
   interface Window {
     electronAPI: {
-      getPasswords: () => Promise<Password[]>
-      getPasswordById: (id: number) => Promise<Password | null>
-      addPassword: (data: PasswordInput) => Promise<Password | null>
-      updatePassword: (id: number, data: PasswordInput) => Promise<Password | null>
+      getPasswords: () => Promise<PasswordRow[]>
+      getPasswordById: (id: number) => Promise<PasswordRow | null>
+      addPassword: (data: PasswordRowInput) => Promise<PasswordRow | null>
+      updatePassword: (id: number, data: PasswordRowInput) => Promise<PasswordRow | null>
       deletePassword: (id: number) => Promise<boolean>
-      searchPasswords: (query: string) => Promise<Password[]>
+      searchPasswords: (query: string) => Promise<PasswordRow[]>
       getCategories: () => Promise<string[]>
       copyToClipboard: (text: string) => Promise<void>
     }

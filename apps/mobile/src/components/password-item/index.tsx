@@ -239,8 +239,8 @@ export function PasswordItem({ password, onEdit, onDelete }: Props) {
       >
         <Star
           size={18}
-          color={password.favorite === 1 ? '#f59e0b' : `${textColor}40`}
-          fill={password.favorite === 1 ? '#f59e0b' : 'none'}
+          color={password.isFavorite ? '#f59e0b' : `${textColor}40`}
+          fill={password.isFavorite ? '#f59e0b' : 'none'}
         />
       </Pressable>
     </View>

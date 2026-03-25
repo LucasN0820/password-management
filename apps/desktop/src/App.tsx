@@ -3,20 +3,6 @@ import { AppSidebar } from './components/AppSidebar';
 import { SidebarProvider } from './components/ui/sidebar';
 import { Toaster } from './components/ui/toaster';
 
-export interface Password {
-  id: number;
-  title: string;
-  username: string;
-  password: string;
-  url: string;
-  notes: string;
-  category: string;
-  favorite: number;
-  icon?: string;
-  created_at: string;
-  updated_at: string;
-}
-
 function App() {
   return (
     <div className='h-screen'>
