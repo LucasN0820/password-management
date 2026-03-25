@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef,useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import type { Password } from '../App'
+import type { Password } from '@repo/db'
 import { usePasswordStore } from '../store/passwordStore'
 
 export default function SpotlightSearch() {
@@ -13,6 +13,8 @@ export default function SpotlightSearch() {
   const inputRef = useRef<HTMLInputElement>(null)
   const { passwords } = usePasswordStore()
 
+  const { searchPasswords: storeSearch } = usePasswordStore()
+
   const searchPasswords = useCallback(async (searchQuery: string) => {
     if (!searchQuery.trim()) {
       setResults(passwords)
@@ -21,14 +23,15 @@ export default function SpotlightSearch() {
     }
 
     try {
-      const searchResults = await window.electronAPI.searchPasswords(searchQuery)
+      await storeSearch(searchQuery)
+      const { filteredPasswords } = usePasswordStore.getState()
 
-      setResults(searchResults)
+      setResults(filteredPasswords)
     } catch (error) {
       console.error('Search failed:', error)
       setResults(passwords)
     }
-  }, [passwords])
+  }, [passwords, storeSearch])
 
   useEffect(() => {
     searchPasswords('')

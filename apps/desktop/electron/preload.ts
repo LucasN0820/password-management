@@ -6,11 +6,11 @@ export interface PasswordRow {
   title: string
   username: string
   password: string
-  url: string
-  notes: string
+  url: string | null
+  notes: string | null
   category: string
   favorite: number
-  icon?: string
+  icon: string | null
   created_at: string
   updated_at: string
 }

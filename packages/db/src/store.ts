@@ -124,9 +124,10 @@ export function createPasswordStore(adapter: DatabaseAdapter) {
     },
 
     toggleFavorite: async password => {
+      const { id, created_at, updated_at, ...passwordData } = password
       const newIsFavorite = !password.isFavorite
       await adapter.updatePassword(password.id, {
-        ...password,
+        ...passwordData,
         isFavorite: newIsFavorite,
       })
       await get().loadPasswords()

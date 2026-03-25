@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
-import type { Password } from '../App'
+import type { Password } from '@repo/db'
 
 interface AddPasswordModalProps {
   onClose: () => void
