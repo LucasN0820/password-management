@@ -26,6 +26,7 @@ export interface PasswordState {
   deletePassword: (id: number) => Promise<void>
   searchPasswords: (query: string) => Promise<void>
   toggleFavorite: (password: Password) => Promise<void>
+  findPassword: (id: number) => Promise<Password | null>
 }
 
 export function createPasswordStore(adapter: DatabaseAdapter) {
@@ -140,6 +141,9 @@ export function createPasswordStore(adapter: DatabaseAdapter) {
           },
         })
       }
+    },
+    findPassword: async id => {
+      return await adapter.getPasswordById(id)
     },
   }))
 }
