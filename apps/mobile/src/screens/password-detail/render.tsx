@@ -8,6 +8,8 @@ import {
   Alert,
   Share,
   StyleSheet,
+  Image,
+  Linking,
 } from 'react-native';
 import { Text } from '@/components/ui/text';
 import {
@@ -44,7 +46,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   const primaryColor = useColor('primary');
   const destructiveColor = useColor('red');
 
-  const { id, title, username, password, url, notes, isFavorite } = passwordItem;
+  const { id, title, username, password, url, notes, isFavorite, icon } = passwordItem;
 
   const styles = StyleSheet.create({
     header: {
@@ -82,6 +84,11 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
       fontSize: 24,
       fontWeight: '600',
       color: 'white',
+    },
+    iconImage: {
+      width: 64,
+      height: 64,
+      borderRadius: 16,
     },
     title: {
       fontSize: 24,
@@ -302,7 +309,17 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
         {/* Header Section */}
         <View style={styles.headerSection}>
           <View style={styles.iconContainer}>
-            <Text style={styles.iconText}>{getDomainIcon()}</Text>
+            {icon ? (
+              <Image
+                source={{ uri: icon }}
+                style={styles.iconImage}
+                onError={() => {
+                  console.warn('Failed to load icon');
+                }}
+              />
+            ) : (
+              <Text style={styles.iconText}>{getDomainIcon()}</Text>
+            )}
           </View>
 
           <Text style={styles.title}>{title}</Text>
@@ -394,8 +411,17 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
 
             <TouchableOpacity
               onPress={() => {
-                // TODO: Open URL in browser
-                console.log('Open URL:', url);
+                const target =
+                  url.startsWith('http://') || url.startsWith('https://')
+                    ? url
+                    : `https://${url}`;
+                Linking.canOpenURL(target).then(supported => {
+                  if (supported) {
+                    Linking.openURL(target);
+                  } else {
+                    Alert.alert('无效链接', '无法识别的URL格式');
+                  }
+                });
               }}
               style={styles.urlContent}
             >

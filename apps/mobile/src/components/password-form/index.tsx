@@ -3,6 +3,7 @@ import { FormType, defaultValues } from "./form";
 import { useValidatedForm } from "./form";
 import { FormProvider } from "react-hook-form";
 import { View } from "react-native";
+import { FieldIcon } from "./field-icon";
 import { FieldTitle } from "./field-title";
 import { FieldUsername } from "./field-username";
 import { FieldPassword } from "./field-password";
@@ -45,6 +46,7 @@ export const PasswordForm = forwardRef<PasswordFormRef, PasswordFormProps>((prop
   return (
     <FormProvider {...form}>
       <View className="flex gap-4">
+        <FieldIcon />
         <FieldTitle />
         <FieldUsername />
         <FieldPassword />
