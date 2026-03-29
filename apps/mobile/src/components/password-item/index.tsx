@@ -199,6 +199,9 @@ export function PasswordItem({ password, onEdit, onDelete }: Props) {
                   <Image
                     source={{ uri: password.icon }}
                     style={styles.iconImage}
+                    onError={() => {
+                      console.warn('Failed to load icon:', password.id);
+                    }}
                   />
                 ) : (
                   <Text style={[styles.iconText]}>{getDomainIcon()}</Text>

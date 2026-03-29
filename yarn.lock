@@ -11164,23 +11164,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-image-loader@npm:~55.0.0":
-  version: 55.0.0
-  resolution: "expo-image-loader@npm:55.0.0"
+"expo-image-loader@npm:~6.0.0":
+  version: 6.0.0
+  resolution: "expo-image-loader@npm:6.0.0"
   peerDependencies:
     expo: "*"
-  checksum: 10c0/4e8d9a7cd69af109f818639afd1f2106825950b4d7eaa304645939710a84bec59b70fd7dc4a7543ee2f31fc517b9ed23afc750e4c20ed4f7cf114d3686efece3
+  checksum: 10c0/36f1e80d2b3d2a1cce440c7d938cd3cf3138f2b1fa706a1954e415bfae87b5b8eeaec65be0ab17880eb7585dd28c9225d056ebdb98ac81e0ffbfe880d952b0eb
   languageName: node
   linkType: hard
 
-"expo-image-picker@npm:^55.0.14":
-  version: 55.0.14
-  resolution: "expo-image-picker@npm:55.0.14"
+"expo-image-picker@npm:~17.0.10":
+  version: 17.0.10
+  resolution: "expo-image-picker@npm:17.0.10"
   dependencies:
-    expo-image-loader: "npm:~55.0.0"
+    expo-image-loader: "npm:~6.0.0"
   peerDependencies:
     expo: "*"
-  checksum: 10c0/f105b84d109106183a2a2513e642648834648d2206cbabc711108f49d13ba6972c34c81d1ab8e9e612c73cf0481789b8932926ef97e7f1064a0cf49bbd585228
+  checksum: 10c0/d05ed6ce53463acc86af062df33a648aaafb27549f875ebf907f0f438c09727ae9b75fb8c333fdcaceb0249d9de16929d2cd65ba81f256403745a30af9a7f8c3
   languageName: node
   linkType: hard
 
@@ -16058,7 +16058,7 @@ __metadata:
     expo-constants: "npm:~18.0.13"
     expo-font: "npm:~14.0.11"
     expo-haptics: "npm:^15.0.8"
-    expo-image-picker: "npm:^55.0.14"
+    expo-image-picker: "npm:~17.0.10"
     expo-linking: "npm:~8.0.11"
     expo-router: "npm:~6.0.23"
     expo-splash-screen: "npm:~31.0.13"

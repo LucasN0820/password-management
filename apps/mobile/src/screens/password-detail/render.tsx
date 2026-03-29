@@ -85,6 +85,11 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
       fontWeight: '600',
       color: 'white',
     },
+    iconImage: {
+      width: 64,
+      height: 64,
+      borderRadius: 16,
+    },
     title: {
       fontSize: 24,
       fontWeight: '700',
@@ -307,10 +312,9 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
             {icon ? (
               <Image
                 source={{ uri: icon }}
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 16,
+                style={styles.iconImage}
+                onError={() => {
+                  console.warn('Failed to load icon');
                 }}
               />
             ) : (
@@ -407,9 +411,16 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
 
             <TouchableOpacity
               onPress={() => {
-                const target = url.startsWith('http') ? url : `https://${url}`;
-                Linking.openURL(target).catch(() => {
-                  Alert.alert('无法打开', '无法打开该网址');
+                const target =
+                  url.startsWith('http://') || url.startsWith('https://')
+                    ? url
+                    : `https://${url}`;
+                Linking.canOpenURL(target).then(supported => {
+                  if (supported) {
+                    Linking.openURL(target);
+                  } else {
+                    Alert.alert('无效链接', '无法识别的URL格式');
+                  }
                 });
               }}
               style={styles.urlContent}
