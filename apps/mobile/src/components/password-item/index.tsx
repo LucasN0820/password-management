@@ -1,5 +1,5 @@
 import { Password, usePasswordStore } from '@/store/passwordStore';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -195,7 +195,14 @@ export function PasswordItem({ password, onEdit, onDelete }: Props) {
           >
             <View style={styles.leftSection}>
               <View style={styles.iconContainer}>
-                <Text style={[styles.iconText]}>{getDomainIcon()}</Text>
+                {password.icon ? (
+                  <Image
+                    source={{ uri: password.icon }}
+                    style={styles.iconImage}
+                  />
+                ) : (
+                  <Text style={[styles.iconText]}>{getDomainIcon()}</Text>
+                )}
               </View>
             </View>
 
@@ -278,8 +285,15 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 40,
     height: 40,
+    borderRadius: 10,
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  iconImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
   },
   iconText: {
     fontSize: 18,
