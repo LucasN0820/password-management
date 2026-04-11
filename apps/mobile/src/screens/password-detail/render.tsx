@@ -4,284 +4,85 @@ import { Stack } from 'expo-router';
 import {
   View,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
+  Linking,
   Alert,
-  Share,
   StyleSheet,
   Image,
-  Linking,
+  useColorScheme,
 } from 'react-native';
-import { Text } from '@/components/ui/text';
+import { Text } from 'react-native';
 import {
   Copy,
   Eye,
   EyeOff,
-  Edit,
-  Trash2,
   Star,
   Globe,
   User,
   Key,
   FileText,
+  MoreHorizontal,
+  ChevronLeft,
 } from 'lucide-react-native';
-import { useColor } from '@/hooks/useColor';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useStore } from './context';
+import { useRouter } from 'expo-router';
+import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
+import { CopyToast } from '@/components/copy-toast';
+import { Colors } from '@/theme/colors';
+import { fonts } from '@/theme/globals';
+import * as Haptics from 'expo-haptics';
+import * as Clipboard from 'expo-clipboard';
+import { Edit, Share2, Trash2 } from 'lucide-react-native';
 
 export function Render({ passwordItem }: { passwordItem: Password }) {
   const { toggleFavorite } = usePasswordStore();
   const [showPassword, setShowPassword] = useState(false);
-  const [showCopied, setShowCopied] = useState(false);
-  const [optimisticFavorite, setOptimisticFavorite] = useState<boolean | null>(
-    null
-  );
+  const [optimisticFavorite, setOptimisticFavorite] = useState<boolean | null>(null);
+  const [actionSheetVisible, setActionSheetVisible] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
   const setModal = useStore(s => s.setModal);
-
+  const router = useRouter();
   const qc = useQueryClient();
-
-  const backgroundColor = useColor('background');
-  const cardColor = useColor('card');
-  const textColor = useColor('text');
-  const borderColor = useColor('border');
-  const primaryColor = useColor('primary');
-  const destructiveColor = useColor('red');
+  const scheme = useColorScheme() ?? 'light';
+  const c = Colors[scheme];
 
   const { id, title, username, password, url, notes, isFavorite, icon } = passwordItem;
+  const currentFavorite = optimisticFavorite !== null ? optimisticFavorite : isFavorite;
 
-  const styles = StyleSheet.create({
-    header: {
-      backgroundColor: backgroundColor,
-    },
-    container: {
-      flex: 1,
-      backgroundColor: backgroundColor,
-    },
-    contentContainer: {
-      padding: 20,
-    },
-    headerSection: {
-      backgroundColor: cardColor,
-      borderRadius: 16,
-      padding: 24,
-      marginBottom: 20,
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
-      elevation: 2,
-    },
-    iconContainer: {
-      width: 64,
-      height: 64,
-      borderRadius: 16,
-      backgroundColor: primaryColor,
-      justifyContent: 'center',
-      alignItems: 'center',
-      marginBottom: 16,
-    },
-    iconText: {
-      fontSize: 24,
-      fontWeight: '600',
-      color: 'white',
-    },
-    iconImage: {
-      width: 64,
-      height: 64,
-      borderRadius: 16,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: '700',
-      color: textColor,
-      textAlign: 'center',
-      marginBottom: 8,
-    },
-    headerMeta: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-    },
-    favoriteButton: {
-      padding: 4,
-      borderRadius: 8,
-    },
-    sectionCard: {
-      backgroundColor: cardColor,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 12,
-      borderWidth: 1,
-      borderColor: borderColor,
-    },
-    sectionHeader: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginBottom: 12,
-    },
-    sectionTitle: {
-      fontSize: 12,
-      color: `${textColor}60`,
-      fontWeight: '500',
-    },
-    sectionContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    contentText: {
-      fontSize: 16,
-      color: textColor,
-      flex: 1,
-      fontWeight: '500',
-    },
-    copyButton: {
-      padding: 8,
-      borderRadius: 8,
-      backgroundColor: `${primaryColor}10`,
-    },
-    passwordActions: {
-      flexDirection: 'row',
-      gap: 8,
-    },
-    iconButton: {
-      padding: 8,
-      borderRadius: 8,
-      backgroundColor: `${primaryColor}10`,
-    },
-    urlContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    urlText: {
-      fontSize: 16,
-      color: primaryColor,
-      flex: 1,
-      fontWeight: '500',
-      textDecorationLine: 'underline',
-    },
-    notesText: {
-      fontSize: 16,
-      color: textColor,
-      lineHeight: 24,
-    },
-    actionButtons: {
-      flexDirection: 'row',
-      gap: 12,
-      marginTop: 8,
-    },
-    editButton: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 16,
-      borderRadius: 12,
-      backgroundColor: primaryColor,
-      gap: 8,
-    },
-    deleteButton: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: 16,
-      borderRadius: 12,
-      backgroundColor: destructiveColor,
-      gap: 8,
-    },
-    buttonText: {
-      color: 'white',
-      fontSize: 16,
-      fontWeight: '600',
-    },
-    copiedFeedback: {
-      position: 'absolute',
-      top: 60,
-      left: 20,
-      right: 20,
-      backgroundColor: '#10b981',
-      padding: 12,
-      borderRadius: 8,
-      alignItems: 'center',
-    },
-    copiedText: {
-      color: 'white',
-      fontSize: 14,
-      fontWeight: '500',
-    },
-  });
+  const showToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setToastVisible(true);
+  }, []);
 
-  const handleCopyPassword = async () => {
-    try {
-      await Share.share({
-        message: password,
-        title: `Password for ${title}`,
-      });
-      setShowCopied(true);
-      setTimeout(() => setShowCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy password:', error);
-    }
-  };
-
-  const handleCopyUsername = async () => {
-    try {
-      await Share.share({
-        message: username,
-        title: `Username for ${title}`,
-      });
-      setShowCopied(true);
-      setTimeout(() => setShowCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy username:', error);
-    }
-  };
-
-  const handleDelete = () => {
-    setModal({
-      type: 'delete-password',
-      id: passwordItem.id,
-      title: passwordItem.title,
-    });
-  };
-
-  const handleEdit = () => {
-    setModal({
-      type: 'edit-password',
-      id: passwordItem.id,
-    });
+  const handleCopy = async (text: string, label: string) => {
+    await Clipboard.setStringAsync(text);
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    showToast(`${label} copied`);
   };
 
   const handleToggleFavorite = async () => {
-    const newFavorite = !isFavorite;
-
-    // Optimistic update: immediately update UI
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const newFavorite = !currentFavorite;
     setOptimisticFavorite(newFavorite);
-
     try {
-      // Background update: sync with database
       await toggleFavorite(passwordItem);
-    } catch (error) {
-      console.error('Failed to toggle favorite:', error);
+    } catch {
+      // revert
     } finally {
-      await qc.invalidateQueries({
-        queryKey: ['findPassword', id],
-      });
+      await qc.invalidateQueries({ queryKey: ['findPassword', id] });
       setOptimisticFavorite(null);
     }
   };
 
-  // Use optimistic favorite state if available, otherwise use data
-  const currentFavorite =
-    optimisticFavorite !== null ? optimisticFavorite : isFavorite;
+  const handleEdit = () => {
+    setModal({ type: 'edit-password', id: passwordItem.id });
+  };
 
-  const getFavoriteButtonStyle = () => ({
-    padding: 4,
-    borderRadius: 8,
-    backgroundColor: currentFavorite ? `${primaryColor}20` : 'transparent',
-  });
+  const handleDelete = () => {
+    setModal({ type: 'delete-password', id: passwordItem.id, title: passwordItem.title });
+  };
 
   const getDomainIcon = () => {
     if (url) {
@@ -294,181 +95,285 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
     return title.charAt(0).toUpperCase() || '';
   };
 
+  const overflowOptions: ActionSheetOption[] = [
+    {
+      label: 'Edit',
+      icon: Edit,
+      onPress: handleEdit,
+    },
+    {
+      label: 'Share',
+      icon: Share2,
+      onPress: async () => {
+        const { Share } = await import('react-native');
+        Share.share({ message: `${title}\nUsername: ${username}\nPassword: ${password}` });
+      },
+    },
+    {
+      label: 'Delete',
+      icon: Trash2,
+      destructive: true,
+      onPress: handleDelete,
+    },
+  ];
+
   return (
     <>
       <Stack.Screen
         options={{
-          headerTitle: title,
-          headerStyle: styles.header,
+          headerTitle: '',
+          headerStyle: { backgroundColor: c.background },
+          headerShadowVisible: false,
+          headerLeft: () => (
+            <Pressable onPress={() => router.back()} style={styles.backButton}>
+              <ChevronLeft size={24} color={c.foreground} />
+            </Pressable>
+          ),
+          headerRight: () => (
+            <Pressable
+              onPress={() => setActionSheetVisible(true)}
+              style={styles.moreButton}
+            >
+              <MoreHorizontal size={24} color={c.foreground} />
+            </Pressable>
+          ),
         }}
       />
       <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.contentContainer}
+        style={[styles.container, { backgroundColor: c.background }]}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        {/* Header Section */}
-        <View style={styles.headerSection}>
-          <View style={styles.iconContainer}>
+        {/* Hero section */}
+        <View style={styles.heroSection}>
+          <View style={[styles.heroIcon, { backgroundColor: c.foreground }]}>
             {icon ? (
-              <Image
-                source={{ uri: icon }}
-                style={styles.iconImage}
-                onError={() => {
-                  console.warn('Failed to load icon');
-                }}
-              />
+              <Image source={{ uri: icon }} style={styles.heroIconImage} />
             ) : (
-              <Text style={styles.iconText}>{getDomainIcon()}</Text>
+              <Text style={[styles.heroIconText, { fontFamily: fonts.bodySemiBold }]}>
+                {getDomainIcon()}
+              </Text>
             )}
           </View>
 
-          <Text style={styles.title}>{title}</Text>
-
-          <View style={styles.headerMeta}>
-            <TouchableOpacity
-              onPress={handleToggleFavorite}
-              style={getFavoriteButtonStyle()}
-            >
-              <Star
-                size={20}
-                color={currentFavorite ? '#f59e0b' : `${textColor}40`}
-                fill={currentFavorite ? '#f59e0b' : 'none'}
-              />
-            </TouchableOpacity>
-            {url && <Globe size={16} color={`${textColor}60`} />}
-          </View>
-        </View>
-
-        {/* Username Section */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <User
-              size={16}
-              color={`${textColor}60`}
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.sectionTitle}>用户名</Text>
-          </View>
-
-          <View style={styles.sectionContent}>
-            <Text style={styles.contentText}>{username}</Text>
-            <TouchableOpacity
-              onPress={handleCopyUsername}
-              style={styles.copyButton}
-            >
-              <Copy size={16} color={primaryColor} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Password Section */}
-        <View style={styles.sectionCard}>
-          <View style={styles.sectionHeader}>
-            <Key
-              size={16}
-              color={`${textColor}60`}
-              style={{ marginRight: 8 }}
-            />
-            <Text style={styles.sectionTitle}>密码</Text>
-          </View>
-
-          <View style={styles.sectionContent}>
-            <Text style={styles.contentText}>
-              {showPassword ? password : '•••••••••'}
+          <View style={styles.heroTitleRow}>
+            <Text style={[styles.heroTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
+              {title}
             </Text>
-            <View style={styles.passwordActions}>
-              <TouchableOpacity
+            <Pressable onPress={handleToggleFavorite} style={styles.heroStar}>
+              <Star
+                size={22}
+                color={currentFavorite ? c.accentYellow : c.textTertiary}
+                fill={currentFavorite ? c.accentYellow : 'none'}
+              />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Username card */}
+        <View style={[styles.detailCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+          <View style={styles.cardLabel}>
+            <User size={14} color={c.textTertiary} />
+            <Text style={[styles.cardLabelText, { color: c.textTertiary, fontFamily: fonts.bodySemiBold }]}>
+              USERNAME
+            </Text>
+          </View>
+          <View style={styles.cardContent}>
+            <Text style={[styles.cardValue, { color: c.foreground, fontFamily: fonts.body }]}>
+              {username}
+            </Text>
+            <Pressable
+              onPress={() => handleCopy(username, 'Username')}
+              style={[styles.copyBtn, { backgroundColor: c.hover }]}
+            >
+              <Copy size={16} color={c.accentBlue} />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Password card */}
+        <View style={[styles.detailCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+          <View style={styles.cardLabel}>
+            <Key size={14} color={c.textTertiary} />
+            <Text style={[styles.cardLabelText, { color: c.textTertiary, fontFamily: fonts.bodySemiBold }]}>
+              PASSWORD
+            </Text>
+          </View>
+          <View style={styles.cardContent}>
+            <Text style={[
+              styles.cardValue,
+              { color: c.foreground, fontFamily: showPassword ? fonts.mono : fonts.body },
+            ]}>
+              {showPassword ? password : '••••••••••'}
+            </Text>
+            <View style={styles.cardActions}>
+              <Pressable
                 onPress={() => setShowPassword(!showPassword)}
-                style={styles.iconButton}
+                style={[styles.copyBtn, { backgroundColor: c.hover }]}
               >
                 {showPassword ? (
-                  <EyeOff size={16} color={primaryColor} />
+                  <EyeOff size={16} color={c.accentBlue} />
                 ) : (
-                  <Eye size={16} color={primaryColor} />
+                  <Eye size={16} color={c.accentBlue} />
                 )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleCopyPassword}
-                style={styles.iconButton}
+              </Pressable>
+              <Pressable
+                onPress={() => handleCopy(password, 'Password')}
+                style={[styles.copyBtn, { backgroundColor: c.hover }]}
               >
-                <Copy size={16} color={primaryColor} />
-              </TouchableOpacity>
+                <Copy size={16} color={c.accentBlue} />
+              </Pressable>
             </View>
           </View>
         </View>
 
-        {/* URL Section */}
+        {/* URL card */}
         {url && (
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <Globe
-                size={16}
-                color={`${textColor}60`}
-                style={{ marginRight: 8 }}
-              />
-              <Text style={styles.sectionTitle}>网址</Text>
+          <View style={[styles.detailCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+            <View style={styles.cardLabel}>
+              <Globe size={14} color={c.textTertiary} />
+              <Text style={[styles.cardLabelText, { color: c.textTertiary, fontFamily: fonts.bodySemiBold }]}>
+                URL
+              </Text>
             </View>
-
-            <TouchableOpacity
+            <Pressable
               onPress={() => {
-                const target =
-                  url.startsWith('http://') || url.startsWith('https://')
-                    ? url
-                    : `https://${url}`;
+                const target = url.startsWith('http://') || url.startsWith('https://')
+                  ? url
+                  : `https://${url}`;
                 Linking.canOpenURL(target).then(supported => {
-                  if (supported) {
-                    Linking.openURL(target);
-                  } else {
-                    Alert.alert('无效链接', '无法识别的URL格式');
-                  }
+                  if (supported) Linking.openURL(target);
+                  else Alert.alert('Invalid URL');
                 });
               }}
-              style={styles.urlContent}
+              style={styles.cardContent}
             >
-              <Text style={styles.urlText}>{url}</Text>
-              <View style={styles.iconButton}>
-                <Globe size={16} color={primaryColor} />
+              <Text style={[styles.cardValue, { color: c.accentBlue, fontFamily: fonts.body }]}>
+                {url}
+              </Text>
+              <View style={[styles.copyBtn, { backgroundColor: c.hover }]}>
+                <Globe size={16} color={c.accentBlue} />
               </View>
-            </TouchableOpacity>
+            </Pressable>
           </View>
         )}
 
-        {/* Notes Section */}
+        {/* Notes card */}
         {notes && (
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <FileText
-                size={16}
-                color={`${textColor}60`}
-                style={{ marginRight: 8 }}
-              />
-              <Text style={styles.sectionTitle}>备注</Text>
+          <View style={[styles.detailCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+            <View style={styles.cardLabel}>
+              <FileText size={14} color={c.textTertiary} />
+              <Text style={[styles.cardLabelText, { color: c.textTertiary, fontFamily: fonts.bodySemiBold }]}>
+                NOTES
+              </Text>
             </View>
-
-            <Text style={styles.notesText}>{notes}</Text>
-          </View>
-        )}
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity onPress={handleEdit} style={styles.editButton}>
-            <Edit size={18} color="white" />
-            <Text style={styles.buttonText}>编辑</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleDelete} style={styles.deleteButton}>
-            <Trash2 size={18} color="white" />
-            <Text style={styles.buttonText}>删除</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Copied Feedback */}
-        {showCopied && (
-          <View style={styles.copiedFeedback}>
-            <Text style={styles.copiedText}>已复制到剪贴板</Text>
+            <Text style={[styles.notesText, { color: c.foreground, fontFamily: fonts.body }]}>
+              {notes}
+            </Text>
           </View>
         )}
       </ScrollView>
+
+      <ActionSheet
+        visible={actionSheetVisible}
+        onClose={() => setActionSheetVisible(false)}
+        options={overflowOptions}
+      />
+
+      <CopyToast
+        visible={toastVisible}
+        message={toastMessage}
+        onHide={() => setToastVisible(false)}
+      />
     </>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  backButton: {
+    padding: 4,
+  },
+  moreButton: {
+    padding: 4,
+  },
+  heroSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  heroIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  heroIconImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+  },
+  heroIconText: {
+    fontSize: 24,
+    color: '#FFFFFF',
+  },
+  heroTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  heroTitle: {
+    fontSize: 28,
+  },
+  heroStar: {
+    padding: 4,
+  },
+  detailCard: {
+    borderRadius: 12,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 12,
+  },
+  cardLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+  },
+  cardLabelText: {
+    fontSize: 11,
+    letterSpacing: 1,
+  },
+  cardContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  cardValue: {
+    fontSize: 16,
+    flex: 1,
+  },
+  cardActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  copyBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  notesText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+});

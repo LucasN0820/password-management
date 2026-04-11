@@ -6,5 +6,5 @@ import { LockIcon } from "lucide-react-native";
 export function FieldPassword() {
   const { control } = useFormContext<FormType>()
 
-  return <InputField control={control} name='password' label="密码" variant="outline" icon={LockIcon} />
+  return <InputField control={control} name='password' label="PASSWORD" variant="outline" icon={LockIcon} />
 }

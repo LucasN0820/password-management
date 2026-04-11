@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, globalShortcut, screen } from 'electron'
+import { app, BrowserWindow, ipcMain, globalShortcut, screen, nativeImage } from 'electron'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import Database from 'better-sqlite3'
@@ -41,11 +41,23 @@ function initDatabase() {
 }
 
 function createWindow() {
+  const iconPath = isDev
+    ? join(__dirname, '../public/icon-512.png')
+    : join(__dirname, '../dist/icon-512.png')
+
+  const appIcon = nativeImage.createFromPath(iconPath)
+
+  // macOS: set Dock icon explicitly
+  if (process.platform === 'darwin' && app.dock) {
+    app.dock.setIcon(appIcon)
+  }
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
     minWidth: 900,
     minHeight: 600,
+    icon: appIcon,
     webPreferences: {
       preload: join(__dirname, '../dist-electron/preload.js'),
       contextIsolation: true,

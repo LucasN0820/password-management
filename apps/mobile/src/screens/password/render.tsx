@@ -1,57 +1,233 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useStore } from './context';
-import { usePasswordStore } from '@/store/passwordStore';
+import { Password, usePasswordStore } from '@/store/passwordStore';
 import {
   View,
   Text,
-  TouchableOpacity,
+  Pressable,
   TextInput,
   StyleSheet,
+  useColorScheme,
+  ScrollView,
+  RefreshControl,
 } from 'react-native';
 import { Search, Plus } from 'lucide-react-native';
 import { ModalController } from './modal-controller';
-import { TabViewContainer } from './tab-view-container';
+import { AllPassword } from './password-all';
+import { FavoritePassword } from './password-favorite';
+import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
+import { CopyToast } from '@/components/copy-toast';
+import { Colors } from '@/theme/colors';
+import { fonts } from '@/theme/globals';
+import * as Haptics from 'expo-haptics';
+import * as Clipboard from 'expo-clipboard';
+import { Copy, ClipboardCopy, Edit, Star, Trash2 } from 'lucide-react-native';
+
+type Tab = 'all' | 'favorites';
 
 export function Render() {
   const [searchVisible, setSearchVisible] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>('all');
+  const [refreshing, setRefreshing] = useState(false);
+  const [actionSheetVisible, setActionSheetVisible] = useState(false);
+  const [selectedPassword, setSelectedPassword] = useState<Password | null>(null);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+
   const setModal = useStore(s => s.setModal);
-  const { searchQuery, setSearchQuery } = usePasswordStore();
+  const { searchQuery, setSearchQuery, loadPasswords } = usePasswordStore();
+  const scheme = useColorScheme() ?? 'light';
+  const c = Colors[scheme];
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadPasswords();
+    setRefreshing(false);
+  }, [loadPasswords]);
+
+  const handleLongPress = useCallback((password: Password) => {
+    setSelectedPassword(password);
+    setActionSheetVisible(true);
+  }, []);
+
+  const showToast = useCallback((msg: string) => {
+    setToastMessage(msg);
+    setToastVisible(true);
+  }, []);
+
+  const actionSheetOptions: ActionSheetOption[] = selectedPassword ? [
+    {
+      label: 'Copy Password',
+      icon: Copy,
+      onPress: async () => {
+        if (selectedPassword) {
+          await Clipboard.setStringAsync(selectedPassword.password);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          showToast('Password copied');
+        }
+      },
+    },
+    {
+      label: 'Copy Username',
+      icon: ClipboardCopy,
+      onPress: async () => {
+        if (selectedPassword) {
+          await Clipboard.setStringAsync(selectedPassword.username);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          showToast('Username copied');
+        }
+      },
+    },
+    {
+      label: 'Edit',
+      icon: Edit,
+      onPress: () => {
+        if (selectedPassword) {
+          setModal({ type: 'edit-password', id: selectedPassword.id });
+        }
+      },
+    },
+    {
+      label: selectedPassword.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+      icon: Star,
+      onPress: () => {
+        // Toggle handled by store
+      },
+    },
+    {
+      label: 'Delete',
+      icon: Trash2,
+      destructive: true,
+      onPress: () => {
+        if (selectedPassword) {
+          setModal({ type: 'delete-password', id: selectedPassword.id, title: selectedPassword.title });
+        }
+      },
+    },
+  ] : [];
 
   return (
     <>
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: c.background }]}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={styles.headerRow}>
-            <Text style={styles.headerTitle}>密码管理</Text>
-            <View style={styles.headerActions}>
-              <TouchableOpacity
-                onPress={() => setSearchVisible(!searchVisible)}
-                style={styles.iconButton}
-              >
-                <Search size={20} color="#6b7280" />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => setModal({ type: 'add-password' })}
-                style={styles.iconButton}
-              >
-                <Plus size={20} color="#6b7280" />
-              </TouchableOpacity>
+          <Text style={[styles.pageTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
+            My Vault
+          </Text>
+          <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSearchVisible(!searchVisible);
+              }}
+              style={[styles.headerIcon, { backgroundColor: c.surface, borderColor: c.border }]}
+            >
+              <Search size={18} color={c.mutedForeground} />
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setModal({ type: 'add-password' });
+              }}
+              style={[styles.headerIconFilled, { backgroundColor: c.foreground }]}
+            >
+              <Plus size={18} color={c.background} />
+            </Pressable>
+          </View>
+        </View>
+
+        {/* Search bar */}
+        {searchVisible && (
+          <View style={styles.searchContainer}>
+            <View style={[styles.searchInput, { backgroundColor: c.surface, borderColor: c.border }]}>
+              <Search size={16} color={c.textTertiary} />
+              <TextInput
+                style={[styles.searchText, { color: c.foreground, fontFamily: fonts.body }]}
+                placeholder="Search passwords..."
+                placeholderTextColor={c.textTertiary}
+                value={searchQuery}
+                onChangeText={text => setSearchQuery(text.trim())}
+                autoFocus
+              />
             </View>
           </View>
+        )}
 
-          {searchVisible && (
-            <TextInput
-              style={styles.searchInput}
-              placeholder="搜索密码..."
-              value={searchQuery}
-              onChangeText={text => setSearchQuery(text.trim())}
-            />
-          )}
+        {/* Segmented tabs */}
+        <View style={styles.tabContainer}>
+          <View style={[styles.tabPill, { backgroundColor: c.surface }]}>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setActiveTab('all');
+              }}
+              style={[
+                styles.tab,
+                activeTab === 'all' && [styles.tabActive, { backgroundColor: c.background }],
+              ]}
+            >
+              <Text style={[
+                styles.tabText,
+                { fontFamily: activeTab === 'all' ? fonts.bodySemiBold : fonts.body },
+                { color: activeTab === 'all' ? c.foreground : c.mutedForeground },
+              ]}>
+                All
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setActiveTab('favorites');
+              }}
+              style={[
+                styles.tab,
+                activeTab === 'favorites' && [styles.tabActive, { backgroundColor: c.background }],
+              ]}
+            >
+              <Text style={[
+                styles.tabText,
+                { fontFamily: activeTab === 'favorites' ? fonts.bodySemiBold : fonts.body },
+                { color: activeTab === 'favorites' ? c.foreground : c.mutedForeground },
+              ]}>
+                ★ Favorites
+              </Text>
+            </Pressable>
+          </View>
         </View>
-        <TabViewContainer />
+
+        {/* Password list */}
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={styles.listContent}
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor={c.foreground}
+            />
+          }
+        >
+          {activeTab === 'all'
+            ? <AllPassword onLongPress={handleLongPress} />
+            : <FavoritePassword onLongPress={handleLongPress} />
+          }
+        </ScrollView>
       </View>
+
       <ModalController />
+
+      <ActionSheet
+        visible={actionSheetVisible}
+        onClose={() => setActionSheetVisible(false)}
+        options={actionSheetOptions}
+      />
+
+      <CopyToast
+        visible={toastVisible}
+        message={toastMessage}
+        onHide={() => setToastVisible(false)}
+      />
     </>
   );
 }
@@ -59,147 +235,84 @@ export function Render() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
   },
   header: {
-    padding: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
   },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+  pageTitle: {
+    fontSize: 32,
   },
   headerActions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 10,
   },
-  iconButton: {
-    padding: 8,
-  },
-  searchInput: {
+  headerIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 16,
-  },
-  categoryFilter: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#f9fafb',
-  },
-  categoryChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#e5e7eb',
-    marginRight: 8,
-  },
-  categoryChipActive: {
-    backgroundColor: '#3b82f6',
-  },
-  categoryChipText: {
-    fontSize: 14,
-    color: '#374151',
-  },
-  categoryChipTextActive: {
-    color: '#ffffff',
-  },
-  card: {
-    margin: 8,
-    backgroundColor: '#ffffff',
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  cardContent: {
-    padding: 16,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    flex: 1,
-  },
-  username: {
-    color: '#6b7280',
-    marginBottom: 4,
-  },
-  url: {
-    color: '#2563eb',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  passwordRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  password: {
-    flex: 1,
-    color: '#1f2937',
-    fontFamily: 'monospace',
-  },
-  passwordActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  footerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  category: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  viewButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    backgroundColor: '#3b82f6',
-    borderRadius: 4,
-  },
-  deleteButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    backgroundColor: '#ef4444',
-    borderRadius: 4,
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 14,
-  },
-  emptyState: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 32,
   },
-  emptyText: {
-    color: '#6b7280',
-    textAlign: 'center',
+  headerIconFilled: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  searchInput: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 10,
+  },
+  searchText: {
+    flex: 1,
+    fontSize: 15,
+    padding: 0,
+  },
+  tabContainer: {
+    paddingHorizontal: 20,
+    paddingBottom: 12,
+  },
+  tabPill: {
+    flexDirection: 'row',
+    borderRadius: 20,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 16,
+  },
+  tabActive: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 14,
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    paddingBottom: 20,
   },
 });

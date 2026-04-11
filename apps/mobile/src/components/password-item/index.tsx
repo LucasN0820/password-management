@@ -1,11 +1,16 @@
 import { Password, usePasswordStore } from '@/store/passwordStore';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Image } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  useColorScheme,
+} from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
   interpolate,
-  runOnJS,
 } from 'react-native-reanimated';
 import {
   Gesture,
@@ -15,36 +20,30 @@ import {
 import { useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Edit, Trash2, Star, Globe } from 'lucide-react-native';
-import { useColor } from '@/hooks/useColor';
 import { useRouter } from 'expo-router';
+import { Colors } from '@/theme/colors';
+import { fonts } from '@/theme/globals';
+import * as Haptics from 'expo-haptics';
 
 interface Props {
   password: Password;
   onEdit?: (id: number) => void;
   onDelete?: (id: number, title: string) => void;
+  onLongPress?: (password: Password) => void;
 }
 
 function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max);
 }
 
-export function PasswordItem({ password, onEdit, onDelete }: Props) {
-  const { deletePassword, toggleFavorite } = usePasswordStore();
+export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props) {
+  const { toggleFavorite } = usePasswordStore();
   const router = useRouter();
   const translateX = useSharedValue(0);
   const lastOffset = useRef(0);
-
-  const backgroundColor = useColor('background');
-  const textColor = useColor('text');
-  const primaryColor = useColor('primary');
-  const destructiveColor = useColor('red');
-  const itemBackgroundColor = useColor('card');
-
-  const { mutate: deleteMutate } = useMutation({
-    mutationFn: async () => {
-      await deletePassword(password.id);
-    },
-  });
+  const itemScale = useSharedValue(1);
+  const scheme = useColorScheme() ?? 'light';
+  const c = Colors[scheme];
 
   const { mutate: favoriteMutate } = useMutation({
     mutationFn: async () => {
@@ -62,83 +61,76 @@ export function PasswordItem({ password, onEdit, onDelete }: Props) {
   };
 
   const animatedStyles = useAnimatedStyle(() => ({
-    transform: [{ translateX: translateX.value }],
+    transform: [{ translateX: translateX.value }, { scale: itemScale.value }],
   }));
 
   const actionButtonsStyle = useAnimatedStyle(() => {
-    // Action buttons should appear from right to left as user swipes left
     const buttonTranslateX = interpolate(
       translateX.value,
       [-120, -100, -80, -60, -40, -20, 0],
       [0, 20, 40, 60, 80, 100, 120]
     );
-
     return {
       transform: [{ translateX: buttonTranslateX }],
     };
   });
 
   const resetSwipe = (stiffness: number = 100) => {
-    translateX.value = withSpring(0, {
-      stiffness,
-    });
+    translateX.value = withSpring(0, { stiffness });
     lastOffset.current = 0;
   };
 
-  // gesture提供的手势和对应的回调默认运行在UI线程，因此如果想要在回调中访问只存在于JS线程上的东西例如useState这些，则需要使用runOnJs让这段代码可以访问JS线程上的东西
+  const longPress = Gesture.LongPress()
+    .minDuration(500)
+    .onStart(() => {
+      itemScale.value = withSpring(0.97, { damping: 15 });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    })
+    .onEnd(() => {
+      itemScale.value = withSpring(1, { damping: 15 });
+      if (onLongPress) {
+        onLongPress(password);
+      }
+    })
+    .runOnJS(true);
+
   const tap = Gesture.Tap()
     .onEnd(() => {
       router.push({
         pathname: '/password/[id]',
-        params: {
-          id: password.id,
-        },
+        params: { id: password.id },
       });
-
       resetSwipe(1300);
     })
     .runOnJS(true);
 
-  //同理： 运行在UI线程
   const pan = Gesture.Pan()
     .minDistance(1)
     .onStart(() => {
-      // Reset last offset when starting new gesture
       lastOffset.current = translateX.value;
     })
     .onUpdate(e => {
-      // Calculate new translation with boundaries
       const newTranslationX = lastOffset.current + e.translationX;
       translateX.value = clamp(newTranslationX, -120, 0);
     })
     .onEnd(e => {
-      // Determine snap position based on final position and velocity
       const currentTranslation = translateX.value;
       const { velocityX } = e;
-
       let shouldSnapOpen = false;
-
-      // Snap open if swiped far enough or with sufficient velocity
-      if (
-        currentTranslation < -80 ||
-        (currentTranslation < -40 && velocityX < -500)
-      ) {
+      if (currentTranslation < -80 || (currentTranslation < -40 && velocityX < -500)) {
         shouldSnapOpen = true;
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
-
-      // Apply spring animation to snap position
       translateX.value = withSpring(shouldSnapOpen ? -120 : 0, {
         damping: 20,
         stiffness: 100,
         mass: 1,
       });
-
-      // Update last offset
       lastOffset.current = shouldSnapOpen ? -120 : 0;
     })
     .runOnJS(true);
 
-  const gesture = Gesture.Exclusive(pan, tap);
+  const gesture = Gesture.Race(pan, Gesture.Exclusive(longPress, tap));
 
   const getDomainIcon = () => {
     if (password.url) {
@@ -153,111 +145,91 @@ export function PasswordItem({ password, onEdit, onDelete }: Props) {
   };
 
   return (
-    <View style={[{ backgroundColor }]}>
-      {/* Action buttons - hidden by default, revealed on left swipe */}
+    <View style={styles.wrapper}>
+      {/* Swipe action buttons */}
       <Animated.View style={[styles.actionButtons, actionButtonsStyle]}>
         <Pressable
-          style={[
-            styles.actionButton,
-            styles.editButton,
-            { backgroundColor: primaryColor },
-          ]}
-          onPress={() => {
-            handleEdit();
-          }}
+          style={[styles.actionButton, { backgroundColor: c.foreground }]}
+          onPress={handleEdit}
         >
-          <Edit size={20} color="white" />
+          <Edit size={20} color="#FFFFFF" />
         </Pressable>
         <Pressable
-          style={[
-            styles.actionButton,
-            styles.deleteButton,
-            { backgroundColor: destructiveColor },
-          ]}
-          onPress={() => {
-            handleDelete();
-          }}
+          style={[styles.actionButton, { backgroundColor: c.accentRed }]}
+          onPress={handleDelete}
         >
-          <Trash2 size={20} color="white" />
+          <Trash2 size={20} color="#FFFFFF" />
         </Pressable>
       </Animated.View>
+
       {/* Main content */}
       <GestureDetector gesture={gesture}>
-        <TouchableOpacity activeOpacity={0.9}>
-          <Animated.View
-            style={[
-              styles.content,
-              {
-                backgroundColor: itemBackgroundColor,
-              },
-              animatedStyles,
-            ]}
-          >
-            <View style={styles.leftSection}>
-              <View style={styles.iconContainer}>
-                {password.icon ? (
-                  <Image
-                    source={{ uri: password.icon }}
-                    style={styles.iconImage}
-                    onError={() => {
-                      console.warn('Failed to load icon:', password.id);
-                    }}
-                  />
-                ) : (
-                  <Text style={[styles.iconText]}>{getDomainIcon()}</Text>
-                )}
-              </View>
-            </View>
+        <Animated.View style={[styles.content, { backgroundColor: c.surface }, animatedStyles]}>
+          {/* Icon circle */}
+          <View style={[styles.iconCircle, { backgroundColor: c.background, borderColor: c.border }]}>
+            {password.icon ? (
+              <Image source={{ uri: password.icon }} style={styles.iconImage} />
+            ) : (
+              <Text style={[styles.iconText, { color: c.foreground, fontFamily: fonts.bodySemiBold }]}>
+                {getDomainIcon()}
+              </Text>
+            )}
+          </View>
 
-            <View style={styles.middleSection}>
-              <View style={styles.titleRow}>
+          {/* Text content */}
+          <View style={styles.textContent}>
+            <Text
+              style={[styles.title, { color: c.foreground, fontFamily: fonts.bodySemiBold }]}
+              numberOfLines={1}
+            >
+              {password.title}
+            </Text>
+            <Text
+              style={[styles.username, { color: c.mutedForeground, fontFamily: fonts.body }]}
+              numberOfLines={1}
+            >
+              {password.username}
+            </Text>
+            {password.url && (
+              <View style={styles.urlRow}>
+                <Globe size={11} color={c.textTertiary} />
                 <Text
-                  style={[styles.title, { color: textColor }]}
+                  style={[styles.url, { color: c.textTertiary, fontFamily: fonts.body }]}
                   numberOfLines={1}
                 >
-                  {password.title}
+                  {password.url}
                 </Text>
               </View>
-              <Text
-                style={[styles.subtitle, { color: `${textColor}80` }]}
-                numberOfLines={1}
-              >
-                {password.username}
-              </Text>
-              {password.url && (
-                <View style={styles.urlRow}>
-                  <Globe size={12} color={`${textColor}60`} />
-                  <Text
-                    style={[styles.url, { color: `${textColor}60` }]}
-                    numberOfLines={1}
-                  >
-                    {password.url}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </Animated.View>
-        </TouchableOpacity>
-      </GestureDetector>
+            )}
+          </View>
 
-      {/* Favorite button outside gesture detector */}
-      <Pressable
-        style={styles.favoriteButton}
-        onPress={() => {
-          favoriteMutate();
-        }}
-      >
-        <Star
-          size={18}
-          color={password.isFavorite ? '#f59e0b' : `${textColor}40`}
-          fill={password.isFavorite ? '#f59e0b' : 'none'}
-        />
-      </Pressable>
+          {/* Favorite star */}
+          <Pressable
+            style={styles.favoriteButton}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              favoriteMutate();
+            }}
+          >
+            <Star
+              size={18}
+              color={password.isFavorite ? c.accentYellow : c.textTertiary}
+              fill={password.isFavorite ? c.accentYellow : 'none'}
+            />
+          </Pressable>
+        </Animated.View>
+      </GestureDetector>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    marginHorizontal: 20,
+    marginBottom: 8,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
   actionButtons: {
     position: 'absolute',
     right: 0,
@@ -273,49 +245,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  editButton: {
-    marginRight: 0,
-  },
-  deleteButton: {},
   content: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
+    borderRadius: 16,
   },
-  leftSection: {
-    marginRight: 12,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    overflow: 'hidden',
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
+    overflow: 'hidden',
   },
   iconImage: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
   },
   iconText: {
     fontSize: 18,
-    fontWeight: '600',
   },
-  middleSection: {
+  textContent: {
     flex: 1,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
-    flex: 1,
   },
-  subtitle: {
+  username: {
     fontSize: 14,
     marginTop: 2,
   },
@@ -330,10 +290,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   favoriteButton: {
-    position: 'absolute',
-    right: 16,
-    top: 16,
     padding: 8,
-    zIndex: 10,
+    marginLeft: 4,
   },
 });

@@ -6,5 +6,5 @@ import { BookIcon } from "lucide-react-native";
 export function FieldTitle() {
   const { control } = useFormContext<FormType>()
 
-  return <InputField control={control} name="title" label="标题" variant="outline" icon={BookIcon} />
+  return <InputField control={control} name="title" label="TITLE" variant="outline" icon={BookIcon} />
 }

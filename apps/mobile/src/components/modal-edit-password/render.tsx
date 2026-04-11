@@ -1,14 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Modal, Platform } from 'react-native';
+import {
+  Modal,
+  Platform,
+  View,
+  Pressable,
+  Text,
+  StyleSheet,
+  KeyboardAvoidingView,
+  ScrollView,
+  useColorScheme,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { PasswordForm } from '@/components/password-form';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
-import { Button } from '@/components/ui/button';
-import { Text } from '@/components/ui/text';
+import { PasswordForm, PasswordFormRef, FormType } from '@/components/password-form';
 import { useMutation } from '@tanstack/react-query';
 import { Password, usePasswordStore } from '@/store/passwordStore';
-import { PasswordFormRef, FormType } from '@/components/password-form';
-import { X } from 'lucide-react-native';
+import { Colors } from '@/theme/colors';
+import { fonts } from '@/theme/globals';
+import * as Haptics from 'expo-haptics';
 
 export function Render({
   initialValue,
@@ -20,31 +28,28 @@ export function Render({
   id: number;
 }) {
   const { updatePassword } = usePasswordStore();
+  const [visible, setVisible] = useState(true);
+  const formRef = useRef<PasswordFormRef>(null);
+  const scheme = useColorScheme() ?? 'light';
+  const c = Colors[scheme];
+
   const handleClose = useCallback(() => {
     setVisible(false);
   }, []);
 
-  const [visible, setVisible] = useState(true);
-
-  const formRef = useRef<PasswordFormRef>(null);
-
   const { mutate, isPending } = useMutation({
-    mutationFn: async (
-      data: Omit<Password, 'id' | 'created_at' | 'updated_at'>
-    ) => {
+    mutationFn: async (data: Omit<Password, 'id' | 'created_at' | 'updated_at'>) => {
       await updatePassword(id, data);
     },
     onSuccess: () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       handleClose();
     },
   });
 
   useEffect(() => {
-    // On Android, onClose is not called.
     if (Platform.OS === 'android' && !visible) {
-      setTimeout(() => {
-        onClose?.();
-      }, 300);
+      setTimeout(() => onClose?.(), 300);
     }
   }, [visible, onClose]);
 
@@ -56,33 +61,57 @@ export function Render({
       onRequestClose={handleClose}
       onDismiss={onClose}
     >
-      <SafeAreaView edges={['top', 'bottom']} className="flex-1">
-        <View style={styles.header}>
-          <Text style={styles.title}>编辑密码</Text>
-          <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-            <X size={24} color="#6b7280" />
-          </TouchableOpacity>
+      <SafeAreaView
+        edges={['top', 'bottom']}
+        style={[styles.container, { backgroundColor: c.background }]}
+      >
+        {/* Drag handle */}
+        <View style={styles.handleContainer}>
+          <View style={[styles.handle, { backgroundColor: c.border }]} />
         </View>
-        <View style={styles.form}>
-          <PasswordForm
-            ref={formRef}
-            onSubmit={mutate}
-            initialValue={initialValue}
-          />
-        </View>
-        <View style={styles.actions}>
-          <Button variant="outline" onPress={handleClose} disabled={isPending}>
-            <Text>取消</Text>
-          </Button>
-          <Button
-            onPress={() => {
-              formRef.current?.requestSubmit();
-            }}
-            loading={isPending}
+
+        {/* Header */}
+        <View style={[styles.header, { borderBottomColor: c.border }]}>
+          <Pressable onPress={handleClose} disabled={isPending}>
+            <Text style={[styles.cancelText, { color: c.accentBlue, fontFamily: fonts.body }]}>
+              Cancel
+            </Text>
+          </Pressable>
+          <Text style={[styles.title, { color: c.foreground, fontFamily: fonts.heading }]}>
+            Edit Password
+          </Text>
+          <Pressable
+            onPress={() => formRef.current?.requestSubmit()}
+            disabled={isPending}
           >
-            <Text>保存</Text>
-          </Button>
+            <Text style={[
+              styles.saveText,
+              { fontFamily: fonts.bodySemiBold },
+              isPending ? { color: c.textTertiary } : { color: c.accentBlue },
+            ]}>
+              {isPending ? 'Saving...' : 'Save'}
+            </Text>
+          </Pressable>
         </View>
+
+        {/* Form */}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.formWrapper}
+        >
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.formContent}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            <PasswordForm
+              ref={formRef}
+              onSubmit={mutate}
+              initialValue={initialValue}
+            />
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </Modal>
   );
@@ -91,33 +120,42 @@ export function Render({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+  },
+  handleContainer: {
+    alignItems: 'center',
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  handle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+  },
+  cancelText: {
+    fontSize: 15,
   },
   title: {
     fontSize: 20,
-    fontWeight: '600',
-    color: '#1f2937',
   },
-  closeButton: {
-    padding: 4,
+  saveText: {
+    fontSize: 15,
   },
-  form: {
+  formWrapper: {
     flex: 1,
-    padding: 20,
   },
-  actions: {
-    flexDirection: 'row',
-    gap: 12,
+  scrollView: {
+    flex: 1,
+  },
+  formContent: {
     padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    paddingBottom: 40,
   },
 });

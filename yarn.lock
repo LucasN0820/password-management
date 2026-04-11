@@ -1688,6 +1688,27 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@expo-google-fonts/caveat@npm:^0.4.2":
+  version: 0.4.2
+  resolution: "@expo-google-fonts/caveat@npm:0.4.2"
+  checksum: 10c0/2cd1d9570de0eaa196f324678156113efeb9833d10c90e874bed273993018021f192fac4174e82e5cd35002bc2db1caf680db6e5c37f122b97ccca60979859ab
+  languageName: node
+  linkType: hard
+
+"@expo-google-fonts/jetbrains-mono@npm:^0.4.1":
+  version: 0.4.1
+  resolution: "@expo-google-fonts/jetbrains-mono@npm:0.4.1"
+  checksum: 10c0/cd141277f9577803fb83d4ed0c74b92b3333ef6a60a0e46b3a38111914c0c8b42d6dc074bcc32f14b12b09bb3480248517afe27d8b227a7e362bd9d679102a30
+  languageName: node
+  linkType: hard
+
+"@expo-google-fonts/nunito@npm:^0.4.2":
+  version: 0.4.2
+  resolution: "@expo-google-fonts/nunito@npm:0.4.2"
+  checksum: 10c0/b22712e9892d47561b0d96bfb625fea24eeda3f34531bee88e781827892740e063dcde1ddf4615b097ba0b436e765f5101fbc4788430574369b6e5f4c8860eb3
+  languageName: node
+  linkType: hard
+
 "@expo/cli@npm:54.0.23":
   version: 54.0.23
   resolution: "@expo/cli@npm:54.0.23"
@@ -16175,6 +16196,9 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "password-mobile@workspace:apps/mobile"
   dependencies:
+    "@expo-google-fonts/caveat": "npm:^0.4.2"
+    "@expo-google-fonts/jetbrains-mono": "npm:^0.4.1"
+    "@expo-google-fonts/nunito": "npm:^0.4.2"
     "@expo/html-elements": "npm:^0.10.1"
     "@expo/vector-icons": "npm:^15.0.3"
     "@hookform/resolvers": "npm:^3.9.1"

@@ -1,8 +1,20 @@
-import { useState } from 'react';
-import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import { RefreshCw, Copy, Check } from 'lucide-react-native';
+import { useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  Pressable,
+  StyleSheet,
+  ScrollView,
+  useColorScheme,
+  Switch,
+} from 'react-native';
+import { RefreshCw, Copy, Check, Save, Minus, Plus } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
-import { useColor } from '@/hooks/useColor';
+import * as Haptics from 'expo-haptics';
+import { Colors } from '@/theme/colors';
+import { fonts } from '@/theme/globals';
+import { CopyToast } from '@/components/copy-toast';
+import { ModalAddPassword } from '@/components/modal-add-password';
 
 export function GeneratorScreen() {
   const [length, setLength] = useState(16);
@@ -12,16 +24,13 @@ export function GeneratorScreen() {
   const [includeSymbols, setIncludeSymbols] = useState(true);
   const [generatedPassword, setGeneratedPassword] = useState('');
   const [copied, setCopied] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [showSaveModal, setShowSaveModal] = useState(false);
 
-  // Color system
-  const backgroundColor = useColor('background');
-  const cardColor = useColor('card');
-  const textColor = useColor('text');
-  const borderColor = useColor('border');
-  const primaryColor = useColor('primary');
-  const mutedTextColor = `${textColor}60`;
+  const scheme = useColorScheme() ?? 'light';
+  const c = Colors[scheme];
 
-  const generatePassword = () => {
+  const generatePassword = useCallback(() => {
     const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const lowercase = 'abcdefghijklmnopqrstuvwxyz';
     const numbers = '0123456789';
@@ -35,298 +44,409 @@ export function GeneratorScreen() {
 
     if (chars === '') {
       setGeneratedPassword('');
-      Alert.alert('错误', '请至少选择一种字符类型');
       return;
     }
 
-    let password = '';
+    let pw = '';
     for (let i = 0; i < length; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
+      pw += chars.charAt(Math.floor(Math.random() * chars.length));
     }
-    setGeneratedPassword(password);
+    setGeneratedPassword(pw);
     setCopied(false);
-  };
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+  }, [length, includeUppercase, includeLowercase, includeNumbers, includeSymbols]);
 
   const copyToClipboard = async () => {
     if (generatedPassword) {
-      try {
-        await Clipboard.setStringAsync(generatedPassword);
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      } catch (error) {
-        Alert.alert('错误', '复制失败');
-      }
+      await Clipboard.setStringAsync(generatedPassword);
+      setCopied(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setToastVisible(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
-  const OptionToggle = ({
-    label,
-    value,
-    onToggle,
-  }: {
-    label: string;
-    value: boolean;
-    onToggle: () => void;
-  }) => (
-    <TouchableOpacity onPress={onToggle} style={styles.optionRow}>
-      <View style={[styles.checkbox, value && styles.checkboxChecked]}>
-        {value && <Text style={styles.checkmark}>✓</Text>}
-      </View>
-      <Text style={styles.optionLabel}>{label}</Text>
-    </TouchableOpacity>
-  );
+  const getStrength = () => {
+    if (!generatedPassword) return { label: '', color: c.textTertiary, ratio: 0 };
+    let score = 0;
+    if (generatedPassword.length >= 12) score++;
+    if (generatedPassword.length >= 16) score++;
+    if (/[A-Z]/.test(generatedPassword)) score++;
+    if (/[a-z]/.test(generatedPassword)) score++;
+    if (/[0-9]/.test(generatedPassword)) score++;
+    if (/[^A-Za-z0-9]/.test(generatedPassword)) score++;
 
-  const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: backgroundColor,
-    },
-    header: {
-      padding: 20,
-      borderBottomWidth: 1,
-      borderBottomColor: borderColor,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: '700',
-      color: textColor,
-    },
-    content: {
-      flex: 1,
-      padding: 20,
-    },
-    passwordDisplay: {
-      backgroundColor: cardColor,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 24,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      borderWidth: 1,
-      borderColor: borderColor,
-    },
-    passwordText: {
-      flex: 1,
-      fontSize: 16,
-      fontFamily: 'monospace',
-      color: textColor,
-      marginRight: 12,
-      fontWeight: '500',
-    },
-    copyButton: {
-      backgroundColor: primaryColor,
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      borderRadius: 8,
-      gap: 6,
-    },
-    copyButtonDisabled: {
-      backgroundColor: mutedTextColor,
-    },
-    copyButtonText: {
-      color: '#ffffff',
-      fontSize: 14,
-      fontWeight: '500',
-    },
-    section: {
-      marginBottom: 24,
-    },
-    sectionTitle: {
-      fontSize: 18,
-      fontWeight: '600',
-      marginBottom: 16,
-      color: textColor,
-    },
-    slider: {
-      width: '100%',
-      height: 40,
-    },
-    thumb: {
-      width: 20,
-      height: 20,
-      backgroundColor: primaryColor,
-    },
-    lengthControl: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: 16,
-      marginVertical: 12,
-    },
-    lengthButton: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
-      backgroundColor: primaryColor,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    lengthButtonText: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: '#ffffff',
-    },
-    lengthValue: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: textColor,
-      minWidth: 40,
-      textAlign: 'center',
-    },
-    lengthLabels: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: -8,
-    },
-    lengthLabel: {
-      fontSize: 12,
-      color: mutedTextColor,
-    },
-    optionRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingVertical: 12,
-      backgroundColor: cardColor,
-      borderRadius: 12,
-      paddingHorizontal: 16,
-      marginBottom: 8,
-      borderWidth: 1,
-      borderColor: borderColor,
-    },
-    checkbox: {
-      width: 20,
-      height: 20,
-      borderWidth: 2,
-      borderColor: borderColor,
-      borderRadius: 4,
-      marginRight: 12,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    checkboxChecked: {
-      backgroundColor: primaryColor,
-      borderColor: primaryColor,
-    },
-    checkmark: {
-      color: '#ffffff',
-      fontSize: 12,
-      fontWeight: 'bold',
-    },
-    optionLabel: {
-      fontSize: 16,
-      color: textColor,
-      fontWeight: '500',
-    },
-    generateButton: {
-      backgroundColor: primaryColor,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 16,
-      borderRadius: 12,
-      gap: 8,
-      marginTop: 'auto',
-    },
-    generateButtonText: {
-      color: '#ffffff',
-      fontSize: 16,
-      fontWeight: '600',
-    },
-  });
+    if (score <= 2) return { label: 'Weak', color: c.accentRed, ratio: 0.25 };
+    if (score <= 4) return { label: 'Medium', color: c.accentYellow, ratio: 0.6 };
+    return { label: 'Strong', color: c.accentGreen, ratio: 1 };
+  };
+
+  const strength = getStrength();
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>密码生成器</Text>
-      </View>
+    <>
+      <ScrollView
+        style={[styles.container, { backgroundColor: c.background }]}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Page title */}
+        <Text style={[styles.pageTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
+          Generator
+        </Text>
 
-      <View style={styles.content}>
-        {/* Generated Password Display */}
-        <View style={styles.passwordDisplay}>
-          <Text style={styles.passwordText}>
-            {generatedPassword || '点击生成按钮创建密码'}
-          </Text>
-          <TouchableOpacity
-            onPress={copyToClipboard}
-            style={[
-              styles.copyButton,
-              !generatedPassword && styles.copyButtonDisabled,
-            ]}
-            disabled={!generatedPassword}
-          >
-            {copied ? (
-              <Check size={20} color="#ffffff" />
-            ) : (
-              <Copy size={20} color="#ffffff" />
-            )}
-            <Text style={styles.copyButtonText}>
-              {copied ? '已复制' : '复制'}
+        {/* Password display card */}
+        <View style={[styles.passwordCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+          <Pressable onPress={generatedPassword ? copyToClipboard : undefined}>
+            <Text
+              style={[
+                styles.passwordText,
+                { color: c.foreground, fontFamily: fonts.mono },
+                !generatedPassword && { color: c.textTertiary, fontFamily: fonts.body },
+              ]}
+              numberOfLines={2}
+            >
+              {generatedPassword || 'Tap generate to create a password'}
             </Text>
-          </TouchableOpacity>
+          </Pressable>
+
+          {/* Strength bar */}
+          {generatedPassword && (
+            <View style={styles.strengthSection}>
+              <View style={[styles.strengthTrack, { backgroundColor: c.border }]}>
+                <View style={[
+                  styles.strengthFill,
+                  { backgroundColor: strength.color, width: `${strength.ratio * 100}%` },
+                ]} />
+              </View>
+              <Text style={[styles.strengthLabel, { color: strength.color, fontFamily: fonts.bodySemiBold }]}>
+                {strength.label}
+              </Text>
+            </View>
+          )}
+
+          {/* Action buttons */}
+          <View style={styles.passwordActions}>
+            <Pressable
+              onPress={generatePassword}
+              style={[styles.regenerateBtn, { borderColor: c.foreground }]}
+            >
+              <RefreshCw size={16} color={c.foreground} />
+              <Text style={[styles.regenerateText, { color: c.foreground, fontFamily: fonts.bodySemiBold }]}>
+                Regenerate
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={copyToClipboard}
+              disabled={!generatedPassword}
+              style={[
+                styles.copyBtn,
+                { backgroundColor: generatedPassword ? c.foreground : c.border },
+              ]}
+            >
+              {copied ? (
+                <Check size={18} color={c.background} />
+              ) : (
+                <Copy size={18} color={generatedPassword ? c.background : c.textTertiary} />
+              )}
+            </Pressable>
+          </View>
         </View>
 
-        {/* Length Slider */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>密码长度: {length}</Text>
-          <View style={styles.lengthControl}>
-            <TouchableOpacity
-              onPress={() => setLength(Math.max(4, length - 1))}
-              style={styles.lengthButton}
+        {/* Length section */}
+        <Text style={[styles.sectionTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
+          Length
+        </Text>
+        <View style={[styles.sliderCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+          <View style={styles.lengthControls}>
+            <Pressable
+              onPress={() => {
+                setLength(Math.max(4, length - 1));
+                Haptics.selectionAsync();
+              }}
+              onLongPress={() => {
+                setLength(Math.max(4, length - 5));
+                Haptics.selectionAsync();
+              }}
+              style={[styles.lengthButton, { backgroundColor: c.foreground }]}
             >
-              <Text style={styles.lengthButtonText}>-</Text>
-            </TouchableOpacity>
-            <Text style={styles.lengthValue}>{length}</Text>
-            <TouchableOpacity
-              onPress={() => setLength(Math.min(64, length + 1))}
-              style={styles.lengthButton}
+              <Minus size={16} color={c.background} />
+            </Pressable>
+
+            <View style={styles.lengthDisplay}>
+              <Text style={[styles.sliderValue, { color: c.foreground, fontFamily: fonts.bodySemiBold }]}>
+                {length}
+              </Text>
+              {/* Visual progress bar */}
+              <View style={[styles.lengthTrack, { backgroundColor: c.border }]}>
+                <View style={[
+                  styles.lengthFill,
+                  { backgroundColor: c.foreground, width: `${((length - 4) / 60) * 100}%` },
+                ]} />
+              </View>
+            </View>
+
+            <Pressable
+              onPress={() => {
+                setLength(Math.min(64, length + 1));
+                Haptics.selectionAsync();
+              }}
+              onLongPress={() => {
+                setLength(Math.min(64, length + 5));
+                Haptics.selectionAsync();
+              }}
+              style={[styles.lengthButton, { backgroundColor: c.foreground }]}
             >
-              <Text style={styles.lengthButtonText}>+</Text>
-            </TouchableOpacity>
+              <Plus size={16} color={c.background} />
+            </Pressable>
           </View>
-          <View style={styles.lengthLabels}>
-            <Text style={styles.lengthLabel}>最小: 4</Text>
-            <Text style={styles.lengthLabel}>最大: 64</Text>
+          <View style={styles.sliderLabels}>
+            <Text style={[styles.sliderLabel, { color: c.textTertiary, fontFamily: fonts.body }]}>Min: 4</Text>
+            <Text style={[styles.sliderLabel, { color: c.textTertiary, fontFamily: fonts.body }]}>Max: 64</Text>
           </View>
         </View>
 
-        {/* Character Options */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>字符类型</Text>
-          <OptionToggle
-            label="大写字母 (A-Z)"
+        {/* Characters section */}
+        <Text style={[styles.sectionTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
+          Characters
+        </Text>
+        <View style={[styles.toggleCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+          <ToggleRow
+            label="Uppercase (A-Z)"
             value={includeUppercase}
             onToggle={() => setIncludeUppercase(!includeUppercase)}
+            colors={c}
+            showBorder
           />
-          <OptionToggle
-            label="小写字母 (a-z)"
+          <ToggleRow
+            label="Lowercase (a-z)"
             value={includeLowercase}
             onToggle={() => setIncludeLowercase(!includeLowercase)}
+            colors={c}
+            showBorder
           />
-          <OptionToggle
-            label="数字 (0-9)"
+          <ToggleRow
+            label="Numbers (0-9)"
             value={includeNumbers}
             onToggle={() => setIncludeNumbers(!includeNumbers)}
+            colors={c}
+            showBorder
           />
-          <OptionToggle
-            label="特殊符号 (!@#$...)"
+          <ToggleRow
+            label="Symbols (!@#$)"
             value={includeSymbols}
             onToggle={() => setIncludeSymbols(!includeSymbols)}
+            colors={c}
           />
         </View>
 
-        {/* Generate Button */}
-        <TouchableOpacity
-          onPress={generatePassword}
-          style={styles.generateButton}
-        >
-          <RefreshCw size={20} color="#ffffff" />
-          <Text style={styles.generateButtonText}>生成密码</Text>
-        </TouchableOpacity>
-      </View>
+        {/* Save to vault */}
+        {generatedPassword && (
+          <Pressable
+            onPress={() => setShowSaveModal(true)}
+            style={[styles.saveButton, { backgroundColor: c.foreground }]}
+          >
+            <Save size={18} color={c.background} />
+            <Text style={[styles.saveButtonText, { color: c.background, fontFamily: fonts.bodySemiBold }]}>
+              Save to Vault
+            </Text>
+          </Pressable>
+        )}
+      </ScrollView>
+
+      <CopyToast
+        visible={toastVisible}
+        message="Password copied"
+        onHide={() => setToastVisible(false)}
+      />
+
+      {showSaveModal && (
+        <ModalAddPassword
+          onClose={() => setShowSaveModal(false)}
+          initialPassword={generatedPassword}
+        />
+      )}
+    </>
+  );
+}
+
+function ToggleRow({
+  label,
+  value,
+  onToggle,
+  colors: c,
+  showBorder,
+}: {
+  label: string;
+  value: boolean;
+  onToggle: () => void;
+  colors: typeof Colors.light;
+  showBorder?: boolean;
+}) {
+  return (
+    <View style={[
+      styles.toggleRow,
+      showBorder && { borderBottomWidth: 1, borderBottomColor: c.border },
+    ]}>
+      <Text style={[styles.toggleLabel, { color: c.foreground, fontFamily: fonts.body }]}>
+        {label}
+      </Text>
+      <Switch
+        value={value}
+        onValueChange={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          onToggle();
+        }}
+        trackColor={{ false: c.border, true: c.foreground }}
+        thumbColor="#FFFFFF"
+      />
     </View>
   );
 }
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 40,
+  },
+  pageTitle: {
+    fontSize: 32,
+    marginBottom: 20,
+  },
+  passwordCard: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 24,
+    marginBottom: 28,
+  },
+  passwordText: {
+    fontSize: 18,
+    textAlign: 'center',
+    lineHeight: 28,
+    minHeight: 56,
+  },
+  strengthSection: {
+    marginTop: 16,
+    marginBottom: 16,
+  },
+  strengthTrack: {
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  strengthFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  strengthLabel: {
+    fontSize: 13,
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  passwordActions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 4,
+  },
+  regenerateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1,
+  },
+  regenerateText: {
+    fontSize: 14,
+  },
+  copyBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sectionTitle: {
+    fontSize: 22,
+    marginBottom: 12,
+  },
+  sliderCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 20,
+    marginBottom: 28,
+  },
+  lengthControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 12,
+  },
+  lengthButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  lengthDisplay: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 8,
+  },
+  sliderValue: {
+    fontSize: 20,
+  },
+  lengthTrack: {
+    width: '100%',
+    height: 4,
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  lengthFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: -4,
+  },
+  sliderLabel: {
+    fontSize: 12,
+  },
+  toggleCard: {
+    borderRadius: 16,
+    borderWidth: 1,
+    overflow: 'hidden',
+    marginBottom: 28,
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+  },
+  toggleLabel: {
+    fontSize: 15,
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    height: 52,
+    borderRadius: 16,
+  },
+  saveButtonText: {
+    fontSize: 15,
+  },
+});
