@@ -3,6 +3,9 @@ name: CI - Type Check, Prettier & Build
 on:
   push:
     branches:
+      - '**'
+  pull_request:
+    branches:
       - main
 
 jobs:

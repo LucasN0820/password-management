@@ -21,6 +21,6 @@
     }
   },
   "include": ["src", "vite/client", "electron"],
-  "exclude": ["./src/components/ui/**/*.tsx"],
+  "exclude": [],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

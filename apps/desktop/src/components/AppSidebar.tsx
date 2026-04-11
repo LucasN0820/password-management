@@ -1,7 +1,5 @@
-
-import { Command, Lock, Shield } from "lucide-react"
-import * as React from "react"
-import { useNavigate } from "react-router";
+import { Home, Key, Search, Shield } from 'lucide-react'
+import { useLocation, useNavigate } from 'react-router'
 import {
   Sidebar,
   SidebarContent,
@@ -12,92 +10,83 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
-} from "@/components/ui/sidebar"
-import { NavUser } from "./NavUser"
+} from '@repo/ui/primitives/sidebar'
+import { NavUser } from './NavUser'
 
-// This is sample data
-const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
-  navMain: [
-    {
-      title: "Password",
-      url: "/password",
-      icon: Lock,
-      isActive: false,
-    },
-    {
-      title: "Generator",
-      url: "/generator",
-      icon: Shield,
-      isActive: false,
-    },
-  ],
+const navItems = [
+  { title: 'Home', url: '/', icon: Home },
+  { title: 'Passwords', url: '/password', icon: Key },
+  { title: 'Generator', url: '/generator', icon: Shield },
+]
+
+const user = {
+  name: 'Lucas',
+  email: 'lucas@passvault.app',
+  avatar: '',
 }
 
 export function AppSidebar() {
-  // Note: I'm using state to show active item.
-  // IRL you should use the url/router.
-  const [activeItem, setActiveItem] = React.useState(data.navMain[0])
-  const { setOpen } = useSidebar()
+  const location = useLocation()
   const navigate = useNavigate()
 
   return (
-    <Sidebar
-      collapsible="none"
-      className="w-[calc(var(--sidebar-width-icon)+1px)]! border-r"
-    >
-      <SidebarHeader>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lg" className="md:h-8 md:p-0">
-              <a href="/">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <Command className="size-4" />
-                </div>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-medium">Acme Inc</span>
-                  <span className="truncate text-xs">Enterprise</span>
-                </div>
-              </a>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+    <Sidebar className="border-r border-border">
+      <SidebarHeader className="px-4 py-3">
+        <a
+          href="/"
+          className="flex items-center gap-2 no-underline"
+          onClick={(e) => {
+            e.preventDefault()
+            navigate('/')
+          }}
+        >
+          <span className="text-xl">🔐</span>
+          <span className="font-heading text-xl font-bold text-foreground">
+            PassVault
+          </span>
+        </a>
       </SidebarHeader>
-      <SidebarContent>
+
+      <SidebarContent className="px-2">
         <SidebarGroup>
-          <SidebarGroupContent className="px-1.5 md:px-0">
+          <SidebarGroupContent>
             <SidebarMenu>
-              {data.navMain.map((item) => 
-                { return <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    isActive={activeItem?.title === item.title}
-                    className="px-2.5 md:px-2"
-                    tooltip={{
-                      children: item.title,
-                      hidden: false,
-                    }}
-                    onClick={() => {
-                      setActiveItem(item)
-                      setOpen(true)
-                      navigate(item.url)
-                    }}
-                  >
-                    <item.icon />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem> }
-              )}
+              {navItems.map((item) => {
+                const isActive =
+                  item.url === '/'
+                    ? location.pathname === '/'
+                    : location.pathname.startsWith(item.url)
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      isActive={isActive}
+                      className="h-9 px-3 rounded-lg transition-colors duration-150"
+                      onClick={() => navigate(item.url)}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span className="text-sm">{item.title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
-        <NavUser user={data.user} />
+
+      <SidebarFooter className="px-2 pb-3 space-y-2">
+        <button
+          className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent transition-colors duration-150"
+          onClick={() => navigate('/search')}
+        >
+          <Search className="h-4 w-4" />
+          <span>Quick Search</span>
+          <kbd className="ml-auto font-mono text-[10px] text-text-tertiary bg-surface px-1.5 py-0.5 rounded border border-border">
+            ⌘⇧P
+          </kbd>
+        </button>
+        <NavUser user={user} />
       </SidebarFooter>
     </Sidebar>
   )

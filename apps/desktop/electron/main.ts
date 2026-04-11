@@ -63,6 +63,9 @@ function createWindow() {
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show()
+    if (isDev) {
+      mainWindow?.webContents.openDevTools()
+    }
   })
 
   mainWindow?.on('closed', () => {

@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router';
 import { AppSidebar } from './components/AppSidebar';
-import { SidebarProvider } from './components/ui/sidebar';
-import { Toaster } from './components/ui/toaster';
+import { SidebarProvider } from '@repo/ui/primitives/sidebar';
+import { Toaster } from '@repo/ui/primitives/toaster';
 
 function App() {
   return (
@@ -10,13 +10,13 @@ function App() {
       <SidebarProvider
         style={
           {
-            '--sidebar-width': '350px',
+            '--sidebar-width': '240px',
           } as React.CSSProperties
         }
       >
         <div className='app'>
           <AppSidebar />
-          <div className='flex-1 overflow-auto p-4'>
+          <div className='flex-1 overflow-auto'>
             <Outlet />
           </div>
         </div>

@@ -1,59 +1,15 @@
 import { motion } from 'framer-motion'
-import SpotlightSearch from "@/components/SpotlightSearch";
-
-const pageVariants = {
-  initial: { opacity: 0, scale: 0.95 },
-  animate: {
-    opacity: 1,
-    scale: 1,
-    transition: {
-      duration: 0.3,
-      ease: "easeOut" as const
-    }
-  },
-  exit: {
-    opacity: 0,
-    scale: 0.95,
-    transition: {
-      duration: 0.2
-    }
-  }
-}
-
-const overlayVariants = {
-  initial: { opacity: 0 },
-  animate: {
-    opacity: 1,
-    transition: {
-      duration: 0.2,
-      ease: "easeOut" as const
-    }
-  },
-  exit: {
-    opacity: 0,
-    transition: {
-      duration: 0.15
-    }
-  }
-}
+import SpotlightSearch from '@/components/SpotlightSearch'
 
 export function SearchPage() {
   return (
     <motion.div
       className="spotlight-overlay"
-      initial="initial"
-      animate="animate"
-      exit="exit"
-      variants={pageVariants}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1, transition: { duration: 0.15 } }}
+      exit={{ opacity: 0, transition: { duration: 0.1 } }}
     >
-      <motion.div
-        variants={overlayVariants}
-        initial="initial"
-        animate="animate"
-        exit="exit"
-      >
-        <SpotlightSearch />
-      </motion.div>
+      <SpotlightSearch />
     </motion.div>
   )
 }

@@ -1,6 +1,6 @@
-import { Globe, Lock,Search, Star } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/utils'
+import { Globe, Lock, Search, Star } from 'lucide-react'
+import { Input } from '@repo/ui/primitives/input'
+import { cn } from '@repo/ui/lib/utils'
 import { usePasswordStore } from '@/store/passwordStore'
 import { ButtonAddPassword } from './button-add-password'
 
@@ -11,97 +11,109 @@ export function PasswordList() {
     searchQuery,
     setSearchQuery,
     setSelectedPassword,
-    toggleFavorite
+    toggleFavorite,
   } = usePasswordStore()
 
   return (
-    <div className="w-80 h-full bg-background border-r border-border/50 flex flex-col">
-      <div className="p-4 border-b border-border/30">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-            <Input
-              type="text"
-              placeholder="搜索密码..."
-              value={searchQuery}
-              className="w-full pl-9 pr-4 h-10 rounded-lg border-border/50 bg-background/50 backdrop-blur-sm text-sm transition-all duration-200 focus:border-border focus:bg-background focus:shadow-sm placeholder:text-muted-foreground/60"
-              onChange={(e) => { setSearchQuery(e.target.value); }}
-            />
-          </div>
+    <div className="w-80 h-full bg-background border-r border-border flex flex-col">
+      <div className="p-4 border-b border-border">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-heading text-xl font-bold text-foreground">
+            Passwords
+          </h2>
           <ButtonAddPassword />
+        </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+          <Input
+            type="text"
+            placeholder="Search passwords..."
+            value={searchQuery}
+            className="w-full pl-9 pr-4 h-9 rounded-lg border-border bg-surface text-sm transition-colors duration-150 focus:border-[var(--accent-blue)] focus:bg-background placeholder:text-text-tertiary"
+            onChange={(e) => {
+              setSearchQuery(e.target.value)
+            }}
+          />
+        </div>
+        <div className="mt-2 text-xs text-text-tertiary">
+          {filteredPasswords.length} passwords
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto py-1">
         {filteredPasswords.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground p-8">
-            <Lock className="h-12 w-12 opacity-30" />
-            <p className="text-sm font-medium">暂无密码记录</p>
-            <span className="text-xs">点击上方"添加密码"按钮添加</span>
+            <Lock className="h-10 w-10 opacity-30" />
+            <p className="text-sm">No passwords found</p>
           </div>
         ) : (
-          <ul className="divide-y divide-border/20">
-            {filteredPasswords.map((password) => 
-              { return <li key={password.id}>
+          <div className="px-2 space-y-0.5">
+            {filteredPasswords.map((password) => (
+              <div
+                key={password.id}
+                className={cn(
+                  'group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors duration-150',
+                  selectedPassword?.id === password.id
+                    ? 'bg-selected-bg'
+                    : 'hover:bg-accent'
+                )}
+                onClick={() => {
+                  setSelectedPassword(password)
+                }}
+              >
                 <div
                   className={cn(
-                    "group flex items-center gap-3 px-3 py-3 cursor-pointer transition-all duration-200",
-                    "hover:bg-accent/50 hover:shadow-sm",
+                    'w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 overflow-hidden',
                     selectedPassword?.id === password.id
-                      ? "bg-accent border-l-2 border-primary"
-                      : "border-l-2 border-transparent hover:border-primary/30"
+                      ? 'bg-[#D4EDFA] border-[#D4EDFA]'
+                      : 'bg-surface border-border'
                   )}
-                  onClick={() => { setSelectedPassword(password); }}
                 >
-                  <div className="w-10 h-10 rounded-lg border border-border/40 bg-card/50 backdrop-blur-sm flex items-center justify-center text-muted-foreground shrink-0 overflow-hidden transition-all duration-200 group-hover:border-border group-hover:shadow-md">
-                    {password.icon ? (
-                      <img
-                        src={password.icon}
-                        alt={password.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : password.url ? (
-                      <Globe className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-                    ) : (
-                      <Lock className="h-4 w-4 transition-transform duration-200 group-hover:scale-110" />
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-sm truncate mb-0.5 group-hover:text-foreground transition-colors duration-200">
-                      {password.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground truncate group-hover:text-muted-foreground/80 transition-colors duration-200">
-                      {password.username || '无用户名'}
-                    </p>
-                  </div>
-
-                  {password.isFavorite && (
-                    <div className="shrink-0">
-                      <Star className="h-3.5 w-3.5 fill-primary text-primary opacity-70" />
-                    </div>
-                  )}
-
-                  <button
-                    className="p-1.5 rounded-lg hover:bg-background/80 transition-all duration-200 shrink-0 opacity-0 group-hover:opacity-100 hover:scale-105"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      toggleFavorite(password)
-                    }}
-                  >
-                    <Star
-                      className={cn(
-                        "h-4 w-4 transition-all duration-300",
-                        password.isFavorite
-                          ? "fill-primary text-primary"
-                          : "text-muted-foreground hover:text-primary"
-                      )}
+                  {password.icon ? (
+                    <img
+                      src={password.icon}
+                      alt={password.title}
+                      className="w-full h-full object-cover"
                     />
-                  </button>
+                  ) : password.url ? (
+                    <Globe className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Lock className="h-4 w-4 text-muted-foreground" />
+                  )}
                 </div>
-              </li> }
-            )}
-          </ul>
+
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm truncate text-foreground">
+                    {password.title}
+                  </h3>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {password.username || 'No username'}
+                  </p>
+                </div>
+
+                {password.isFavorite && (
+                  <Star className="h-3.5 w-3.5 text-[var(--accent-yellow)] fill-current shrink-0" />
+                )}
+
+                <button
+                  className="p-1 rounded-md hover:bg-background transition-colors duration-150 shrink-0 opacity-0 group-hover:opacity-100"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    toggleFavorite(password)
+                  }}
+                >
+                  <Star
+                    className={cn(
+                      'h-3.5 w-3.5 transition-colors duration-150',
+                      password.isFavorite
+                        ? 'fill-[var(--accent-yellow)] text-[var(--accent-yellow)]'
+                        : 'text-muted-foreground hover:text-[var(--accent-yellow)]'
+                    )}
+                  />
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
