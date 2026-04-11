@@ -213,20 +213,22 @@ export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props)
         </Animated.View>
       </GestureDetector>
 
-      {/* Favorite star — outside GestureDetector to avoid tap conflict */}
-      <Pressable
-        style={styles.favoriteButtonOverlay}
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          favoriteMutate();
-        }}
-      >
-        <Star
-          size={18}
-          color={password.isFavorite ? c.accentYellow : c.textTertiary}
-          fill={password.isFavorite ? c.accentYellow : 'none'}
-        />
-      </Pressable>
+      {/* Favorite star — outside GestureDetector to avoid tap conflict, follows swipe */}
+      <Animated.View style={[styles.favoriteButtonOverlay, animatedStyles]}>
+        <Pressable
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            favoriteMutate();
+          }}
+          style={styles.favoriteButtonHit}
+        >
+          <Star
+            size={18}
+            color={password.isFavorite ? c.accentYellow : c.textTertiary}
+            fill={password.isFavorite ? c.accentYellow : 'none'}
+          />
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }
@@ -308,7 +310,9 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    width: 34,
     zIndex: 200,
+  },
+  favoriteButtonHit: {
+    padding: 8,
   },
 });
