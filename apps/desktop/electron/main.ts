@@ -45,9 +45,14 @@ function createWindow() {
     ? join(__dirname, '../public/icon-512.png')
     : join(process.resourcesPath, 'icon-512.png')
 
-  const appIcon = existsSync(iconPath)
-    ? nativeImage.createFromPath(iconPath)
-    : nativeImage.createEmpty()
+  let appIcon = nativeImage.createEmpty()
+  try {
+    if (existsSync(iconPath)) {
+      appIcon = nativeImage.createFromPath(iconPath)
+    }
+  } catch (error) {
+    console.warn('Failed to load app icon:', error)
+  }
 
   // macOS: set Dock icon explicitly
   if (process.platform === 'darwin' && app.dock) {

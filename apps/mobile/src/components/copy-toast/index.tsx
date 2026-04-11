@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Text, StyleSheet, useColorScheme } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -24,6 +24,11 @@ export function CopyToast({ visible, message = 'Copied to clipboard', onHide }: 
   const insets = useSafeAreaInsets();
   const translateY = useSharedValue(-100);
   const opacity = useSharedValue(0);
+  const onHideRef = useRef(onHide);
+
+  useEffect(() => {
+    onHideRef.current = onHide;
+  }, [onHide]);
 
   useEffect(() => {
     if (visible) {
@@ -33,10 +38,10 @@ export function CopyToast({ visible, message = 'Copied to clipboard', onHide }: 
         withDelay(1500, withTiming(0, { duration: 200 }))
       );
       // Auto-hide after animation
-      const timer = setTimeout(onHide, 1900);
+      const timer = setTimeout(() => onHideRef.current(), 1900);
       return () => clearTimeout(timer);
     }
-  }, [visible, onHide]);
+  }, [visible]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],

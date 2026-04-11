@@ -37,6 +37,11 @@ export function ActionSheet({ visible, onClose, options }: Props) {
   const c = Colors[scheme];
   const translateY = useSharedValue(400);
   const overlayOpacity = useSharedValue(0);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (visible) {
@@ -60,10 +65,10 @@ export function ActionSheet({ visible, onClose, options }: Props) {
 
   const handleOptionPress = useCallback((option: ActionSheetOption) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onClose();
+    onCloseRef.current();
     // Delay action to let sheet animate out
     timeoutRef.current = setTimeout(option.onPress, 200);
-  }, [onClose]);
+  }, []);
 
   useEffect(() => {
     return () => {

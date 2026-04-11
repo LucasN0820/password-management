@@ -18,7 +18,7 @@ import {
   GestureDetector,
   Pressable,
 } from 'react-native-gesture-handler';
-import { useRef } from 'react';
+import { useMemo, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { Edit, Trash2, Star, Globe } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
@@ -132,7 +132,10 @@ export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props)
     })
     .runOnJS(true);
 
-  const gesture = Gesture.Race(pan, Gesture.Exclusive(longPress, tap));
+  const gesture = useMemo(
+    () => Gesture.Race(pan, Gesture.Exclusive(longPress, tap)),
+    [pan, longPress, tap]
+  );
 
   const getDomainIcon = () => {
     if (password.url) {
@@ -205,22 +208,25 @@ export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props)
             )}
           </View>
 
-          {/* Favorite star */}
-          <Pressable
-            style={styles.favoriteButton}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              favoriteMutate();
-            }}
-          >
-            <Star
-              size={18}
-              color={password.isFavorite ? c.accentYellow : c.textTertiary}
-              fill={password.isFavorite ? c.accentYellow : 'none'}
-            />
-          </Pressable>
+          {/* Spacer for favorite button area */}
+          <View style={styles.favoriteButton} />
         </Animated.View>
       </GestureDetector>
+
+      {/* Favorite star — outside GestureDetector to avoid tap conflict */}
+      <Pressable
+        style={styles.favoriteButtonOverlay}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          favoriteMutate();
+        }}
+      >
+        <Star
+          size={18}
+          color={password.isFavorite ? c.accentYellow : c.textTertiary}
+          fill={password.isFavorite ? c.accentYellow : 'none'}
+        />
+      </Pressable>
     </View>
   );
 }
@@ -292,7 +298,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   favoriteButton: {
-    padding: 8,
+    width: 34,
     marginLeft: 4,
+  },
+  favoriteButtonOverlay: {
+    position: 'absolute',
+    right: 16,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 34,
+    zIndex: 200,
   },
 });
