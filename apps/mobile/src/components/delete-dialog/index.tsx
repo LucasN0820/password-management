@@ -60,7 +60,13 @@ export function DeleteDialog({ visible, title, onClose, onConfirm }: Props) {
     <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
       <View style={styles.container}>
         <Animated.View style={[styles.overlay, overlayStyle]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss"
+            accessibilityHint="Close the dialog"
+          />
         </Animated.View>
 
         <Animated.View style={[styles.card, cardStyle, {

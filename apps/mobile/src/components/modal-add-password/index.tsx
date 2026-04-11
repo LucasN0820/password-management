@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Modal,
   Platform,
   View,
@@ -41,6 +42,10 @@ export function ModalAddPassword({ onClose, initialPassword }: Props) {
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       handleClose();
+    },
+    onError: () => {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Error', 'Failed to save password. Please try again.');
     },
   });
 

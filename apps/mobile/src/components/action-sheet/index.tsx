@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -56,12 +56,20 @@ export function ActionSheet({ visible, onClose, options }: Props) {
     opacity: overlayOpacity.value,
   }));
 
+  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+
   const handleOptionPress = useCallback((option: ActionSheetOption) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onClose();
     // Delay action to let sheet animate out
-    setTimeout(option.onPress, 200);
+    timeoutRef.current = setTimeout(option.onPress, 200);
   }, [onClose]);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   if (!visible) return null;
 
@@ -69,7 +77,13 @@ export function ActionSheet({ visible, onClose, options }: Props) {
     <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
       <View style={styles.container}>
         <Animated.View style={[styles.overlay, overlayStyle]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Dismiss"
+            accessibilityHint="Close the action sheet"
+          />
         </Animated.View>
 
         <Animated.View style={[styles.sheet, sheetStyle, { backgroundColor: c.background }]}>

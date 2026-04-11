@@ -11,6 +11,7 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
   interpolate,
+  runOnJS,
 } from 'react-native-reanimated';
 import {
   Gesture,
@@ -83,16 +84,17 @@ export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props)
   const longPress = Gesture.LongPress()
     .minDuration(500)
     .onStart(() => {
+      'worklet';
       itemScale.value = withSpring(0.97, { damping: 15 });
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
     })
     .onEnd(() => {
+      'worklet';
       itemScale.value = withSpring(1, { damping: 15 });
       if (onLongPress) {
-        onLongPress(password);
+        runOnJS(onLongPress)(password);
       }
-    })
-    .runOnJS(true);
+    });
 
   const tap = Gesture.Tap()
     .onEnd(() => {
@@ -105,7 +107,7 @@ export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props)
     .runOnJS(true);
 
   const pan = Gesture.Pan()
-    .minDistance(1)
+    .activeOffsetX([-10, 10])
     .onStart(() => {
       lastOffset.current = translateX.value;
     })

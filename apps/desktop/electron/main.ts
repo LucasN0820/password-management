@@ -43,9 +43,11 @@ function initDatabase() {
 function createWindow() {
   const iconPath = isDev
     ? join(__dirname, '../public/icon-512.png')
-    : join(__dirname, '../dist/icon-512.png')
+    : join(process.resourcesPath, 'icon-512.png')
 
-  const appIcon = nativeImage.createFromPath(iconPath)
+  const appIcon = existsSync(iconPath)
+    ? nativeImage.createFromPath(iconPath)
+    : nativeImage.createEmpty()
 
   // macOS: set Dock icon explicitly
   if (process.platform === 'darwin' && app.dock) {

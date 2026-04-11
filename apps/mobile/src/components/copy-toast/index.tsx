@@ -36,7 +36,7 @@ export function CopyToast({ visible, message = 'Copied to clipboard', onHide }: 
       const timer = setTimeout(onHide, 1900);
       return () => clearTimeout(timer);
     }
-  }, [visible]);
+  }, [visible, onHide]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
