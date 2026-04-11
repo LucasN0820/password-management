@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Hand-drawn wobble filter -->
+    <filter id="sketch" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="turbulence" baseFrequency="0.015" numOctaves="3" seed="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+  </defs>
+
+  <!-- Transparent canvas — macOS needs ~10% padding for Dock sizing -->
+
+  <!-- Offset the rounded square inward: 100px padding on each side → 824x824 centered -->
+  <g transform="translate(100, 100) scale(0.8046875)">
+    <!-- Background: warm cream rounded square -->
+    <rect x="0" y="0" width="1024" height="1024" rx="224" ry="224" fill="#FFFCF5"/>
+
+    <!-- Subtle border -->
+    <rect x="6" y="6" width="1012" height="1012" rx="220" ry="220" fill="none" stroke="#E8E5DE" stroke-width="3.7"/>
+
+    <!-- Main icon group with hand-drawn filter -->
+    <g filter="url(#sketch)">
+
+      <!-- Lock body -->
+      <path d="M 362 478
+               C 360 462, 378 444, 396 442
+               L 624 440
+               C 644 439, 664 456, 665 478
+               L 668 688
+               C 669 708, 654 726, 634 728
+               L 392 730
+               C 372 731, 358 714, 357 694
+               Z"
+            fill="#37352F"
+            stroke="#37352F"
+            stroke-width="6"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+
+      <!-- Lock shackle -->
+      <path d="M 418 448
+               L 416 368
+               C 414 316, 428 282, 460 264
+               C 480 252, 504 246, 514 246
+               C 524 246, 548 252, 568 264
+               C 600 282, 614 316, 612 368
+               L 610 448"
+            fill="none"
+            stroke="#37352F"
+            stroke-width="38"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+
+      <!-- Inner shackle cutout -->
+      <path d="M 452 448
+               L 450 376
+               C 449 340, 460 316, 480 302
+               C 494 292, 506 288, 514 288
+               C 522 288, 534 292, 548 302
+               C 568 316, 579 340, 578 376
+               L 576 448"
+            fill="#FFFCF5"
+            stroke="#FFFCF5"
+            stroke-width="6"
+            stroke-linecap="round"/>
+
+      <!-- Keyhole circle -->
+      <circle cx="514" cy="568" r="38" fill="#FFFCF5"/>
+
+      <!-- Keyhole slot -->
+      <path d="M 502 592
+               L 494 660
+               C 492 670, 500 678, 514 678
+               C 528 678, 536 670, 534 660
+               L 526 592"
+            fill="#FFFCF5"
+            stroke="#FFFCF5"
+            stroke-width="4"
+            stroke-linecap="round"/>
+
+      <!-- Sketch lines -->
+      <line x1="388" y1="470" x2="640" y2="468" stroke="#2C2B27" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+      <line x1="386" y1="710" x2="638" y2="712" stroke="#2C2B27" stroke-width="2" stroke-linecap="round" opacity="0.3"/>
+
+    </g>
+
+    <!-- Accent dots -->
+    <circle cx="680" cy="454" r="4" fill="#37352F" opacity="0.15"/>
+    <circle cx="346" cy="700" r="3" fill="#37352F" opacity="0.12"/>
+    <circle cx="652" cy="738" r="3.5" fill="#37352F" opacity="0.1"/>
+
+    <!-- Sparkle -->
+    <g transform="translate(680, 340)" opacity="0.4">
+      <line x1="0" y1="-14" x2="0" y2="14" stroke="#37352F" stroke-width="3" stroke-linecap="round"/>
+      <line x1="-14" y1="0" x2="14" y2="0" stroke="#37352F" stroke-width="3" stroke-linecap="round"/>
+      <line x1="-9" y1="-9" x2="9" y2="9" stroke="#37352F" stroke-width="2" stroke-linecap="round"/>
+      <line x1="9" y1="-9" x2="-9" y2="9" stroke="#37352F" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </g>
+
+  <!-- macOS drop shadow for depth -->
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#37352F" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+</svg>

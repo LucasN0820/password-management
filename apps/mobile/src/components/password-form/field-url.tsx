@@ -6,5 +6,5 @@ import { LinkIcon } from "lucide-react-native";
 export function FieldUrl() {
   const { control } = useFormContext<FormType>()
 
-  return <InputField control={control} name="url" label="网址" variant="outline" icon={LinkIcon} />
+  return <InputField control={control} name="url" label="URL" variant="outline" icon={LinkIcon} placeholder="e.g. github.com" />
 }

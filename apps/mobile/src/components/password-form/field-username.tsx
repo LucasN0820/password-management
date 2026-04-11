@@ -6,5 +6,5 @@ import { UserIcon } from "lucide-react-native";
 export function FieldUsername() {
   const { control } = useFormContext<FormType>()
 
-  return <InputField control={control} name="username" label="用户名" variant="outline" icon={UserIcon} />
+  return <InputField control={control} name="username" label="USERNAME" variant="outline" icon={UserIcon} />
 }

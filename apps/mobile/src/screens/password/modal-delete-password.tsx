@@ -1,5 +1,7 @@
-import { ModalDeletePassword as ModalDeletePasswordComponent } from '@/components/modal-delete-password';
+import { DeleteDialog } from '@/components/delete-dialog';
+import { usePasswordStore } from '@/store/passwordStore';
 import { useStore, ModalDataDeletePassword } from './context';
+import { useMutation } from '@tanstack/react-query';
 
 export function ModalDeletePassword({
   modal,
@@ -7,13 +9,23 @@ export function ModalDeletePassword({
   modal: ModalDataDeletePassword;
 }) {
   const setModal = useStore(s => s.setModal);
+  const { deletePassword } = usePasswordStore();
+
+  const { mutate } = useMutation({
+    mutationFn: async () => {
+      await deletePassword(modal.id);
+    },
+    onSuccess: () => {
+      setModal(null);
+    },
+  });
+
   return (
-    <ModalDeletePasswordComponent
-      onClose={() => {
-        setModal(null);
-      }}
-      id={modal.id}
+    <DeleteDialog
+      visible
       title={modal.title}
+      onClose={() => setModal(null)}
+      onConfirm={() => mutate()}
     />
   );
 }

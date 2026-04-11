@@ -1,152 +1,110 @@
+// Notion-inspired color palette for PassVault mobile
+// Matches desktop design system with light/dark variants
+
 const lightColors = {
-  // Base colors
+  // Core Notion palette
   background: '#FFFFFF',
-  foreground: '#000000',
+  foreground: '#37352F',
+  surface: '#F7F6F3',
+  border: '#E9E9E7',
+  hover: '#EFEFEF',
+  mutedForeground: '#787774',
+  textTertiary: '#C0BFB9',
 
-  // Card colors
-  card: '#F2F2F7',
-  cardForeground: '#000000',
+  // Semantic
+  accentBlue: '#2EAADC',
+  accentGreen: '#0F7B6C',
+  accentRed: '#EB5757',
+  accentYellow: '#F5C542',
+  selectedBg: '#E8F5FD',
 
-  // Popover colors
-  popover: '#F2F2F7',
-  popoverForeground: '#000000',
+  // Tinted backgrounds
+  favCardBg: '#FEF9EF',
+  strongCardBg: '#EDF9F0',
 
-  // Primary colors
-  primary: '#18181b',
+  // Legacy mappings for existing components
+  card: '#F7F6F3',
+  cardForeground: '#37352F',
+  primary: '#37352F',
   primaryForeground: '#FFFFFF',
-
-  // Secondary colors
-  secondary: '#F2F2F7',
-  secondaryForeground: '#18181b',
-
-  // Muted colors
-  muted: '#78788033',
-  mutedForeground: '#71717a',
-
-  // Accent colors
-  accent: '#F2F2F7',
-  accentForeground: '#18181b',
-
-  // Destructive colors
-  destructive: '#ef4444',
+  secondary: '#F7F6F3',
+  secondaryForeground: '#37352F',
+  muted: '#F7F6F3',
+  accent: '#EFEFEF',
+  accentForeground: '#37352F',
+  destructive: '#EB5757',
   destructiveForeground: '#FFFFFF',
+  input: '#F7F6F3',
+  ring: '#2EAADC',
+  text: '#37352F',
+  textMuted: '#787774',
+  tint: '#37352F',
+  icon: '#787774',
+  tabIconDefault: '#C0BFB9',
+  tabIconSelected: '#37352F',
 
-  // Border and input
-  border: '#C6C6C8',
-  input: '#e4e4e7',
-  ring: '#a1a1aa',
-
-  // Text colors
-  text: '#000000',
-  textMuted: '#71717a',
-
-  // Legacy support for existing components
-  tint: '#18181b',
-  icon: '#71717a',
-  tabIconDefault: '#71717a',
-  tabIconSelected: '#18181b',
-
-  // Default buttons, links, Send button, selected tabs
-  blue: '#007AFF',
-
-  // Success states, FaceTime buttons, completed tasks
-  green: '#34C759',
-
-  // Delete buttons, error states, critical alerts
-  red: '#FF3B30',
-
-  // VoiceOver highlights, warning states
-  orange: '#FF9500',
-
-  // Notes app accent, Reminders highlights
-  yellow: '#FFCC00',
-
-  // Pink accent color for various UI elements
-  pink: '#FF2D92',
-
-  // Purple accent for creative apps and features
-  purple: '#AF52DE',
-
-  // Teal accent for communication features
-  teal: '#5AC8FA',
-
-  // Indigo accent for system features
+  // Keep semantic color aliases
+  blue: '#2EAADC',
+  green: '#0F7B6C',
+  red: '#EB5757',
+  orange: '#E9966A',
+  yellow: '#F5C542',
+  pink: '#D44C91',
+  purple: '#9065B0',
+  teal: '#4DAAAF',
   indigo: '#5856D6',
 };
 
 const darkColors = {
-  // Base colors
-  background: '#000000',
-  foreground: '#FFFFFF',
+  // Core Notion palette (dark)
+  background: '#191919',
+  foreground: '#FFFFFFCF',
+  surface: '#2F2F2F',
+  border: '#3A3A3A',
+  hover: '#363636',
+  mutedForeground: '#9B9A97',
+  textTertiary: '#5A5A5A',
 
-  // Card colors
-  card: '#1C1C1E',
-  cardForeground: '#FFFFFF',
+  // Semantic
+  accentBlue: '#529CCA',
+  accentGreen: '#4DAB9A',
+  accentRed: '#FF6B6B',
+  accentYellow: '#F5C542',
+  selectedBg: '#1A3A4A',
 
-  // Popover colors
-  popover: '#18181b',
-  popoverForeground: '#FFFFFF',
+  // Tinted backgrounds
+  favCardBg: '#2A2520',
+  strongCardBg: '#1A2A20',
 
-  // Primary colors
-  primary: '#e4e4e7',
-  primaryForeground: '#18181b',
-
-  // Secondary colors
-  secondary: '#1C1C1E',
-  secondaryForeground: '#FFFFFF',
-
-  // Muted colors
-  muted: '#78788033',
-  mutedForeground: '#a1a1aa',
-
-  // Accent colors
-  accent: '#1C1C1E',
-  accentForeground: '#FFFFFF',
-
-  // Destructive colors
-  destructive: '#dc2626',
+  // Legacy mappings
+  card: '#2F2F2F',
+  cardForeground: '#FFFFFFCF',
+  primary: '#FFFFFFCF',
+  primaryForeground: '#191919',
+  secondary: '#2F2F2F',
+  secondaryForeground: '#FFFFFFCF',
+  muted: '#2F2F2F',
+  accent: '#363636',
+  accentForeground: '#FFFFFFCF',
+  destructive: '#FF6B6B',
   destructiveForeground: '#FFFFFF',
+  input: '#2F2F2F',
+  ring: '#529CCA',
+  text: '#FFFFFFCF',
+  textMuted: '#9B9A97',
+  tint: '#FFFFFFCF',
+  icon: '#9B9A97',
+  tabIconDefault: '#5A5A5A',
+  tabIconSelected: '#FFFFFFCF',
 
-  // Border and input - using alpha values for better blending
-  border: '#38383A',
-  input: 'rgba(255, 255, 255, 0.15)',
-  ring: '#71717a',
-
-  // Text colors
-  text: '#FFFFFF',
-  textMuted: '#a1a1aa',
-
-  // Legacy support for existing components
-  tint: '#FFFFFF',
-  icon: '#a1a1aa',
-  tabIconDefault: '#a1a1aa',
-  tabIconSelected: '#FFFFFF',
-
-  // Default buttons, links, Send button, selected tabs
-  blue: '#0A84FF',
-
-  // Success states, FaceTime buttons, completed tasks
-  green: '#30D158',
-
-  // Delete buttons, error states, critical alerts
-  red: '#FF453A',
-
-  // VoiceOver highlights, warning states
-  orange: '#FF9F0A',
-
-  // Notes app accent, Reminders highlights
-  yellow: '#FFD60A',
-
-  // Pink accent color for various UI elements
-  pink: '#FF375F',
-
-  // Purple accent for creative apps and features
-  purple: '#BF5AF2',
-
-  // Teal accent for communication features
-  teal: '#64D2FF',
-
-  // Indigo accent for system features
+  blue: '#529CCA',
+  green: '#4DAB9A',
+  red: '#FF6B6B',
+  orange: '#E9966A',
+  yellow: '#F5C542',
+  pink: '#D44C91',
+  purple: '#9B6FC3',
+  teal: '#5AC8C8',
   indigo: '#5E5CE6',
 };
 
@@ -155,8 +113,5 @@ export const Colors = {
   dark: darkColors,
 };
 
-// Export individual color schemes for easier access
 export { darkColors, lightColors };
-
-// Utility type for color keys
 export type ColorKeys = keyof typeof lightColors;

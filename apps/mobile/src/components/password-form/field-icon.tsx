@@ -30,9 +30,9 @@ export function FieldIcon() {
 
       if (status !== 'granted') {
         Alert.alert(
-          '需要权限',
-          '请在设置中允许访问相册以选择图标',
-          [{ text: '确定' }]
+          'Permission Required',
+          'Please allow photo library access in Settings to choose an icon',
+          [{ text: 'OK' }]
         );
         return;
       }
@@ -53,7 +53,7 @@ export function FieldIcon() {
           (base64.length * 3) / 4 / 1024 / 1024;
 
         if (sizeInMB > MAX_ICON_SIZE_MB) {
-          Alert.alert('图片过大', '请选择小于1MB的图片');
+          Alert.alert('Image Too Large', 'Please select an image under 1MB');
           return;
         }
 
@@ -62,7 +62,7 @@ export function FieldIcon() {
         setValue('icon', base64Uri, { shouldDirty: true });
       }
     } catch (error) {
-      Alert.alert('错误', '无法打开相册');
+      Alert.alert('Error', 'Unable to open photo library');
       console.error(error);
     }
   };
@@ -100,7 +100,7 @@ export function FieldIcon() {
               <Text
                 style={[styles.placeholderText, { color: muted }]}
               >
-                选择图标
+                Choose Icon
               </Text>
             </View>
           )}
