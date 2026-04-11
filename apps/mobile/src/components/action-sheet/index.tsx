@@ -103,21 +103,23 @@ export function ActionSheet({ visible, onClose, options }: Props) {
               const Icon = option.icon;
               const textColor = option.destructive ? c.accentRed : c.foreground;
               const iconColor = option.destructive ? c.accentRed : c.mutedForeground;
+              const isLast = i === options.length - 1;
 
               return (
                 <Pressable
                   key={i}
                   onPress={() => handleOptionPress(option)}
-                  style={({ pressed }) => [
+                  style={[
                     styles.option,
-                    pressed && { backgroundColor: c.hover },
-                    i < options.length - 1 && { borderBottomWidth: 1, borderBottomColor: c.border },
+                    !isLast && { borderBottomWidth: 1, borderBottomColor: c.border },
                   ]}
                 >
-                  {Icon && <Icon size={20} color={iconColor} />}
-                  <Text style={[styles.optionText, { color: textColor, fontFamily: fonts.body }]}>
-                    {option.label}
-                  </Text>
+                  <View style={styles.optionRow}>
+                    {Icon && <Icon size={20} color={iconColor} />}
+                    <Text style={[styles.optionText, { color: textColor, fontFamily: fonts.body }]}>
+                      {option.label}
+                    </Text>
+                  </View>
                 </Pressable>
               );
             })}
@@ -126,11 +128,7 @@ export function ActionSheet({ visible, onClose, options }: Props) {
           {/* Cancel button */}
           <Pressable
             onPress={onClose}
-            style={({ pressed }) => [
-              styles.cancelButton,
-              { backgroundColor: c.surface },
-              pressed && { backgroundColor: c.hover },
-            ]}
+            style={[styles.cancelButton, { backgroundColor: c.surface }]}
           >
             <Text style={[styles.cancelText, { color: c.accentBlue, fontFamily: fonts.bodySemiBold }]}>
               Cancel
@@ -172,12 +170,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   option: {
-    flexDirection: 'row',
-    alignItems: 'center',
     paddingVertical: 16,
     paddingHorizontal: 20,
-    gap: 14,
     minHeight: 52,
+    justifyContent: 'center',
+  },
+  optionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
   },
   optionText: {
     fontSize: 16,
