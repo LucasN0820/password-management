@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -27,16 +27,21 @@ interface Props {
 export function DeleteDialog({ visible, title, onClose, onConfirm }: Props) {
   const scheme = useColorScheme() ?? 'light';
   const c = Colors[scheme];
+  const [isMounted, setIsMounted] = useState(false);
   const scale = useSharedValue(0.9);
   const opacity = useSharedValue(0);
 
   useEffect(() => {
     if (visible) {
+      setIsMounted(true);
       opacity.value = withTiming(1, { duration: 200 });
       scale.value = withSpring(1, { damping: 20, stiffness: 300 });
     } else {
       opacity.value = withTiming(0, { duration: 150 });
       scale.value = withTiming(0.9, { duration: 150 });
+      // Delay unmount until exit animation completes
+      const timer = setTimeout(() => setIsMounted(false), 200);
+      return () => clearTimeout(timer);
     }
   }, [visible]);
 
@@ -54,10 +59,10 @@ export function DeleteDialog({ visible, title, onClose, onConfirm }: Props) {
     onConfirm();
   };
 
-  if (!visible) return null;
+  if (!isMounted) return null;
 
   return (
-    <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
+    <Modal transparent visible={isMounted} animationType="none" onRequestClose={onClose}>
       <View style={styles.container}>
         <Animated.View style={[styles.overlay, overlayStyle]}>
           <Pressable

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -35,6 +35,7 @@ interface Props {
 export function ActionSheet({ visible, onClose, options }: Props) {
   const scheme = useColorScheme() ?? 'light';
   const c = Colors[scheme];
+  const [isMounted, setIsMounted] = useState(false);
   const translateY = useSharedValue(400);
   const overlayOpacity = useSharedValue(0);
   const onCloseRef = useRef(onClose);
@@ -45,11 +46,15 @@ export function ActionSheet({ visible, onClose, options }: Props) {
 
   useEffect(() => {
     if (visible) {
+      setIsMounted(true);
       overlayOpacity.value = withTiming(1, { duration: 200 });
       translateY.value = withSpring(0, { damping: 20, stiffness: 300 });
     } else {
       overlayOpacity.value = withTiming(0, { duration: 150 });
       translateY.value = withSpring(400, { damping: 25, stiffness: 400 });
+      // Delay unmount until exit animation completes
+      const timer = setTimeout(() => setIsMounted(false), 300);
+      return () => clearTimeout(timer);
     }
   }, [visible]);
 
@@ -76,10 +81,10 @@ export function ActionSheet({ visible, onClose, options }: Props) {
     };
   }, []);
 
-  if (!visible) return null;
+  if (!isMounted) return null;
 
   return (
-    <Modal transparent visible={visible} animationType="none" onRequestClose={onClose}>
+    <Modal transparent visible={isMounted} animationType="none" onRequestClose={onClose}>
       <View style={styles.container}>
         <Animated.View style={[styles.overlay, overlayStyle]}>
           <Pressable

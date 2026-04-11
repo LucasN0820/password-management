@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { KeyRound, Wand2 } from 'lucide-react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
@@ -11,9 +11,10 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 function NotionTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const scheme = useColorScheme() ?? 'light';
   const c = Colors[scheme];
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.tabBar, { backgroundColor: c.background, borderTopColor: c.border }]}>
+    <View style={[styles.tabBar, { backgroundColor: c.background, borderTopColor: c.border, paddingBottom: Math.max(insets.bottom, 24) }]}>
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key]!;
         const isFocused = state.index === index;
@@ -82,7 +83,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     borderTopWidth: 1,
     paddingTop: 8,
-    paddingBottom: 24,
     paddingHorizontal: 40,
   },
   tabItem: {
