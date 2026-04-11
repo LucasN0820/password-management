@@ -1,20 +1,18 @@
-import { Image,Star, Upload, X } from 'lucide-react'
-import { useEffect, useRef,useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
-import type { Password } from '../store/passwordStore'
+import { Image, Star, Upload, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { Button } from '@repo/ui/primitives/button'
+import { Input } from '@repo/ui/primitives/input'
+import { Label } from '@repo/ui/primitives/label'
+import { cn } from '@repo/ui/lib/utils'
+import type { Password } from '@repo/db'
 
 interface EditPasswordModalProps {
   password: Password
   onClose: () => void
   onSave: (id: number, data: Omit<Password, 'id' | 'created_at' | 'updated_at'>) => void
-  existingCategories: string[]
 }
 
-export function EditPasswordModal({ password, onClose, onSave, existingCategories }: EditPasswordModalProps) {
+export function EditPasswordModal({ password, onClose, onSave }: EditPasswordModalProps) {
   const [formData, setFormData] = useState({
     title: '',
     username: '',
@@ -23,40 +21,10 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
     notes: '',
     category: 'all',
     isFavorite: false,
-    icon: ''
+    icon: '',
   })
-  const [newCategory, setNewCategory] = useState('')
-  const [showNewCategory, setShowNewCategory] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const handleIconUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        alert('图标文件大小不能超过5MB')
-
-        return
-      }
-
-      const reader = new FileReader()
-
-      reader.onload = (e) => {
-        const dataUrl = e.target?.result as string
-
-        setFormData({ ...formData, icon: dataUrl })
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  const removeIcon = () => {
-    setFormData({ ...formData, icon: '' })
-    if (fileInputRef.current) {
-      fileInputRef.current.value = ''
-    }
-  }
 
   useEffect(() => {
     setFormData({
@@ -67,205 +35,196 @@ export function EditPasswordModal({ password, onClose, onSave, existingCategorie
       notes: password.notes || '',
       category: password.category || 'all',
       isFavorite: password.isFavorite,
-      icon: password.icon || ''
+      icon: password.icon || '',
     })
   }, [password])
+
+  const handleIconUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Icon file must be under 5MB')
+        return
+      }
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        setFormData({ ...formData, icon: e.target?.result as string })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeIcon = () => {
+    setFormData({ ...formData, icon: '' })
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   const handleClose = () => {
     setIsClosing(true)
     setTimeout(() => {
       onClose()
       setIsClosing(false)
-    }, 250)
+    }, 200)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    const category = showNewCategory && newCategory ? newCategory : formData.category
-    const data = { ...formData, category }
-
-    onSave(password.id, data)
+    onSave(password.id, formData)
     onClose()
   }
 
   return (
-    <div className={cn(
-      "fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50",
-      isClosing ? "animate-out fade-out duration-250" : "animate-in fade-in duration-250"
-    )}>
-      <Card className={cn(
-        "w-full max-w-md mx-4",
-        isClosing ? "animate-out slide-out-to-bottom-4 duration-250" : "animate-in slide-in-from-bottom-4 duration-250"
-      )}>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-lg">{password ? '编辑密码' : '新建密码'}</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onClose}>
+    <div
+      className={cn(
+        'fixed inset-0 bg-foreground/20 flex items-center justify-center z-50',
+        isClosing ? 'animate-out fade-out duration-200' : 'animate-in fade-in duration-200'
+      )}
+    >
+      <div
+        className={cn(
+          'w-full max-w-md mx-4 bg-background rounded-xl border border-border shadow-lg',
+          isClosing
+            ? 'animate-out slide-out-to-bottom-4 duration-200'
+            : 'animate-in slide-in-from-bottom-4 duration-200'
+        )}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+          <h2 className="font-heading text-xl font-bold text-foreground">
+            Edit Password
+          </h2>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleClose}>
             <X className="h-4 w-4" />
           </Button>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <Label>图标</Label>
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-muted/30">
-                  {formData.icon ? (
-                    <img
-                      src={formData.icon}
-                      alt="图标预览"
-                      className="w-full h-full object-cover rounded-lg"
-                    />
-                  ) : (
-                    <Image className="w-6 h-6 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="flex gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleIconUpload}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    更换图标
-                  </Button>
-                  {formData.icon && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={removeIcon}
-                    >
-                      移除
-                    </Button>
-                  )}
-                </div>
+        </div>
+
+        <form className="px-6 py-5 space-y-4" onSubmit={handleSubmit}>
+          {/* Icon */}
+          <div className="space-y-2">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Icon
+            </Label>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg border-2 border-dashed border-border flex items-center justify-center bg-surface">
+                {formData.icon ? (
+                  <img src={formData.icon} alt="Icon" className="w-full h-full object-cover rounded-lg" />
+                ) : (
+                  <Image className="w-5 h-5 text-text-tertiary" />
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">
-                支持 JPG、PNG、GIF 格式，文件大小不超过 5MB
-              </p>
+              <div className="flex gap-2">
+                <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleIconUpload} />
+                <Button type="button" variant="outline" size="sm" className="border-border" onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="w-3.5 h-3.5 mr-1.5" />
+                  Change
+                </Button>
+                {formData.icon && (
+                  <Button type="button" variant="outline" size="sm" className="border-border" onClick={removeIcon}>
+                    Remove
+                  </Button>
+                )}
+              </div>
             </div>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="title">标题 *</Label>
-              <Input
-                required
-                id="title"
-                value={formData.title}
-                placeholder="例如：GitHub"
-                onChange={(e) => { setFormData({ ...formData, title: e.target.value }); }}
-              />
-            </div>
+          {/* Title */}
+          <div className="space-y-1.5">
+            <Label htmlFor="title" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Title *
+            </Label>
+            <Input
+              required
+              id="title"
+              value={formData.title}
+              placeholder="e.g., GitHub"
+              className="border-border bg-surface focus:bg-background"
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="username">用户名</Label>
-              <Input
-                id="username"
-                value={formData.username}
-                placeholder="用户名或邮箱"
-                onChange={(e) => { setFormData({ ...formData, username: e.target.value }); }}
-              />
-            </div>
+          {/* Username */}
+          <div className="space-y-1.5">
+            <Label htmlFor="username" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Username
+            </Label>
+            <Input
+              id="username"
+              value={formData.username}
+              placeholder="Username or email"
+              className="border-border bg-surface focus:bg-background"
+              onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">密码 *</Label>
-              <Input
-                required
-                id="password"
-                type="password"
-                value={formData.password}
-                placeholder="输入密码"
-                onChange={(e) => { setFormData({ ...formData, password: e.target.value }); }}
-              />
-            </div>
+          {/* Password */}
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Password *
+            </Label>
+            <Input
+              required
+              id="password"
+              type="password"
+              value={formData.password}
+              placeholder="Enter password"
+              className="border-border bg-surface focus:bg-background font-mono"
+              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="url">网站地址</Label>
-              <Input
-                id="url"
-                type="url"
-                value={formData.url}
-                placeholder="https://..."
-                onChange={(e) => { setFormData({ ...formData, url: e.target.value }); }}
-              />
-            </div>
+          {/* URL */}
+          <div className="space-y-1.5">
+            <Label htmlFor="url" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              URL
+            </Label>
+            <Input
+              id="url"
+              type="url"
+              value={formData.url}
+              placeholder="https://..."
+              className="border-border bg-surface focus:bg-background"
+              onChange={(e) => setFormData({ ...formData, url: e.target.value })}
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="category">分类</Label>
-              {showNewCategory ? (
-                <Input
-                  autoFocus
-                  id="category"
-                  value={newCategory}
-                  placeholder="输入新分类名称"
-                  onChange={(e) => { setNewCategory(e.target.value); }}
-                />
-              ) : (
-                <select
-                  id="category"
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                  value={formData.category}
-                  onChange={(e) => {
-                    if (e.target.value === 'new') {
-                      setShowNewCategory(true)
-                    } else {
-                      setFormData({ ...formData, category: e.target.value })
-                    }
-                  }}
-                >
-                  <option value="all">全部</option>
-                  {existingCategories.filter(c => c !== 'all').map(cat => (
-                    <option key={cat} value={cat}>{cat}</option>
-                  ))}
-                  <option value="new">+ 新建分类</option>
-                </select>
-              )}
-            </div>
+          {/* Notes */}
+          <div className="space-y-1.5">
+            <Label htmlFor="notes" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              Notes
+            </Label>
+            <textarea
+              id="notes"
+              className="flex min-h-[60px] w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm transition-colors placeholder:text-text-tertiary focus:bg-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
+              value={formData.notes}
+              placeholder="Optional notes..."
+              rows={3}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="notes">备注</Label>
-              <textarea
-                id="notes"
-                className="flex min-h-[60px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 resize-none"
-                value={formData.notes}
-                placeholder="添加备注信息..."
-                rows={3}
-                onChange={(e) => { setFormData({ ...formData, notes: e.target.value }); }}
-              />
-            </div>
+          {/* Favorite */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="isFavorite"
+              checked={formData.isFavorite}
+              className="h-4 w-4 rounded border border-border"
+              onChange={(e) => setFormData({ ...formData, isFavorite: e.target.checked })}
+            />
+            <Label htmlFor="isFavorite" className="flex items-center gap-1.5 cursor-pointer text-sm">
+              <Star className={cn('h-3.5 w-3.5', formData.isFavorite && 'fill-[var(--accent-yellow)] text-[var(--accent-yellow)]')} />
+              Add to favorites
+            </Label>
+          </div>
 
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="isFavorite"
-                checked={formData.isFavorite}
-                className="h-4 w-4 rounded border border-primary text-primary focus:ring-2 focus:ring-ring"
-                onChange={(e) => { setFormData({ ...formData, isFavorite: e.target.checked }); }}
-              />
-              <Label htmlFor="isFavorite" className="flex items-center gap-2 cursor-pointer">
-                <Star className={cn("h-4 w-4", formData.isFavorite && "fill-foreground text-foreground")} />
-                添加到收藏
-              </Label>
-            </div>
-
-            <div className="flex justify-end space-x-2 pt-4">
-              <Button type="button" variant="outline" onClick={handleClose}>
-                取消
-              </Button>
-              <Button type="submit">
-                保存
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+          {/* Actions */}
+          <div className="flex justify-end gap-2 pt-3 border-t border-border">
+            <Button type="button" variant="outline" className="border-border" onClick={handleClose}>
+              Cancel
+            </Button>
+            <Button type="submit">Save</Button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }
