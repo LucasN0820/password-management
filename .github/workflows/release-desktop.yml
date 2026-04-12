@@ -93,7 +93,7 @@ jobs:
           mkdir -p build/icons
           SOURCE=public/icon-512.png
           for size in 16 32 48 64 128 256 512; do
-            magick "$SOURCE" -resize ${size}x${size} "build/icons/${size}x${size}.png"
+            convert "$SOURCE" -resize ${size}x${size} "build/icons/${size}x${size}.png"
           done
 
       - name: Build and package (${{ matrix.platform }})
