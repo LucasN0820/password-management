@@ -1,0 +1,18 @@
+# Monorepo files not needed for EAS build
+apps/desktop
+config/eslint
+config/ts
+
+# Dev / tooling
+.claude
+.github
+.vscode
+*.md
+!README.md
+
+# Tests
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx

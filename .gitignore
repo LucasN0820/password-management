@@ -7,6 +7,17 @@ dist
 .DS_Store
 Makefile
 
+# Electron Builder output
+release/
+*.dmg
+*.dmg.blockmap
+*.exe
+*.AppImage
+*.deb
+*.snap
+*.zip.blockmap
+builder-effective-config.yaml
+
 # Expo
 .expo/
 dist/
