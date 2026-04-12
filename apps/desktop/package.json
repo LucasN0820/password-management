@@ -11,7 +11,7 @@
     "dist:mac": "yarn build && electron-builder --mac",
     "dist:win": "yarn build && electron-builder --win",
     "dist:linux": "yarn build && electron-builder --linux",
-    "postinstall": "[ -n \"$CI\" ] || electron-builder install-app-deps",
+    "postinstall": "node -e \"if(!process.env.CI){require('child_process').execSync('electron-builder install-app-deps',{stdio:'inherit'})}\"",
     "rebuild": "electron-rebuild",
     "preview": "vite preview",
     "tsc": "tsc --noEmit",

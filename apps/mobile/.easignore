@@ -10,6 +10,14 @@ config/ts
 *.md
 !README.md
 
+# Build cache & logs
+.turbo/
+coverage/
+*.log
+
+# Environment files
+.env*
+
 # Tests
 **/__tests__
 **/*.test.ts

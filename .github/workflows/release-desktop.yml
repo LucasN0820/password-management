@@ -106,3 +106,10 @@ jobs:
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTS_PASSWORD }}
         working-directory: apps/desktop
         run: yarn dist:${{ matrix.platform }} --publish always
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-${{ matrix.platform }}
+          path: apps/desktop/release/
