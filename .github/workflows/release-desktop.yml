@@ -88,24 +88,33 @@ jobs:
       - name: Generate Linux icons
         if: matrix.platform == 'linux'
         run: |
+          sudo apt-get update && sudo apt-get install -y imagemagick
           cd apps/desktop
           mkdir -p build/icons
           SOURCE=public/icon-512.png
           for size in 16 32 48 64 128 256 512; do
-            convert "$SOURCE" -resize ${size}x${size} "build/icons/${size}x${size}.png"
+            magick "$SOURCE" -resize ${size}x${size} "build/icons/${size}x${size}.png"
           done
 
       - name: Build and package (${{ matrix.platform }})
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # macOS code signing (optional — set these secrets to enable)
-          CSC_LINK: ${{ secrets.MAC_CERTS }}
-          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
-          # Windows code signing (optional)
-          WIN_CSC_LINK: ${{ secrets.WIN_CERTS }}
-          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTS_PASSWORD }}
+          # Disable auto code signing discovery — only sign when secrets are explicitly configured
+          CSC_IDENTITY_AUTO_DISCOVERY: false
         working-directory: apps/desktop
-        run: yarn dist:${{ matrix.platform }} --publish always
+        run: |
+          # Conditionally enable macOS code signing
+          if [ -n "${{ secrets.MAC_CERTS }}" ]; then
+            export CSC_LINK="${{ secrets.MAC_CERTS }}"
+            export CSC_KEY_PASSWORD="${{ secrets.MAC_CERTS_PASSWORD }}"
+          fi
+          # Conditionally enable Windows code signing
+          if [ -n "${{ secrets.WIN_CERTS }}" ]; then
+            export WIN_CSC_LINK="${{ secrets.WIN_CERTS }}"
+            export WIN_CSC_KEY_PASSWORD="${{ secrets.WIN_CERTS_PASSWORD }}"
+          fi
+          yarn dist:${{ matrix.platform }} --publish always
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
