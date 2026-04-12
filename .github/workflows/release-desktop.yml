@@ -5,10 +5,6 @@ on:
     tags:
       - 'desktop-v*'
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Version tag (e.g. 1.0.0)'
-        required: false
 
 permissions:
   contents: write
@@ -58,7 +54,7 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      # macOS: generate .icns from source PNG
+      # macOS: generate .icns from source PNG (iconutil is macOS-only)
       - name: Generate macOS icon
         if: matrix.platform == 'mac'
         run: |
@@ -79,6 +75,26 @@ jobs:
           cp "$SOURCE" "$ICONSET_DIR/icon_512x512@2x.png"
           iconutil -c icns "$ICONSET_DIR" -o build/icon.icns
 
+      # Windows: generate .ico from source PNG using ImageMagick (pre-installed on GitHub runners)
+      - name: Generate Windows icon
+        if: matrix.platform == 'win'
+        shell: bash
+        run: |
+          cd apps/desktop
+          mkdir -p build
+          magick public/icon-512.png -define icon:auto-resize=256,128,64,48,32,16 build/icon.ico
+
+      # Linux: generate multi-size PNGs for .desktop icon
+      - name: Generate Linux icons
+        if: matrix.platform == 'linux'
+        run: |
+          cd apps/desktop
+          mkdir -p build/icons
+          SOURCE=public/icon-512.png
+          for size in 16 32 48 64 128 256 512; do
+            convert "$SOURCE" -resize ${size}x${size} "build/icons/${size}x${size}.png"
+          done
+
       - name: Build and package (${{ matrix.platform }})
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -90,11 +106,3 @@ jobs:
           WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTS_PASSWORD }}
         working-directory: apps/desktop
         run: yarn dist:${{ matrix.platform }} --publish always
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/')
-    steps:
-      - name: Summary
-        run: echo "Release artifacts published to GitHub Releases for tag ${{ github.ref_name }}"
