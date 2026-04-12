@@ -2,6 +2,10 @@
   "name": "password-desktop",
   "version": "1.0.0",
   "description": "A secure password manager built with Electron and React",
+  "author": {
+    "name": "Lucas",
+    "email": "lucasx001@126.com"
+  },
   "homepage": "https://github.com/LucasN0820/password-management",
   "main": "dist-electron/main.js",
   "scripts": {
