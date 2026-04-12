@@ -50,6 +50,6 @@ jobs:
         working-directory: apps/mobile
         run: eas build --platform android --profile production --non-interactive --no-wait
 
-      - name: Build iOS
-        working-directory: apps/mobile
-        run: eas build --platform ios --profile production --non-interactive --no-wait
+      # - name: Build iOS
+      #   working-directory: apps/mobile
+      #   run: eas build --platform ios --profile production --non-interactive --no-wait
