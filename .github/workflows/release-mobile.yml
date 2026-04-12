@@ -6,6 +6,9 @@ on:
       - 'mobile-v*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -48,8 +51,26 @@ jobs:
 
       - name: Build Android
         working-directory: apps/mobile
-        run: eas build --platform android --profile production --non-interactive --no-wait
+        run: eas build --platform android --profile production --non-interactive
 
       # - name: Build iOS
       #   working-directory: apps/mobile
-      #   run: eas build --platform ios --profile production --non-interactive --no-wait
+      #   run: eas build --platform ios --profile production --non-interactive
+
+      - name: Get build artifact URL
+        id: build-url
+        working-directory: apps/mobile
+        run: |
+          URL=$(eas build:list --platform android --status finished \
+            --json --limit 1 --non-interactive | jq -r '.[0].artifacts.buildUrl')
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Download APK
+        run: curl -L -o android-release.apk "${{ steps.build-url.outputs.url }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: android-release.apk
+          generate_release_notes: true
