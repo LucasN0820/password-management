@@ -9,7 +9,6 @@ directories:
 files:
   - dist/**/*
   - dist-electron/**/*
-  - "!node_modules/**/*"
 
 extraResources:
   - from: public/icon-512.png
