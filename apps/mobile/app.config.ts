@@ -57,7 +57,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   owner: 'lucas-beto',
   extra: {
     eas: {
-      projectId: '1a2040ad-1684-4431-adab-b2c154f2c871',
+      projectId: 'd7184498-0ef7-4f4b-b2e9-cd33ea62045c',
     },
   },
 });

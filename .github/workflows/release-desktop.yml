@@ -1,0 +1,115 @@
+name: Release Desktop App
+
+on:
+  push:
+    tags:
+      - 'desktop-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            platform: mac
+          - os: windows-latest
+            platform: win
+          - os: ubuntu-latest
+            platform: linux
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack prepare yarn@4.13.0 --activate
+
+      - name: Get yarn cache directory path
+        id: yarn-cache-dir-path
+        shell: bash
+        run: echo "dir=$(yarn config get cacheFolder)" >> $GITHUB_OUTPUT
+
+      - name: Restore Yarn cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # macOS: generate .icns from source PNG (iconutil is macOS-only)
+      - name: Generate macOS icon
+        if: matrix.platform == 'mac'
+        run: |
+          cd apps/desktop
+          mkdir -p build
+          ICONSET_DIR=$(mktemp -d)/icon.iconset
+          mkdir -p "$ICONSET_DIR"
+          SOURCE=public/icon-512.png
+          sips -z 16 16 "$SOURCE" --out "$ICONSET_DIR/icon_16x16.png"
+          sips -z 32 32 "$SOURCE" --out "$ICONSET_DIR/icon_16x16@2x.png"
+          sips -z 32 32 "$SOURCE" --out "$ICONSET_DIR/icon_32x32.png"
+          sips -z 64 64 "$SOURCE" --out "$ICONSET_DIR/icon_32x32@2x.png"
+          sips -z 128 128 "$SOURCE" --out "$ICONSET_DIR/icon_128x128.png"
+          sips -z 256 256 "$SOURCE" --out "$ICONSET_DIR/icon_128x128@2x.png"
+          sips -z 256 256 "$SOURCE" --out "$ICONSET_DIR/icon_256x256.png"
+          sips -z 512 512 "$SOURCE" --out "$ICONSET_DIR/icon_256x256@2x.png"
+          sips -z 512 512 "$SOURCE" --out "$ICONSET_DIR/icon_512x512.png"
+          cp "$SOURCE" "$ICONSET_DIR/icon_512x512@2x.png"
+          iconutil -c icns "$ICONSET_DIR" -o build/icon.icns
+
+      # Windows: generate .ico from source PNG using ImageMagick (pre-installed on GitHub runners)
+      - name: Generate Windows icon
+        if: matrix.platform == 'win'
+        shell: bash
+        run: |
+          cd apps/desktop
+          mkdir -p build
+          magick public/icon-512.png -define icon:auto-resize=256,128,64,48,32,16 build/icon.ico
+
+      # Linux: generate multi-size PNGs for .desktop icon
+      - name: Generate Linux icons
+        if: matrix.platform == 'linux'
+        run: |
+          cd apps/desktop
+          mkdir -p build/icons
+          SOURCE=public/icon-512.png
+          for size in 16 32 48 64 128 256 512; do
+            convert "$SOURCE" -resize ${size}x${size} "build/icons/${size}x${size}.png"
+          done
+
+      - name: Build and package (${{ matrix.platform }})
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # macOS code signing (optional — set these secrets to enable)
+          CSC_LINK: ${{ secrets.MAC_CERTS }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERTS_PASSWORD }}
+          # Windows code signing (optional)
+          WIN_CSC_LINK: ${{ secrets.WIN_CERTS }}
+          WIN_CSC_KEY_PASSWORD: ${{ secrets.WIN_CERTS_PASSWORD }}
+        working-directory: apps/desktop
+        run: yarn dist:${{ matrix.platform }} --publish always
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-${{ matrix.platform }}
+          path: apps/desktop/release/

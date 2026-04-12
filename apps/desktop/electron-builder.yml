@@ -1,0 +1,85 @@
+appId: com.lucasni.password-desktop
+productName: Password Volt
+copyright: Copyright © 2024 Lucas
+
+directories:
+  buildResources: build
+  output: release
+
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - "!node_modules/**/*"
+
+extraResources:
+  - from: public/icon-512.png
+    to: icon-512.png
+
+# Rebuild better-sqlite3 for the target Electron version
+nodeGypRebuild: false
+npmRebuild: true
+
+asar: true
+asarUnpack:
+  - "**/*.node"
+
+mac:
+  category: public.app-category.utilities
+  icon: build/icon.icns
+  target:
+    - target: dmg
+      arch:
+        - x64
+        - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+
+dmg:
+  artifactName: "${productName}-${version}-mac-${arch}.dmg"
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+win:
+  icon: build/icon.ico
+  target:
+    - target: nsis
+      arch:
+        - x64
+        - arm64
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: "${productName}-${version}-win-${arch}-setup.exe"
+
+linux:
+  icon: build/icons
+  category: Utility
+  target:
+    - target: AppImage
+      arch:
+        - x64
+        - arm64
+    - target: deb
+      arch:
+        - x64
+
+appImage:
+  artifactName: "${productName}-${version}-linux-${arch}.AppImage"
+
+publish:
+  provider: github
+  owner: LucasN0820
+  repo: password-management
+  releaseType: release
