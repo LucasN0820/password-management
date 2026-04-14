@@ -14,7 +14,10 @@ export function I18nProvider({ children }: I18nProviderProps) {
   useEffect(() => {
     detectAndSetLanguage()
       .then(() => setReady(true))
-      .catch(console.error);
+      .catch((err) => {
+        console.error('Failed to detect/set language:', err);
+        setReady(true); // Ensure app renders even if language detection fails
+      });
   }, []);
 
   return (

@@ -35,7 +35,10 @@ export function I18nProvider({ children }: I18nProviderProps) {
     const deviceLang = getDeviceLanguage();
     changeLanguage(deviceLang)
       .then(() => setReady(true))
-      .catch(console.error);
+      .catch((err) => {
+        console.error('Failed to change language:', err);
+        setReady(true); // Ensure app renders even if language fails
+      });
   }, []);
 
   return (

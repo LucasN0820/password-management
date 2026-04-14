@@ -16,7 +16,8 @@ export const changeLanguage = (lng: string) => i18n.changeLanguage(lng);
 /**
  * Detects the user's preferred language and sets it in i18n.
  * For browser: checks localStorage first, then navigator.language
- * For mobile/non-browser: uses navigator.language or defaults to 'en'
+ * For browser (e.g., web workers): uses navigator.language if available
+ * Note: React Native mobile app uses its own provider with expo-localization
  */
 export const detectAndSetLanguage = async () => {
   try {
