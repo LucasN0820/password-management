@@ -2,9 +2,11 @@ import { Globe, Lock, Search, Star } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { cn } from '@repo/ui/lib/utils'
 import type { Password } from '@repo/db'
+import { useTranslation } from '@repo/i18n'
 import { usePasswordStore } from '../store/passwordStore'
 
 export default function SpotlightSearch() {
+  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Password[]>([])
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -104,7 +106,7 @@ export default function SpotlightSearch() {
             autoFocus
             ref={inputRef}
             type="text"
-            placeholder="Search passwords..."
+            placeholder={t('spotlight.searchPlaceholder')}
             value={query}
             className="flex-1 bg-transparent text-lg text-foreground placeholder:text-text-tertiary outline-none"
             onChange={(e) => setQuery(e.target.value)}
@@ -121,7 +123,7 @@ export default function SpotlightSearch() {
               <div className="flex flex-col items-center py-10 text-muted-foreground">
                 <Lock className="h-8 w-8 opacity-20 mb-2" />
                 <p className="text-sm">
-                  {query ? 'No matching passwords' : 'No passwords yet'}
+                  {query ? t('spotlight.noMatchingPasswords') : t('spotlight.noPasswordsYet')}
                 </p>
               </div>
             ) : (
@@ -163,7 +165,7 @@ export default function SpotlightSearch() {
                         {password.title}
                       </div>
                       <div className="text-xs text-muted-foreground truncate">
-                        {password.username || 'No username'}
+                        {password.username || t('home.noUsername')}
                       </div>
                     </div>
                     {password.isFavorite && (
@@ -188,19 +190,19 @@ export default function SpotlightSearch() {
               <kbd className="bg-background px-1.5 py-0.5 rounded border border-border text-foreground">
                 ↑↓
               </kbd>
-              Navigate
+              {t('spotlight.navigate')}
             </span>
             <span className="flex items-center gap-1.5">
               <kbd className="bg-background px-1.5 py-0.5 rounded border border-border text-foreground">
                 ↵
               </kbd>
-              Copy Password
+              {t('spotlight.copyPassword')}
             </span>
             <span className="flex items-center gap-1.5">
               <kbd className="bg-background px-1.5 py-0.5 rounded border border-border text-foreground">
                 Esc
               </kbd>
-              Close
+              {t('spotlight.close')}
             </span>
           </div>
           {results.length > 0 && (

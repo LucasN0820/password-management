@@ -1,0 +1,103 @@
+{
+  "app": {
+    "name": "PassVault"
+  },
+  "nav": {
+    "home": "Home",
+    "passwords": "Passwords",
+    "generator": "Generator",
+    "quickSearch": "Quick Search"
+  },
+  "home": {
+    "welcome": "Welcome back, {{name}}",
+    "subtitle": "Your passwords are safe and sound. Here's a quick overview.",
+    "totalPasswords": "Total Passwords",
+    "favorites": "Favorites",
+    "strongPasswords": "Strong Passwords",
+    "quickActions": "Quick Actions",
+    "addPassword": "Add Password",
+    "generatePassword": "Generate Password",
+    "recentPasswords": "Recent Passwords",
+    "noPasswordsYet": "No passwords yet",
+    "addFirstPassword": "Add your first password",
+    "keyboardShortcuts": "Keyboard Shortcuts",
+    "noUsername": "No username"
+  },
+  "generator": {
+    "title": "Password Generator",
+    "subtitle": "Create strong, unique passwords with one click.",
+    "placeholder": "Click generate...",
+    "passwordLength": "Password Length",
+    "settings": "Settings",
+    "savePassword": "Save Password",
+    "saveSubtitle": "Save this generated password to your vault.",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "regenerate": "Regenerate",
+    "saveToVault": "Save to Vault",
+    "weak": "Weak",
+    "medium": "Medium",
+    "strong": "Strong",
+    "veryStrong": "Very Strong",
+    "uppercase": "Uppercase (A-Z)",
+    "lowercase": "Lowercase (a-z)",
+    "numbers": "Numbers (0-9)",
+    "symbols": "Symbols (!@#$)",
+    "excludeSimilar": "Exclude Similar (l, 1, O, 0)",
+    "titleLabel": "Title",
+    "usernameLabel": "Username",
+    "urlLabel": "URL",
+    "notesLabel": "Notes",
+    "titlePlaceholder": "e.g., GitHub",
+    "usernamePlaceholder": "e.g., lucas@dev.com",
+    "urlPlaceholder": "e.g., https://github.com",
+    "notesPlaceholder": "Optional notes...",
+    "saved": "Password saved to vault",
+    "selectAtLeastOne": "Select at least one character type",
+    "copiedToClipboard": "Password copied to clipboard"
+  },
+  "spotlight": {
+    "searchPlaceholder": "Search passwords...",
+    "noMatchingPasswords": "No matching passwords",
+    "noPasswordsYet": "No passwords yet",
+    "navigate": "Navigate",
+    "copyPassword": "Copy Password",
+    "close": "Close"
+  },
+  "passwords": {
+    "myVault": "My Vault",
+    "all": "All",
+    "favorites": "★ Favorites",
+    "searchPlaceholder": "Search passwords...",
+    "copyPassword": "Copy Password",
+    "copyUsername": "Copy Username",
+    "edit": "Edit",
+    "addToFavorites": "Add to Favorites",
+    "removeFromFavorites": "Remove from Favorites",
+    "delete": "Delete",
+    "passwordCopied": "Password copied",
+    "usernameCopied": "Username copied"
+  },
+  "tabs": {
+    "myVault": "My Vault",
+    "generate": "Generate"
+  },
+  "time": {
+    "justNow": "Just now",
+    "hoursAgo": "{{hours}}h ago",
+    "daysAgo": "{{days}}d ago",
+    "weeksAgo": "{{weeks}}w ago"
+  },
+  "shortcuts": {
+    "quickSearch": "Quick Search",
+    "newPassword": "New Password",
+    "generator": "Generator",
+    "closeOverlay": "Close Overlay",
+    "navigateList": "Navigate List",
+    "selectCopy": "Select / Copy"
+  },
+  "toast": {
+    "error": "Error",
+    "saved": "Saved"
+  }
+}

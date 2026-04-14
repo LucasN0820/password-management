@@ -11,12 +11,14 @@ import {
 import { RefreshCw, Copy, Check, Save, Minus, Plus } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
+import { useTranslation } from '@repo/i18n';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
 import { CopyToast } from '@/components/copy-toast';
 import { ModalAddPassword } from '@/components/modal-add-password';
 
 export function GeneratorScreen() {
+  const { t } = useTranslation();
   const [length, setLength] = useState(16);
   const [includeUppercase, setIncludeUppercase] = useState(true);
   const [includeLowercase, setIncludeLowercase] = useState(true);
@@ -92,7 +94,7 @@ export function GeneratorScreen() {
       >
         {/* Page title */}
         <Text style={[styles.pageTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
-          Generator
+          {t('generator.title')}
         </Text>
 
         {/* Password display card */}
@@ -106,7 +108,7 @@ export function GeneratorScreen() {
               ]}
               numberOfLines={2}
             >
-              {generatedPassword || 'Tap generate to create a password'}
+              {generatedPassword || t('generator.placeholder')}
             </Text>
           </Pressable>
 
@@ -133,7 +135,7 @@ export function GeneratorScreen() {
             >
               <RefreshCw size={16} color={c.foreground} />
               <Text style={[styles.regenerateText, { color: c.foreground, fontFamily: fonts.bodySemiBold }]}>
-                Regenerate
+                {t('generator.regenerate')}
               </Text>
             </Pressable>
             <Pressable
@@ -155,7 +157,7 @@ export function GeneratorScreen() {
 
         {/* Length section */}
         <Text style={[styles.sectionTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
-          Length
+          {t('generator.passwordLength')}
         </Text>
         <View style={[styles.sliderCard, { backgroundColor: c.surface, borderColor: c.border }]}>
           <View style={styles.lengthControls}>
@@ -208,32 +210,32 @@ export function GeneratorScreen() {
 
         {/* Characters section */}
         <Text style={[styles.sectionTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
-          Characters
+          {t('generator.characters')}
         </Text>
         <View style={[styles.toggleCard, { backgroundColor: c.surface, borderColor: c.border }]}>
           <ToggleRow
-            label="Uppercase (A-Z)"
+            label={t('generator.uppercase')}
             value={includeUppercase}
             onToggle={() => setIncludeUppercase(!includeUppercase)}
             colors={c}
             showBorder
           />
           <ToggleRow
-            label="Lowercase (a-z)"
+            label={t('generator.lowercase')}
             value={includeLowercase}
             onToggle={() => setIncludeLowercase(!includeLowercase)}
             colors={c}
             showBorder
           />
           <ToggleRow
-            label="Numbers (0-9)"
+            label={t('generator.numbers')}
             value={includeNumbers}
             onToggle={() => setIncludeNumbers(!includeNumbers)}
             colors={c}
             showBorder
           />
           <ToggleRow
-            label="Symbols (!@#$)"
+            label={t('generator.symbols')}
             value={includeSymbols}
             onToggle={() => setIncludeSymbols(!includeSymbols)}
             colors={c}
@@ -248,7 +250,7 @@ export function GeneratorScreen() {
           >
             <Save size={18} color={c.background} />
             <Text style={[styles.saveButtonText, { color: c.background, fontFamily: fonts.bodySemiBold }]}>
-              Save to Vault
+              {t('generator.saveToVault')}
             </Text>
           </Pressable>
         )}
@@ -256,7 +258,7 @@ export function GeneratorScreen() {
 
       <CopyToast
         visible={toastVisible}
-        message="Password copied"
+        message={t('passwords.passwordCopied')}
         onHide={() => setToastVisible(false)}
       />
 

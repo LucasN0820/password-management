@@ -2,9 +2,11 @@ import { motion } from 'framer-motion'
 import { Globe, Key, Lock, Plus, Search, Star, Zap } from 'lucide-react'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router'
+import { useTranslation } from '@repo/i18n'
 import { usePasswordStore } from '@/store/passwordStore'
 
 export function HomePage() {
+  const { t } = useTranslation()
   const { passwords, loadPasswords } = usePasswordStore()
   const navigate = useNavigate()
 
@@ -40,10 +42,10 @@ export function HomePage() {
         {/* Welcome */}
         <motion.div className="mb-10" variants={itemVariants}>
           <h1 className="font-heading text-[42px] font-bold text-foreground leading-tight">
-            Welcome back, Lucas
+            {t('home.welcome', { name: 'Lucas' })}
           </h1>
           <p className="text-base text-muted-foreground mt-1">
-            Your passwords are safe and sound. Here's a quick overview.
+            {t('home.subtitle')}
           </p>
         </motion.div>
 
@@ -58,7 +60,7 @@ export function HomePage() {
               {totalPasswords}
             </div>
             <div className="text-sm text-muted-foreground mt-1">
-              Total Passwords
+              {t('home.totalPasswords')}
             </div>
           </div>
           <div className="rounded-2xl border border-border bg-[#FEF9EF] p-5">
@@ -66,7 +68,7 @@ export function HomePage() {
             <div className="font-heading text-4xl font-bold text-foreground">
               {favoriteCount}
             </div>
-            <div className="text-sm text-muted-foreground mt-1">Favorites</div>
+            <div className="text-sm text-muted-foreground mt-1">{t('home.favorites')}</div>
           </div>
           <div className="rounded-2xl border border-border bg-[#EDF9F0] p-5">
             <div className="text-2xl mb-1">🛡️</div>
@@ -74,7 +76,7 @@ export function HomePage() {
               {Math.round(totalPasswords * 0.85)}
             </div>
             <div className="text-sm text-muted-foreground mt-1">
-              Strong Passwords
+              {t('home.strongPasswords')}
             </div>
           </div>
         </motion.div>
@@ -82,24 +84,24 @@ export function HomePage() {
         {/* Quick Actions */}
         <motion.div className="mb-10" variants={itemVariants}>
           <h2 className="font-heading text-2xl font-bold text-foreground mb-4">
-            Quick Actions
+            {t('home.quickActions')}
           </h2>
           <div className="flex gap-4">
             {[
               {
                 icon: Plus,
-                label: 'Add Password',
+                label: t('home.addPassword'),
                 action: () => navigate('/password'),
               },
               {
                 icon: Search,
-                label: 'Quick Search',
+                label: t('nav.quickSearch'),
                 shortcut: '⌘⇧P',
                 action: () => navigate('/search'),
               },
               {
                 icon: Zap,
-                label: 'Generate Password',
+                label: t('home.generatePassword'),
                 action: () => navigate('/generator'),
               },
             ].map((action) => (
@@ -130,7 +132,7 @@ export function HomePage() {
           {/* Recent Passwords */}
           <div>
             <h2 className="font-heading text-2xl font-bold text-foreground mb-4">
-              Recent Passwords
+              {t('home.recentPasswords')}
             </h2>
             <div className="space-y-1">
               {recentPasswords.length > 0 ? (
@@ -158,26 +160,26 @@ export function HomePage() {
                         {password.title}
                       </div>
                       <div className="text-xs text-muted-foreground truncate">
-                        {password.username || 'No username'}
+                        {password.username || t('home.noUsername')}
                       </div>
                     </div>
                     {password.isFavorite && (
                       <Star className="h-3.5 w-3.5 text-[var(--accent-yellow)] fill-current shrink-0" />
                     )}
                     <span className="text-xs text-text-tertiary shrink-0">
-                      {formatTimeAgo(password.created_at)}
+                      {formatTimeAgo(password.created_at, t)}
                     </span>
                   </div>
                 ))
               ) : (
                 <div className="flex flex-col items-center py-12 text-muted-foreground">
                   <Key className="h-10 w-10 opacity-30 mb-3" />
-                  <p className="text-sm">No passwords yet</p>
+                  <p className="text-sm">{t('home.noPasswordsYet')}</p>
                   <button
                     className="mt-3 text-sm text-[var(--accent-blue)] hover:underline"
                     onClick={() => navigate('/password')}
                   >
-                    Add your first password
+                    {t('home.addFirstPassword')}
                   </button>
                 </div>
               )}
@@ -187,16 +189,16 @@ export function HomePage() {
           {/* Keyboard Shortcuts */}
           <div>
             <h2 className="font-heading text-2xl font-bold text-foreground mb-4">
-              Keyboard Shortcuts
+              {t('home.keyboardShortcuts')}
             </h2>
             <div className="space-y-3">
               {[
-                { keys: '⌘ ⇧ P', desc: 'Quick Search' },
-                { keys: '⌘ N', desc: 'New Password' },
-                { keys: '⌘ G', desc: 'Generator' },
-                { keys: 'Esc', desc: 'Close Overlay' },
-                { keys: '↑ ↓', desc: 'Navigate List' },
-                { keys: '↵', desc: 'Select / Copy' },
+                { keys: '⌘ ⇧ P', desc: t('shortcuts.quickSearch') },
+                { keys: '⌘ N', desc: t('shortcuts.newPassword') },
+                { keys: '⌘ G', desc: t('shortcuts.generator') },
+                { keys: 'Esc', desc: t('shortcuts.closeOverlay') },
+                { keys: '↑ ↓', desc: t('shortcuts.navigateList') },
+                { keys: '↵', desc: t('shortcuts.selectCopy') },
               ].map((sc) => (
                 <div
                   key={sc.desc}
@@ -218,14 +220,14 @@ export function HomePage() {
   )
 }
 
-function formatTimeAgo(dateStr: string): string {
+function formatTimeAgo(dateStr: string, t: (key: string, options?: Record<string, unknown>) => string): string {
   const now = Date.now()
   const date = new Date(dateStr).getTime()
   const diff = now - date
   const hours = Math.floor(diff / 3600000)
-  if (hours < 1) return 'Just now'
-  if (hours < 24) return `${hours}h ago`
+  if (hours < 1) return t('time.justNow')
+  if (hours < 24) return t('time.hoursAgo', { hours })
   const days = Math.floor(hours / 24)
-  if (days < 7) return `${days}d ago`
-  return `${Math.floor(days / 7)}w ago`
+  if (days < 7) return t('time.daysAgo', { days })
+  return t('time.weeksAgo', { weeks: Math.floor(days / 7) })
 }

@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { DBProvider } from '@/providers/db';
 import { ThemeProvider } from '@/providers/theme';
 import { PasswordProvider } from '@/providers/password';
+import { I18nProvider } from '@/providers/i18n';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Render } from './render';
 
@@ -57,9 +58,11 @@ export function RootScreen() {
         <QueryClientProvider client={queryClient}>
           <DBProvider>
             <PasswordProvider>
-              <ThemeProvider>
-                <Render />
-              </ThemeProvider>
+              <I18nProvider>
+                <ThemeProvider>
+                  <Render />
+                </ThemeProvider>
+              </I18nProvider>
             </PasswordProvider>
           </DBProvider>
         </QueryClientProvider>

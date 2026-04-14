@@ -6,6 +6,7 @@ import { Label } from '@repo/ui/primitives/label'
 import { Slider } from '@repo/ui/primitives/slider'
 import { Switch } from '@repo/ui/primitives/switch'
 import { useToast } from '@repo/ui/hooks/use-toast'
+import { useTranslation } from '@repo/i18n'
 import { usePasswordStore } from '@/store/passwordStore'
 
 interface GeneratorSettings {
@@ -18,6 +19,7 @@ interface GeneratorSettings {
 }
 
 export function PasswordGeneratorPage() {
+  const { t } = useTranslation()
   const [password, setPassword] = useState('')
   const [copied, setCopied] = useState(false)
   const [strength, setStrength] = useState(0)
@@ -60,7 +62,7 @@ export function PasswordGeneratorPage() {
     if (settings.excludeSimilar) charset = charset.replaceAll(/[il1o0]/gi, '')
 
     if (!charset) {
-      toast({ title: 'Error', description: 'Select at least one character type', variant: 'destructive' })
+      toast({ title: t('toast.error'), description: t('generator.selectAtLeastOne'), variant: 'destructive' })
       return
     }
 
@@ -80,7 +82,7 @@ export function PasswordGeneratorPage() {
     if (!password) return
     await navigator.clipboard.writeText(password)
     setCopied(true)
-    toast({ title: 'Copied', description: 'Password copied to clipboard' })
+    toast({ title: t('generator.copied'), description: t('generator.copiedToClipboard') })
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -96,7 +98,7 @@ export function PasswordGeneratorPage() {
       isFavorite: false,
       icon: '',
     })
-    toast({ title: 'Saved', description: 'Password saved to vault' })
+    toast({ title: t('toast.saved'), description: t('generator.saved') })
     setShowSave(false)
     setSaveTitle('')
     setSaveUsername('')
@@ -107,17 +109,17 @@ export function PasswordGeneratorPage() {
   const strengthColor =
     strength >= 80 ? 'var(--accent-green)' : strength >= 50 ? 'var(--accent-yellow)' : 'var(--accent-red)'
   const strengthText =
-    strength >= 80 ? 'Very Strong' : strength >= 60 ? 'Strong' : strength >= 40 ? 'Medium' : 'Weak'
+    strength >= 80 ? t('generator.veryStrong') : strength >= 60 ? t('generator.strong') : strength >= 40 ? t('generator.medium') : t('generator.weak')
 
   return (
     <div className="h-full overflow-y-auto">
       <div className="max-w-5xl mx-auto px-10 py-10">
         {/* Header */}
         <h1 className="font-heading text-4xl font-bold text-foreground mb-1">
-          Password Generator
+          {t('generator.title')}
         </h1>
         <p className="text-base text-muted-foreground mb-8">
-          Create strong, unique passwords with one click.
+          {t('generator.subtitle')}
         </p>
 
         <div className="grid grid-cols-[1fr_380px] gap-8">
@@ -126,7 +128,7 @@ export function PasswordGeneratorPage() {
             {/* Generated Password Card */}
             <div className="rounded-2xl border border-border bg-surface p-6">
               <div className="font-mono text-2xl font-medium text-foreground tracking-wider break-all leading-relaxed mb-4">
-                {password || 'Click generate...'}
+                {password || t('generator.placeholder')}
               </div>
 
               {/* Strength Bar */}
@@ -150,7 +152,7 @@ export function PasswordGeneratorPage() {
                 onClick={copyToClipboard}
               >
                 {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-                {copied ? 'Copied!' : 'Copy'}
+                {copied ? t('generator.copied') : t('generator.copy')}
               </Button>
               <Button
                 variant="outline"
@@ -158,7 +160,7 @@ export function PasswordGeneratorPage() {
                 onClick={generatePassword}
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Regenerate
+                {t('generator.regenerate')}
               </Button>
               <Button
                 variant="outline"
@@ -166,21 +168,21 @@ export function PasswordGeneratorPage() {
                 onClick={() => setShowSave(!showSave)}
               >
                 <Save className="h-4 w-4 mr-2" />
-                Save to Vault
+                {t('generator.saveToVault')}
               </Button>
             </div>
 
             {/* Settings Card */}
             <div className="rounded-2xl border border-border bg-background p-6">
               <h2 className="font-heading text-xl font-bold text-foreground mb-5">
-                Settings
+                {t('generator.settings')}
               </h2>
 
               {/* Length Slider */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <Label className="text-sm font-semibold text-foreground">
-                    Password Length
+                    {t('generator.passwordLength')}
                   </Label>
                   <span className="font-mono text-sm font-medium text-[var(--accent-blue)]">
                     {settings.length}
@@ -204,11 +206,11 @@ export function PasswordGeneratorPage() {
               {/* Toggle Options */}
               <div className="space-y-4">
                 {([
-                  ['includeUppercase', 'Uppercase (A-Z)'],
-                  ['includeLowercase', 'Lowercase (a-z)'],
-                  ['includeNumbers', 'Numbers (0-9)'],
-                  ['includeSymbols', 'Symbols (!@#$)'],
-                  ['excludeSimilar', 'Exclude Similar (l, 1, O, 0)'],
+                  ['includeUppercase', t('generator.uppercase')],
+                  ['includeLowercase', t('generator.lowercase')],
+                  ['includeNumbers', t('generator.numbers')],
+                  ['includeSymbols', t('generator.symbols')],
+                  ['excludeSimilar', t('generator.excludeSimilar')],
                 ] as const).map(([key, label]) => (
                   <div key={key} className="flex items-center justify-between">
                     <Label className="text-sm text-foreground">{label}</Label>
@@ -229,20 +231,20 @@ export function PasswordGeneratorPage() {
             className={`rounded-2xl border border-border bg-surface p-6 transition-opacity duration-200 ${showSave ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}
           >
             <h2 className="font-heading text-xl font-bold text-foreground mb-1">
-              Save Password
+              {t('generator.savePassword')}
             </h2>
             <p className="text-sm text-muted-foreground mb-5">
-              Save this generated password to your vault.
+              {t('generator.saveSubtitle')}
             </p>
 
             <div className="space-y-4">
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Title
+                  {t('generator.titleLabel')}
                 </Label>
                 <Input
                   value={saveTitle}
-                  placeholder="e.g., GitHub"
+                  placeholder={t('generator.titlePlaceholder')}
                   className="border-border bg-background"
                   onChange={(e) => setSaveTitle(e.target.value)}
                 />
@@ -250,11 +252,11 @@ export function PasswordGeneratorPage() {
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Username
+                  {t('generator.usernameLabel')}
                 </Label>
                 <Input
                   value={saveUsername}
-                  placeholder="e.g., lucas@dev.com"
+                  placeholder={t('generator.usernamePlaceholder')}
                   className="border-border bg-background"
                   onChange={(e) => setSaveUsername(e.target.value)}
                 />
@@ -262,11 +264,11 @@ export function PasswordGeneratorPage() {
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  URL
+                  {t('generator.urlLabel')}
                 </Label>
                 <Input
                   value={saveUrl}
-                  placeholder="e.g., https://github.com"
+                  placeholder={t('generator.urlPlaceholder')}
                   className="border-border bg-background"
                   onChange={(e) => setSaveUrl(e.target.value)}
                 />
@@ -274,11 +276,11 @@ export function PasswordGeneratorPage() {
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Notes
+                  {t('generator.notesLabel')}
                 </Label>
                 <textarea
                   value={saveNotes}
-                  placeholder="Optional notes..."
+                  placeholder={t('generator.notesPlaceholder')}
                   rows={3}
                   className="flex w-full rounded-lg border border-border bg-background px-3 py-2 text-sm placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring resize-none"
                   onChange={(e) => setSaveNotes(e.target.value)}
@@ -289,7 +291,7 @@ export function PasswordGeneratorPage() {
                 className="w-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-150"
                 onClick={savePassword}
               >
-                Save to Vault
+                {t('generator.saveToVault')}
               </Button>
             </div>
           </div>
