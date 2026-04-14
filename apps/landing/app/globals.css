@@ -1,26 +1,139 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:is(.dark *));
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #37352F;
+  --card: #ffffff;
+  --card-foreground: #37352F;
+  --popover: #ffffff;
+  --popover-foreground: #37352F;
+  --primary: #37352F;
+  --primary-foreground: #ffffff;
+  --secondary: #F7F6F3;
+  --secondary-foreground: #37352F;
+  --muted: #F7F6F3;
+  --muted-foreground: #787774;
+  --accent: #EFEFEF;
+  --accent-foreground: #37352F;
+  --destructive: #EB5757;
+  --destructive-foreground: #ffffff;
+  --border: #E9E9E7;
+  --input: #E9E9E7;
+  --ring: #2EAADC;
+  --radius: 0.75rem;
+
+  /* Custom Notion-inspired tokens */
+  --accent-blue: #2EAADC;
+  --accent-green: #0F7B6C;
+  --accent-red: #EB5757;
+  --accent-yellow: #F5C542;
+  --surface: #F7F6F3;
+}
+
+.dark {
+  --background: #191919;
+  --foreground: #E9E9E7;
+  --card: #232323;
+  --card-foreground: #E9E9E7;
+  --popover: #232323;
+  --popover-foreground: #E9E9E7;
+  --primary: #E9E9E7;
+  --primary-foreground: #191919;
+  --secondary: #232323;
+  --secondary-foreground: #E9E9E7;
+  --muted: #232323;
+  --muted-foreground: #787774;
+  --accent: #2A2A2A;
+  --accent-foreground: #E9E9E7;
+  --destructive: #EB5757;
+  --destructive-foreground: #ffffff;
+  --border: #3D3D3D;
+  --input: #3D3D3D;
+  --ring: #2EAADC;
+  --surface: #232323;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-accent-blue: var(--accent-blue);
+  --color-accent-green: var(--accent-green);
+  --color-accent-red: var(--accent-red);
+  --color-accent-yellow: var(--accent-yellow);
+  --color-surface: var(--surface);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
 }
 
 body {
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(46, 170, 220, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(46, 170, 220, 0.6); }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-float { animation: float 6s ease-in-out infinite; }
+.animate-pulse-glow { animation: pulse-glow 3s ease-in-out infinite; }
+.animate-fade-in-up { animation: fade-in-up 0.6s ease-out forwards; }
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease infinite;
 }
