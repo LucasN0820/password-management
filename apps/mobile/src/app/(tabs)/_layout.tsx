@@ -3,12 +3,14 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { KeyRound, Wand2 } from 'lucide-react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
+import { useTranslation } from '@repo/i18n';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
 import * as Haptics from 'expo-haptics';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 function NotionTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const { t } = useTranslation();
   const scheme = useColorScheme() ?? 'light';
   const c = Colors[scheme];
   const insets = useSafeAreaInsets();
@@ -24,7 +26,7 @@ function NotionTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           ? <KeyRound size={22} color={color} />
           : <Wand2 size={22} color={color} />;
 
-        const label = index === 0 ? 'My Vault' : 'Generate';
+        const label = index === 0 ? t('tabs.myVault') : t('tabs.generate');
 
         const onPress = () => {
           const event = navigation.emit({

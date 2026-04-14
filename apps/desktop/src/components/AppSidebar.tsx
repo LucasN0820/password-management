@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Home, Key, Search, Shield } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router'
 import {
@@ -11,13 +12,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@repo/ui/primitives/sidebar'
+import { useTranslation } from '@repo/i18n'
 import { NavUser } from './NavUser'
-
-const navItems = [
-  { title: 'Home', url: '/', icon: Home },
-  { title: 'Passwords', url: '/password', icon: Key },
-  { title: 'Generator', url: '/generator', icon: Shield },
-]
 
 const user = {
   name: 'Lucas',
@@ -26,8 +22,15 @@ const user = {
 }
 
 export function AppSidebar() {
+  const { t } = useTranslation()
   const location = useLocation()
   const navigate = useNavigate()
+
+  const navItems = useMemo(() => [
+    { title: t('nav.home'), url: '/', icon: Home },
+    { title: t('nav.passwords'), url: '/password', icon: Key },
+    { title: t('nav.generator'), url: '/generator', icon: Shield },
+  ], [t])
 
   return (
     <Sidebar className="border-r border-border">
@@ -42,7 +45,7 @@ export function AppSidebar() {
         >
           <span className="text-xl">🔐</span>
           <span className="font-heading text-xl font-bold text-foreground">
-            PassVault
+            {t('app.name')}
           </span>
         </a>
       </SidebarHeader>
@@ -81,7 +84,7 @@ export function AppSidebar() {
           onClick={() => navigate('/search')}
         >
           <Search className="h-4 w-4" />
-          <span>Quick Search</span>
+          <span>{t('nav.quickSearch')}</span>
           <kbd className="ml-auto font-mono text-[10px] text-text-tertiary bg-surface px-1.5 py-0.5 rounded border border-border">
             ⌘⇧P
           </kbd>

@@ -12,6 +12,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Search, Plus } from 'lucide-react-native';
+import { useTranslation } from '@repo/i18n';
 import { ModalController } from './modal-controller';
 import { AllPassword } from './password-all';
 import { FavoritePassword } from './password-favorite';
@@ -26,6 +27,7 @@ import { Copy, ClipboardCopy, Edit, Star, Trash2 } from 'lucide-react-native';
 type Tab = 'all' | 'favorites';
 
 export function Render() {
+  const { t } = useTranslation();
   const [searchVisible, setSearchVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -57,29 +59,29 @@ export function Render() {
 
   const actionSheetOptions: ActionSheetOption[] = selectedPassword ? [
     {
-      label: 'Copy Password',
+      label: t('passwords.copyPassword'),
       icon: Copy,
       onPress: async () => {
         if (selectedPassword) {
           await Clipboard.setStringAsync(selectedPassword.password);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          showToast('Password copied');
+          showToast(t('passwords.passwordCopied'));
         }
       },
     },
     {
-      label: 'Copy Username',
+      label: t('passwords.copyUsername'),
       icon: ClipboardCopy,
       onPress: async () => {
         if (selectedPassword) {
           await Clipboard.setStringAsync(selectedPassword.username);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-          showToast('Username copied');
+          showToast(t('passwords.usernameCopied'));
         }
       },
     },
     {
-      label: 'Edit',
+      label: t('passwords.edit'),
       icon: Edit,
       onPress: () => {
         if (selectedPassword) {
@@ -88,14 +90,14 @@ export function Render() {
       },
     },
     {
-      label: selectedPassword.isFavorite ? 'Remove from Favorites' : 'Add to Favorites',
+      label: selectedPassword.isFavorite ? t('passwords.removeFromFavorites') : t('passwords.addToFavorites'),
       icon: Star,
       onPress: () => {
         // Toggle handled by store
       },
     },
     {
-      label: 'Delete',
+      label: t('passwords.delete'),
       icon: Trash2,
       destructive: true,
       onPress: () => {
@@ -112,7 +114,7 @@ export function Render() {
         {/* Header */}
         <View style={styles.header}>
           <Text style={[styles.pageTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
-            My Vault
+            {t('passwords.myVault')}
           </Text>
           <View style={styles.headerActions}>
             <Pressable
@@ -143,7 +145,7 @@ export function Render() {
               <Search size={16} color={c.textTertiary} />
               <TextInput
                 style={[styles.searchText, { color: c.foreground, fontFamily: fonts.body }]}
-                placeholder="Search passwords..."
+                placeholder={t('passwords.searchPlaceholder')}
                 placeholderTextColor={c.textTertiary}
                 value={searchQuery}
                 onChangeText={text => setSearchQuery(text.trim())}
@@ -171,7 +173,7 @@ export function Render() {
                 { fontFamily: activeTab === 'all' ? fonts.bodySemiBold : fonts.body },
                 { color: activeTab === 'all' ? c.foreground : c.mutedForeground },
               ]}>
-                All
+                {t('passwords.all')}
               </Text>
             </Pressable>
             <Pressable
@@ -189,7 +191,7 @@ export function Render() {
                 { fontFamily: activeTab === 'favorites' ? fonts.bodySemiBold : fonts.body },
                 { color: activeTab === 'favorites' ? c.foreground : c.mutedForeground },
               ]}>
-                ★ Favorites
+                {t('passwords.favorites')}
               </Text>
             </Pressable>
           </View>

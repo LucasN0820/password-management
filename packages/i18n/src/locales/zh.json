@@ -1,0 +1,104 @@
+{
+  "app": {
+    "name": "PassVault"
+  },
+  "nav": {
+    "home": "首页",
+    "passwords": "密码",
+    "generator": "生成器",
+    "quickSearch": "快速搜索"
+  },
+  "home": {
+    "welcome": "欢迎回来，{{name}}",
+    "subtitle": "您的密码安全无虞。以下是快速概览。",
+    "totalPasswords": "密码总数",
+    "favorites": "收藏",
+    "strongPasswords": "强密码",
+    "quickActions": "快捷操作",
+    "addPassword": "添加密码",
+    "generatePassword": "生成密码",
+    "recentPasswords": "最近密码",
+    "noPasswordsYet": "暂无密码",
+    "addFirstPassword": "添加您的第一个密码",
+    "keyboardShortcuts": "键盘快捷键",
+    "noUsername": "无用户名"
+  },
+  "generator": {
+    "title": "密码生成器",
+    "subtitle": "一键创建强密码。",
+    "placeholder": "点击生成...",
+    "passwordLength": "密码长度",
+    "settings": "设置",
+    "savePassword": "保存密码",
+    "saveSubtitle": "将此密码保存到您的保险库。",
+    "copy": "复制",
+    "copied": "已复制！",
+    "regenerate": "重新生成",
+    "saveToVault": "保存到保险库",
+    "characters": "字符",
+    "weak": "弱",
+    "medium": "中等",
+    "strong": "强",
+    "veryStrong": "非常强",
+    "uppercase": "大写字母 (A-Z)",
+    "lowercase": "小写字母 (a-z)",
+    "numbers": "数字 (0-9)",
+    "symbols": "符号 (!@#$)",
+    "excludeSimilar": "排除相似字符 (l, 1, O, 0)",
+    "titleLabel": "标题",
+    "usernameLabel": "用户名",
+    "urlLabel": "网址",
+    "notesLabel": "备注",
+    "titlePlaceholder": "例如：GitHub",
+    "usernamePlaceholder": "例如：lucas@dev.com",
+    "urlPlaceholder": "例如：https://github.com",
+    "notesPlaceholder": "可选备注...",
+    "saved": "密码已保存到保险库",
+    "selectAtLeastOne": "请至少选择一种字符类型",
+    "copiedToClipboard": "密码已复制到剪贴板"
+  },
+  "spotlight": {
+    "searchPlaceholder": "搜索密码...",
+    "noMatchingPasswords": "没有匹配的密码",
+    "noPasswordsYet": "暂无密码",
+    "navigate": "导航",
+    "copyPassword": "复制密码",
+    "close": "关闭"
+  },
+  "passwords": {
+    "myVault": "我的保险库",
+    "all": "全部",
+    "favorites": "★ 收藏",
+    "searchPlaceholder": "搜索密码...",
+    "copyPassword": "复制密码",
+    "copyUsername": "复制用户名",
+    "edit": "编辑",
+    "addToFavorites": "添加到收藏",
+    "removeFromFavorites": "从收藏中移除",
+    "delete": "删除",
+    "passwordCopied": "密码已复制",
+    "usernameCopied": "用户名已复制"
+  },
+  "tabs": {
+    "myVault": "我的保险库",
+    "generate": "生成"
+  },
+  "time": {
+    "justNow": "刚刚",
+    "hoursAgo": "{{hours}}小时前",
+    "daysAgo": "{{days}}天前",
+    "weeksAgo": "{{weeks}}周前"
+  },
+  "shortcuts": {
+    "quickSearch": "快速搜索",
+    "newPassword": "新密码",
+    "generator": "生成器",
+    "closeOverlay": "关闭浮层",
+    "navigateList": "导航列表",
+    "selectCopy": "选择/复制"
+  },
+  "toast": {
+    "error": "错误",
+    "saved": "已保存"
+  }
+}
