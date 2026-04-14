@@ -3,6 +3,13 @@ export { i18n, supportedLanguages, resources };
 export type { SupportedLanguage } from './config';
 export { useTranslation } from 'react-i18next';
 
+// Auto-persist language preference when language changes
+i18n.on('languageChanged', (lng) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('language', lng);
+  }
+});
+
 // Re-export changeLanguage for convenience
 export const changeLanguage = (lng: string) => i18n.changeLanguage(lng);
 
