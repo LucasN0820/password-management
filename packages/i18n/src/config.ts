@@ -12,12 +12,15 @@ export const resources = {
 export const supportedLanguages = ['en', 'zh'] as const;
 export type SupportedLanguage = (typeof supportedLanguages)[number];
 
+const isBrowser = typeof window !== 'undefined';
+const isAsync = typeof navigator !== 'undefined' && navigator.language;
+
 const languageDetector = {
   type: 'languageDetector' as const,
-  async: true,
+  async: isAsync,
   detect: (callback: (lng: string) => void) => {
-    // Check localStorage first (user preference)
-    if (typeof window !== 'undefined') {
+    // Check localStorage first (user preference) - browser only
+    if (isBrowser) {
       const stored = localStorage.getItem('language');
       if (stored && supportedLanguages.includes(stored as SupportedLanguage)) {
         callback(stored);
@@ -25,8 +28,8 @@ const languageDetector = {
       }
     }
 
-    // Fallback to browser language
-    if (typeof navigator !== 'undefined') {
+    // Fallback to browser language - browser only
+    if (isAsync) {
       const browserLang = navigator.language.split('-')[0] || 'en';
       if (supportedLanguages.includes(browserLang as SupportedLanguage)) {
         callback(browserLang);
@@ -39,7 +42,8 @@ const languageDetector = {
   },
   init: () => {},
   cacheUserLanguage: (lng: string) => {
-    if (typeof window !== 'undefined') {
+    // Only persist to localStorage in browser environment
+    if (isBrowser) {
       localStorage.setItem('language', lng);
     }
   },

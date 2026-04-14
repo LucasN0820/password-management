@@ -1,8 +1,7 @@
-export { default as i18n, supportedLanguages } from './config';
+import i18n, { supportedLanguages, resources } from './config';
+export { i18n, supportedLanguages, resources };
 export type { SupportedLanguage } from './config';
 export { useTranslation } from 'react-i18next';
-
-import i18n from './config';
 
 // Re-export changeLanguage for convenience
 export const changeLanguage = (lng: string) => i18n.changeLanguage(lng);

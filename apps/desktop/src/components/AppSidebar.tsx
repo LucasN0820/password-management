@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { Home, Key, Search, Shield } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router'
 import {
@@ -19,11 +20,11 @@ export function AppSidebar() {
   const location = useLocation()
   const navigate = useNavigate()
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { title: t('nav.home'), url: '/', icon: Home },
     { title: t('nav.passwords'), url: '/password', icon: Key },
     { title: t('nav.generator'), url: '/generator', icon: Shield },
-  ]
+  ], [t])
 
   const user = {
     name: 'Lucas',
