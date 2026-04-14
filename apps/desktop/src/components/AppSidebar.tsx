@@ -15,6 +15,12 @@ import {
 import { useTranslation } from '@repo/i18n'
 import { NavUser } from './NavUser'
 
+const user = {
+  name: 'Lucas',
+  email: 'lucas@passvault.app',
+  avatar: '',
+}
+
 export function AppSidebar() {
   const { t } = useTranslation()
   const location = useLocation()
@@ -25,12 +31,6 @@ export function AppSidebar() {
     { title: t('nav.passwords'), url: '/password', icon: Key },
     { title: t('nav.generator'), url: '/generator', icon: Shield },
   ], [t])
-
-  const user = {
-    name: 'Lucas',
-    email: 'lucas@passvault.app',
-    avatar: '',
-  }
 
   return (
     <Sidebar className="border-r border-border">

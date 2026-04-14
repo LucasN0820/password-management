@@ -1,9 +1,21 @@
 import { motion } from 'framer-motion'
 import { Globe, Key, Lock, Plus, Search, Star, Zap } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router'
-import { i18n, useTranslation } from '@repo/i18n'
+import { useTranslation } from '@repo/i18n'
 import { usePasswordStore } from '@/store/passwordStore'
+
+function computeTimeAgo(dateStr: string, t: (key: string, options?: Record<string, unknown>) => string): string {
+  const now = Date.now()
+  const date = new Date(dateStr).getTime()
+  const diff = now - date
+  const hours = Math.floor(diff / 3600000)
+  if (hours < 1) return t('time.justNow')
+  if (hours < 24) return t('time.hoursAgo', { hours })
+  const days = Math.floor(hours / 24)
+  if (days < 7) return t('time.daysAgo', { days })
+  return t('time.weeksAgo', { weeks: Math.floor(days / 7) })
+}
 
 export function HomePage() {
   const { t } = useTranslation()
@@ -17,6 +29,14 @@ export function HomePage() {
   const recentPasswords = passwords.slice(0, 6)
   const favoriteCount = passwords.filter((p) => p.isFavorite).length
   const totalPasswords = passwords.length
+
+  const timeAgoMap = useMemo(() => {
+    const map = new Map<number, string>()
+    for (const password of recentPasswords) {
+      map.set(password.id, computeTimeAgo(password.created_at, t))
+    }
+    return map
+  }, [recentPasswords, t])
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -167,7 +187,7 @@ export function HomePage() {
                       <Star className="h-3.5 w-3.5 text-[var(--accent-yellow)] fill-current shrink-0" />
                     )}
                     <span className="text-xs text-text-tertiary shrink-0">
-                      {formatTimeAgo(password.created_at)}
+                      {timeAgoMap.get(password.id)}
                     </span>
                   </div>
                 ))
@@ -218,16 +238,4 @@ export function HomePage() {
       </div>
     </motion.div>
   )
-}
-
-function formatTimeAgo(dateStr: string): string {
-  const now = Date.now()
-  const date = new Date(dateStr).getTime()
-  const diff = now - date
-  const hours = Math.floor(diff / 3600000)
-  if (hours < 1) return i18n.t('time.justNow')
-  if (hours < 24) return i18n.t('time.hoursAgo', { hours })
-  const days = Math.floor(hours / 24)
-  if (days < 7) return i18n.t('time.daysAgo', { days })
-  return i18n.t('time.weeksAgo', { weeks: Math.floor(days / 7) })
 }

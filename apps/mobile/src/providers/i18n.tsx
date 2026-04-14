@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import * as Localization from 'expo-localization';
 import { i18n, supportedLanguages, changeLanguage } from '@repo/i18n';
@@ -27,16 +27,10 @@ const getDeviceLanguage = (): string => {
 };
 
 export function I18nProvider({ children }: I18nProviderProps) {
-  const [ready, setReady] = useState(false);
-
   useEffect(() => {
     const deviceLang = getDeviceLanguage();
-    i18n.changeLanguage(deviceLang).then(() => setReady(true));
+    changeLanguage(deviceLang);
   }, []);
-
-  if (!ready) {
-    return null;
-  }
 
   return (
     <I18nextProvider i18n={i18n}>
