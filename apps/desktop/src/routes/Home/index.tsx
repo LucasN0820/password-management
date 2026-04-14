@@ -26,7 +26,7 @@ export function HomePage() {
     loadPasswords()
   }, [loadPasswords])
 
-  const recentPasswords = passwords.slice(0, 6)
+  const recentPasswords = useMemo(() => passwords.slice(0, 6), [passwords])
   const favoriteCount = passwords.filter((p) => p.isFavorite).length
   const totalPasswords = passwords.length
 

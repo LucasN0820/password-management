@@ -12090,7 +12090,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"expo-localization@npm:~17.0.0":
+"expo-localization@npm:~17.0.8":
   version: 17.0.8
   resolution: "expo-localization@npm:17.0.8"
   dependencies:
@@ -17269,7 +17269,7 @@ __metadata:
     expo-haptics: "npm:^15.0.8"
     expo-image-picker: "npm:~17.0.10"
     expo-linking: "npm:~8.0.11"
-    expo-localization: "npm:~17.0.0"
+    expo-localization: "npm:~17.0.8"
     expo-router: "npm:~6.0.23"
     expo-splash-screen: "npm:~31.0.13"
     expo-sqlite: "npm:~16.0.10"

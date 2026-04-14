@@ -1,10 +1,12 @@
-import { useEffect } from 'react';
+import type { ReactNode } from 'react';
+import { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import * as Localization from 'expo-localization';
+import { LanguageLoader } from './LanguageLoader';
 import { i18n, supportedLanguages, changeLanguage } from '@repo/i18n';
 
 interface I18nProviderProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
 /**
@@ -27,14 +29,18 @@ const getDeviceLanguage = (): string => {
 };
 
 export function I18nProvider({ children }: I18nProviderProps) {
+  const [ready, setReady] = useState(false);
+
   useEffect(() => {
     const deviceLang = getDeviceLanguage();
-    changeLanguage(deviceLang);
+    changeLanguage(deviceLang)
+      .then(() => setReady(true))
+      .catch(console.error);
   }, []);
 
   return (
     <I18nextProvider i18n={i18n}>
-      {children}
+      {ready ? children : <LanguageLoader />}
     </I18nextProvider>
   );
 }

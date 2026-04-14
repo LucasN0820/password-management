@@ -57,13 +57,13 @@ export function RootScreen() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <DBProvider>
-            <PasswordProvider>
-              <I18nProvider>
+            <I18nProvider>
+              <PasswordProvider>
                 <ThemeProvider>
                   <Render />
                 </ThemeProvider>
-              </I18nProvider>
-            </PasswordProvider>
+              </PasswordProvider>
+            </I18nProvider>
           </DBProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

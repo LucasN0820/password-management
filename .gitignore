@@ -49,3 +49,4 @@ ios
 android
 
 .yarn/cache
+.claude/settings.json
