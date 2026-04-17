@@ -6974,8 +6974,8 @@ __metadata:
   resolution: "@repo/db@workspace:packages/db"
   dependencies:
     "@repo/ts-config": "workspace:*"
-    drizzle-kit: "npm:^0.31.10"
-    drizzle-orm: "npm:^0.45.2"
+    drizzle-kit: "npm:0.31.10"
+    drizzle-orm: "npm:0.45.2"
     typescript: "npm:^5.3.3"
     zustand: "npm:^5.0.11"
   peerDependencies:
@@ -11041,7 +11041,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"drizzle-kit@npm:^0.31.10":
+"drizzle-kit@npm:0.31.10":
   version: 0.31.10
   resolution: "drizzle-kit@npm:0.31.10"
   dependencies:
@@ -11055,7 +11055,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"drizzle-orm@npm:^0.45.2":
+"drizzle-orm@npm:0.45.2":
   version: 0.45.2
   resolution: "drizzle-orm@npm:0.45.2"
   peerDependencies:
