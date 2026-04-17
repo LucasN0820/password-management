@@ -119,6 +119,7 @@ function createSearchWindow() {
     resizable: false,
     transparent: true,
     backgroundColor: '#00000000',
+    hasShadow: false,
   })
 
   if (isDev) {
