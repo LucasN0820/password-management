@@ -118,10 +118,11 @@ function createSearchWindow() {
     skipTaskbar: true,
     resizable: false,
     transparent: true,
+    backgroundColor: '#00000000',
   })
 
   if (isDev) {
-    searchWindow.loadURL('http://localhost:5173/search')
+    searchWindow.loadURL('http://localhost:5173/#/search')
   } else {
     searchWindow.loadFile(join(__dirname, '../dist/index.html'), {
       hash: '/search'
