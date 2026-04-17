@@ -1,9 +1,19 @@
 import { app, BrowserWindow, ipcMain, globalShortcut, screen, nativeImage } from 'electron'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-import Database from 'better-sqlite3'
 import { existsSync, mkdirSync } from 'fs'
-import { PASSWORDS_TABLE_DDL, PASSWORDS_ICON_MIGRATION } from '@repo/db'
+import {
+  addPassword,
+  deletePassword,
+  getCategories,
+  getPasswordById,
+  getPasswords,
+  searchPasswords,
+  updatePassword,
+  type PasswordDatabase,
+  type PasswordInput,
+} from '@repo/db'
+import { createDesktopDatabase } from './db'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -12,7 +22,8 @@ const isDev = !app.isPackaged
 
 let mainWindow: BrowserWindow | null
 let searchWindow: BrowserWindow | null
-let db: Database.Database | null
+let sqlite: ReturnType<typeof createDesktopDatabase>['client'] | null
+let db: PasswordDatabase | null
 
 const userDataPath = app.getPath('userData')
 const dbPath = join(userDataPath, 'passwords.db')
@@ -23,16 +34,9 @@ function initDatabase() {
       mkdirSync(userDataPath, { recursive: true })
     }
 
-    db = new Database(dbPath)
-
-    db.exec(PASSWORDS_TABLE_DDL)
-
-    // Add icon column to existing table if it doesn't exist
-    try {
-      db.exec(PASSWORDS_ICON_MIGRATION)
-    } catch (error) {
-      // Column already exists, ignore error
-    }
+    const database = createDesktopDatabase(dbPath)
+    sqlite = database.client
+    db = database.db
 
     console.log('Database initialized at:', dbPath)
   } catch (error) {
@@ -183,67 +187,43 @@ app.on('window-all-closed', () => {
 
 app.on('will-quit', () => {
   unregisterGlobalShortcuts()
-  if (db) {
-    db.close()
+  if (sqlite) {
+    sqlite.close()
   }
 })
 
 // IPC Handlers
 ipcMain.handle('get-passwords', () => {
   if (!db) return []
-  const stmt = db.prepare('SELECT * FROM passwords ORDER BY created_at DESC')
-  return stmt.all()
+  return getPasswords(db)
 })
 
 ipcMain.handle('get-password-by-id', (_, id: number) => {
   if (!db) return null
-  const stmt = db.prepare('SELECT * FROM passwords WHERE id = ?')
-  return stmt.get(id)
+  return getPasswordById(db, id)
 })
 
-ipcMain.handle('add-password', (_, data: any) => {
+ipcMain.handle('add-password', (_, data: PasswordInput) => {
   if (!db) return null
-  const stmt = db.prepare(`
-    INSERT INTO passwords (title, username, password, url, notes, category, favorite, icon)
-    VALUES (@title, @username, @password, @url, @notes, @category, @favorite, @icon)
-  `)
-  const result = stmt.run(data)
-  return { id: result.lastInsertRowid, ...data }
+  return addPassword(db, data)
 })
 
-ipcMain.handle('update-password', (_, id: number, data: any) => {
+ipcMain.handle('update-password', (_, id: number, data: PasswordInput) => {
   if (!db) return null
-  const stmt = db.prepare(`
-    UPDATE passwords 
-    SET title = @title, username = @username, password = @password, 
-        url = @url, notes = @notes, category = @category, 
-        favorite = @favorite, icon = @icon, updated_at = CURRENT_TIMESTAMP
-    WHERE id = @id
-  `)
-  stmt.run({ ...data, id })
-  return { id, ...data }
+  return updatePassword(db, id, data)
 })
 
 ipcMain.handle('delete-password', (_, id: number) => {
   if (!db) return false
-  const stmt = db.prepare('DELETE FROM passwords WHERE id = ?')
-  const result = stmt.run(id)
-  return result.changes > 0
+  return deletePassword(db, id)
 })
 
 ipcMain.handle('search-passwords', (_, query: string) => {
   if (!db) return []
-  const stmt = db.prepare(`
-    SELECT * FROM passwords 
-    WHERE title LIKE ? OR username LIKE ? OR url LIKE ?
-    ORDER BY favorite DESC, updated_at DESC
-  `)
-  const searchTerm = `%${query}%`
-  return stmt.all(searchTerm, searchTerm, searchTerm)
+  return searchPasswords(db, query)
 })
 
 ipcMain.handle('get-categories', () => {
   if (!db) return []
-  const stmt = db.prepare('SELECT DISTINCT category FROM passwords ORDER BY category')
-  return stmt.all().map((row: any) => row.category)
+  return getCategories(db)
 })

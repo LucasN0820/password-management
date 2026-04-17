@@ -1,15 +1,13 @@
-export interface Password {
-  id: number
-  title: string
+import type { InferInsertModel, InferSelectModel } from 'drizzle-orm'
+import type { passwords } from './schema'
+
+export type PasswordRow = InferSelectModel<typeof passwords>
+
+export type PasswordRowInput = InferInsertModel<typeof passwords>
+
+export interface Password extends Omit<PasswordRow, 'favorite'> {
   username: string
-  password: string
-  url: string | null
-  notes: string | null
-  category: string
   isFavorite: boolean
-  icon: string | null
-  created_at: string
-  updated_at: string
 }
 
 export type PasswordInput = Omit<Password, 'id' | 'created_at' | 'updated_at'>
