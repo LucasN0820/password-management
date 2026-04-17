@@ -1,20 +1,27 @@
-export const PASSWORDS_TABLE_DDL = `
-  CREATE TABLE IF NOT EXISTS passwords (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    username TEXT,
-    password TEXT NOT NULL,
-    url TEXT,
-    notes TEXT,
-    category TEXT DEFAULT 'all',
-    favorite INTEGER DEFAULT 0,
-    icon TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { sql } from 'drizzle-orm'
 
-  CREATE INDEX IF NOT EXISTS idx_category ON passwords(category);
-  CREATE INDEX IF NOT EXISTS idx_favorite ON passwords(favorite);
-`
+export const passwords = sqliteTable('passwords', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  title: text('title').notNull(),
+  username: text('username'),
+  password: text('password').notNull(),
+  url: text('url'),
+  notes: text('notes'),
+  category: text('category').notNull().default('all'),
+  favorite: integer('favorite', { mode: 'boolean' }).notNull().default(false),
+  icon: text('icon'),
+  created_at: text('created_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+  updated_at: text('updated_at')
+    .notNull()
+    .default(sql`CURRENT_TIMESTAMP`),
+}, table => ({
+  categoryIdx: index('idx_passwords_category').on(table.category),
+  favoriteIdx: index('idx_passwords_favorite').on(table.favorite),
+}))
 
-export const PASSWORDS_ICON_MIGRATION = `ALTER TABLE passwords ADD COLUMN icon TEXT`
+export const schema = {
+  passwords,
+}

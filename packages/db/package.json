@@ -9,7 +9,13 @@
       "default": "./src/index.ts"
     }
   },
+  "scripts": {
+    "drizzle:generate": "drizzle-kit generate && node ./scripts/build-migration-bundle.mjs",
+    "drizzle:bundle": "node ./scripts/build-migration-bundle.mjs",
+    "drizzle:studio": "drizzle-kit studio"
+  },
   "dependencies": {
+    "drizzle-orm": "^0.45.2",
     "zustand": "^5.0.11"
   },
   "peerDependencies": {
@@ -17,6 +23,7 @@
   },
   "devDependencies": {
     "@repo/ts-config": "workspace:*",
+    "drizzle-kit": "^0.31.10",
     "typescript": "^5.3.3"
   }
 }
