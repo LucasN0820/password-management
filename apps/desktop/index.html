@@ -13,10 +13,28 @@
       margin: 0;
       padding: 0;
     }
+
+    html.spotlight-window,
+    body.spotlight-window {
+      background: transparent !important;
+    }
   </style>
+  <script>
+    const isSpotlightWindow =
+      window.location.hash === '#/search' || window.location.pathname === '/search';
+
+    if (isSpotlightWindow) {
+      document.documentElement.classList.add('spotlight-window');
+    }
+  </script>
 </head>
 
 <body>
+  <script>
+    if (document.documentElement.classList.contains('spotlight-window')) {
+      document.body.classList.add('spotlight-window');
+    }
+  </script>
   <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
