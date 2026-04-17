@@ -1,6 +1,4 @@
-"use client";
-
-import { useState } from "react";
+import { MobileNav } from "./mobile-nav";
 
 const features = [
   {
@@ -96,8 +94,6 @@ const testimonials = [
 ];
 
 export default function Home() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Navigation */}
@@ -124,49 +120,17 @@ export default function Home() {
 
             {/* CTA Buttons */}
             <div className="hidden md:flex items-center gap-3">
-              <button className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+              <button type="button" className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                 Sign In
               </button>
-              <button className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">
+              <button type="button" className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">
                 Get Started
               </button>
             </div>
 
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 rounded-lg hover:bg-accent transition-colors"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                {isMenuOpen ? (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                ) : (
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                )}
-              </svg>
-            </button>
+            <MobileNav />
           </div>
         </div>
-
-        {/* Mobile Menu */}
-        {isMenuOpen && (
-          <div className="md:hidden bg-background border-t border-border">
-            <div className="px-4 py-4 space-y-3">
-              <a href="#features" className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">Features</a>
-              <a href="#how-it-works" className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
-              <a href="#testimonials" className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">Testimonials</a>
-              <a href="#pricing" className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
-              <div className="pt-3 border-t border-border space-y-2">
-                <button className="w-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors text-left">
-                  Sign In
-                </button>
-                <button className="w-full px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity">
-                  Get Started
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </nav>
 
       {/* Hero Section */}
@@ -182,7 +146,7 @@ export default function Home() {
             {/* Badge */}
             <div className="inline-flex items-center gap-2 px-4 py-2 mb-8 text-sm bg-secondary rounded-full border border-border">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-75"></span>
+                <span className="motion-safe:animate-ping absolute inline-flex h-full w-full rounded-full bg-accent-green opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-accent-green"></span>
               </span>
               <span className="text-muted-foreground">Trusted by 10,000+ users worldwide</span>
@@ -203,10 +167,10 @@ export default function Home() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-              <button className="w-full sm:w-auto px-8 py-4 text-base font-semibold bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-all hover:scale-105 animate-pulse-glow">
+              <button type="button" className="w-full sm:w-auto px-8 py-4 text-base font-semibold bg-primary text-primary-foreground rounded-xl hover:opacity-90 transition-all hover:scale-105 animate-pulse-glow">
                 Start Free Trial
               </button>
-              <button className="w-full sm:w-auto px-8 py-4 text-base font-semibold bg-secondary text-secondary-foreground rounded-xl border border-border hover:bg-accent transition-all">
+              <button type="button" className="w-full sm:w-auto px-8 py-4 text-base font-semibold bg-secondary text-secondary-foreground rounded-xl border border-border hover:bg-accent transition-all">
                 Watch Demo
               </button>
             </div>
@@ -415,7 +379,7 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <button className="w-full py-3 text-sm font-medium bg-secondary text-secondary-foreground rounded-xl border border-border hover:bg-accent transition-colors">
+              <button type="button" className="w-full py-3 text-sm font-medium bg-secondary text-secondary-foreground rounded-xl border border-border hover:bg-accent transition-colors">
                 Get Started
               </button>
             </div>
@@ -442,7 +406,7 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <button className="w-full py-3 text-sm font-medium bg-accent-blue text-white rounded-xl hover:opacity-90 transition-opacity">
+              <button type="button" className="w-full py-3 text-sm font-medium bg-accent-blue text-white rounded-xl hover:opacity-90 transition-opacity">
                 Start Free Trial
               </button>
             </div>
@@ -466,7 +430,7 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <button className="w-full py-3 text-sm font-medium bg-secondary text-secondary-foreground rounded-xl border border-border hover:bg-accent transition-colors">
+              <button type="button" className="w-full py-3 text-sm font-medium bg-secondary text-secondary-foreground rounded-xl border border-border hover:bg-accent transition-colors">
                 Contact Sales
               </button>
             </div>
@@ -484,10 +448,10 @@ export default function Home() {
             Join thousands of users who trust SecureVault to keep their passwords safe. Start your free trial today.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button className="w-full sm:w-auto px-8 py-4 text-base font-semibold bg-white text-primary rounded-xl hover:opacity-90 transition-opacity">
+            <button type="button" className="w-full sm:w-auto px-8 py-4 text-base font-semibold bg-white text-primary rounded-xl hover:opacity-90 transition-opacity">
               Start Free Trial
             </button>
-            <button className="w-full sm:w-auto px-8 py-4 text-base font-semibold bg-transparent border-2 border-white/30 text-white rounded-xl hover:bg-white/10 transition-colors">
+            <button type="button" className="w-full sm:w-auto px-8 py-4 text-base font-semibold bg-transparent border-2 border-white/30 text-white rounded-xl hover:bg-white/10 transition-colors">
               Schedule a Demo
             </button>
           </div>
@@ -539,7 +503,7 @@ export default function Home() {
             </div>
           </div>
           <div className="pt-8 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <p>© 2024 SecureVault. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} SecureVault. All rights reserved.</p>
             <div className="flex items-center gap-4">
               <a href="#" className="hover:text-foreground transition-colors">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
