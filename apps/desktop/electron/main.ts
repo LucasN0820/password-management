@@ -205,14 +205,12 @@ ipcMain.handle('get-password-by-id', (_, id: number) => {
 
 ipcMain.handle('add-password', (_, data: PasswordInput) => {
   if (!db) return null
-  addPassword(db, data)
-  return null
+  return addPassword(db, data)
 })
 
 ipcMain.handle('update-password', (_, id: number, data: PasswordInput) => {
   if (!db) return null
-  updatePassword(db, id, data)
-  return null
+  return updatePassword(db, id, data)
 })
 
 ipcMain.handle('delete-password', (_, id: number) => {

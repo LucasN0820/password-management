@@ -39,6 +39,23 @@ function toPasswordRowInput(data: PasswordInput) {
   }
 }
 
+function getInsertId(result: unknown) {
+  if (!result || typeof result !== 'object') {
+    return null
+  }
+
+  if ('lastInsertRowid' in result) {
+    const id = result.lastInsertRowid
+    return typeof id === 'bigint' ? Number(id) : Number(id)
+  }
+
+  if ('lastInsertRowId' in result) {
+    return Number(result.lastInsertRowId)
+  }
+
+  return null
+}
+
 function getMigrationKey(entry: MigrationEntry) {
   return `m${entry.idx.toString().padStart(4, '0')}` as keyof typeof passwordMigrations.migrations
 }
@@ -122,9 +139,10 @@ export function migratePasswordDatabase(db: PasswordDatabase) {
       hash: '',
     }
   })
-    // runtime migration
 
-    ; (db as any).dialect.migrate(migrations, (db as any).session)
+  // Drizzle does not expose a stable bundled-SQL migration API for this setup,
+  // so this intentionally uses the current internal dialect/session contract.
+  ;(db as any).dialect.migrate(migrations, (db as any).session)
 }
 
 export function getPasswords(db: PasswordDatabase): Password[] {
@@ -146,7 +164,20 @@ export function getPasswordById(
 }
 
 export function addPassword(db: PasswordDatabase, data: PasswordInput) {
-  db.insert(passwords).values(toPasswordRowInput(data)).run()
+  const result = db.insert(passwords).values(toPasswordRowInput(data)).run()
+  const id = getInsertId(result)
+
+  if (id === null) {
+    throw new Error('Failed to read inserted password id')
+  }
+
+  const password = getPasswordById(db, id)
+
+  if (!password) {
+    throw new Error(`Failed to load inserted password ${id}`)
+  }
+
+  return password
 }
 
 export function updatePassword(
@@ -158,21 +189,20 @@ export function updatePassword(
     .update(passwords)
     .set({
       ...toPasswordRowInput(data),
-      updated_at: new Date().toISOString().slice(0, 19).replace('T', ' '),
+      updated_at: sql`CURRENT_TIMESTAMP`,
     })
     .where(eq(passwords.id, id))
     .run()
+
+  return getPasswordById(db, id)
 }
 
 export function deletePassword(db: PasswordDatabase, id: number) {
-  const existing = getPasswordById(db, id)
+  const result = db.delete(passwords).where(eq(passwords.id, id)).run()
 
-  if (!existing) {
-    return false
-  }
-
-  db.delete(passwords).where(eq(passwords.id, id)).run()
-  return true
+  return typeof result === 'object' && result !== null && 'changes' in result
+    ? Number(result.changes) > 0
+    : false
 }
 
 export function searchPasswords(
@@ -213,8 +243,12 @@ export function createDrizzleAdapter(db: PasswordDatabase): DatabaseAdapter {
   return {
     getPasswords: async () => getPasswords(db),
     getPasswordById: async id => getPasswordById(db, id),
-    addPassword: async data => addPassword(db, data),
-    updatePassword: async (id, data) => updatePassword(db, id, data),
+    addPassword: async data => {
+      addPassword(db, data)
+    },
+    updatePassword: async (id, data) => {
+      updatePassword(db, id, data)
+    },
     deletePassword: async id => deletePassword(db, id),
     searchPasswords: async query => searchPasswords(db, query),
     getCategories: async () => getCategories(db),
