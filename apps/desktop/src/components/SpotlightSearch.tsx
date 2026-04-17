@@ -97,10 +97,10 @@ export default function SpotlightSearch() {
   }, [handleKeyDown])
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex justify-center items-start pt-[160px] z-50">
+    <div className="fixed inset-0 flex justify-center items-start pt-[160px] z-50 pointer-events-none">
       <div className="w-full max-w-[640px] mx-4 rounded-2xl bg-background shadow-2xl border border-border overflow-hidden">
         {/* Search Input */}
-        <div className="flex items-center gap-3 px-5 py-4 border-b border-border">
+        <div className="pointer-events-auto flex items-center gap-3 px-5 py-4 border-b border-border">
           <Search className="h-5 w-5 text-muted-foreground shrink-0" />
           <input
             autoFocus
@@ -118,7 +118,7 @@ export default function SpotlightSearch() {
 
         {/* Results */}
         {(query || results.length > 0) && (
-          <div className="max-h-[360px] overflow-y-auto px-2 py-2">
+          <div className="pointer-events-auto max-h-[360px] overflow-y-auto px-2 py-2">
             {results.length === 0 ? (
               <div className="flex flex-col items-center py-10 text-muted-foreground">
                 <Lock className="h-8 w-8 opacity-20 mb-2" />
@@ -184,7 +184,7 @@ export default function SpotlightSearch() {
         )}
 
         {/* Bottom Bar */}
-        <div className="flex items-center justify-between px-5 py-2.5 border-t border-border bg-surface text-xs font-mono text-muted-foreground">
+        <div className="pointer-events-auto flex items-center justify-between px-5 py-2.5 border-t border-border bg-surface text-xs font-mono text-muted-foreground">
           <div className="flex items-center gap-4">
             <span className="flex items-center gap-1.5">
               <kbd className="bg-background px-1.5 py-0.5 rounded border border-border text-foreground">

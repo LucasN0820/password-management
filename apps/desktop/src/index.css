@@ -65,11 +65,12 @@ body {
   font-family: 'JetBrains Mono', monospace;
 }
 
-/* Spotlight search dark background */
-body:has(#root .spotlight-overlay),
-html:has(body:has(#root .spotlight-overlay)) {
-  background: transparent;
+html.spotlight-window,
+body.spotlight-window,
+body.spotlight-window #root {
+  background: transparent !important;
 }
+
 .spotlight-overlay {
   background: transparent !important;
 }
