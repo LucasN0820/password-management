@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
+const envCache = new Map<string, string>()
 
 function parseEnvFile(filePath: string): Record<string, string> {
   const content = readFileSync(filePath, 'utf8')
@@ -47,8 +48,14 @@ function getCandidateEnvPaths() {
 }
 
 export function getEnvValue(key: string): string | undefined {
+  const cachedValue = envCache.get(key)
+  if (cachedValue) {
+    return cachedValue
+  }
+
   const fromProcess = process.env[key]
   if (fromProcess) {
+    envCache.set(key, fromProcess)
     return fromProcess
   }
 
@@ -57,7 +64,7 @@ export function getEnvValue(key: string): string | undefined {
     const parsed = parseEnvFile(filePath)
     const value = parsed[key]
     if (value) {
-      process.env[key] = value
+      envCache.set(key, value)
       return value
     }
   }

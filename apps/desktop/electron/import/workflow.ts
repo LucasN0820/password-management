@@ -1,3 +1,4 @@
+import { createHash } from 'crypto'
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph'
 import { extractCredentialsFromImageFile, extractCredentialsFromTextFile } from './anthropic'
 import { parseImportFile } from './parser'
@@ -85,7 +86,10 @@ const extractCandidatesNode = async (state: typeof ImportState.State) => {
       candidates.push(...extracted)
       const result = resultMap.get(parsedFile.file.name)
       if (result) {
-        result.candidateCount = extracted.length
+        resultMap.set(parsedFile.file.name, {
+          ...result,
+          candidateCount: extracted.length,
+        })
       }
     } catch (error) {
       const message =
@@ -93,8 +97,11 @@ const extractCandidatesNode = async (state: typeof ImportState.State) => {
       warnings.push(`${parsedFile.file.name}: ${message}`)
       const result = resultMap.get(parsedFile.file.name)
       if (result) {
-        result.status = 'failed'
-        result.warning = message
+        resultMap.set(parsedFile.file.name, {
+          ...result,
+          status: 'failed',
+          warning: message,
+        })
       }
     }
   }
@@ -110,12 +117,13 @@ const normalizeCandidatesNode = async (state: typeof ImportState.State) => {
   const dedupeMap = new Map<string, ImportCandidateDraft>()
 
   for (const candidate of state.candidates) {
-    const key = [
+    const fingerprint = [
       candidate.title.trim().toLowerCase(),
       candidate.username.trim().toLowerCase(),
       candidate.password.trim(),
       candidate.url?.trim().toLowerCase() ?? '',
-    ].join('::')
+    ].join('\x00')
+    const key = createHash('sha256').update(fingerprint).digest('hex')
 
     const existing = dedupeMap.get(key)
     if (!existing || existing.confidence < candidate.confidence) {

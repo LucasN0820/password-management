@@ -10,6 +10,8 @@ import type {
 
 type MessageContentBlock = Anthropic.Messages.Message['content'][number]
 type TextContentBlock = Extract<MessageContentBlock, { type: 'text' }>
+type SupportedImageMimeType = 'image/jpeg' | 'image/png' | 'image/webp'
+const EXTRACTION_MODEL = 'claude-sonnet-4-20250514'
 
 const credentialSchema = z.object({
   candidates: z.array(
@@ -35,18 +37,31 @@ function getClient() {
 }
 
 function extractJson(text: string) {
+  const trimmed = text.trim()
+  if (trimmed) {
+    try {
+      JSON.parse(trimmed)
+      return trimmed
+    } catch {
+      // Continue with fallback extraction below.
+    }
+  }
+
   const fencedMatch = text.match(/```json\s*([\s\S]*?)```/i)
   if (fencedMatch?.[1]) {
     return fencedMatch[1].trim()
   }
 
-  const firstBrace = text.indexOf('{')
-  const lastBrace = text.lastIndexOf('}')
-  if (firstBrace === -1 || lastBrace === -1 || lastBrace <= firstBrace) {
+  const objectMatch = text.match(/\{[\s\S]*\}/)
+  if (objectMatch?.[0]) {
+    return objectMatch[0]
+  }
+
+  if (!trimmed) {
     throw new Error('Model did not return JSON')
   }
 
-  return text.slice(firstBrace, lastBrace + 1)
+  return trimmed
 }
 
 function isTextContentBlock(block: MessageContentBlock): block is TextContentBlock {
@@ -58,6 +73,18 @@ function getTextResponse(content: Anthropic.Messages.Message['content']) {
     .filter(isTextContentBlock)
     .map(block => block.text)
     .join('\n')
+}
+
+function toSupportedImageMimeType(mimeType: string): SupportedImageMimeType {
+  if (
+    mimeType === 'image/jpeg' ||
+    mimeType === 'image/png' ||
+    mimeType === 'image/webp'
+  ) {
+    return mimeType
+  }
+
+  throw new Error(`Unsupported image mime type: ${mimeType}`)
 }
 
 function buildCandidateDrafts(
@@ -120,36 +147,46 @@ Evidence excerpts:
 ${file.excerpts.map((excerpt, index) => `Excerpt ${index + 1}:\n${excerpt}`).join('\n\n')}
 `
 
-  const response = await client.messages.create({
-    model: 'claude-opus-4-5',
-    max_tokens: 1400,
-    temperature: 0,
-    messages: [
-      {
-        role: 'user',
-        content: prompt,
-      },
-    ],
-  })
+  try {
+    const response = await client.messages.create({
+      model: EXTRACTION_MODEL,
+      max_tokens: 1400,
+      temperature: 0,
+      messages: [
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+    })
 
-  const parsed = credentialSchema.parse(JSON.parse(extractJson(getTextResponse(response.content))))
-  return buildCandidateDrafts(file.file.name, parsed.candidates)
+    const parsed = credentialSchema.parse(
+      JSON.parse(extractJson(getTextResponse(response.content))),
+    )
+    return buildCandidateDrafts(file.file.name, parsed.candidates)
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown Anthropic extraction error'
+    throw new Error(`Anthropic extraction failed for ${file.file.name}: ${message}`)
+  }
 }
 
 export async function extractCredentialsFromImageFile(file: ParsedImageFile) {
   const client = getClient()
+  const mediaType = toSupportedImageMimeType(file.mimeType)
 
-  const response = await client.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 1400,
-    temperature: 0,
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: `Extract password-manager records from this image. Return strict JSON only using this shape:
+  try {
+    const response = await client.messages.create({
+      model: EXTRACTION_MODEL,
+      max_tokens: 1400,
+      temperature: 0,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: `Extract password-manager records from this image. Return strict JSON only using this shape:
 {
   "candidates": [
     {
@@ -169,20 +206,27 @@ Rules:
 - If there is no password, do not return the record.
 - Keep sourceExcerpt short and grounded in the image.
 - Output JSON only.`,
-          },
-          {
-            type: 'image',
-            source: {
-              type: 'base64',
-              media_type: file.mimeType as 'image/jpeg' | 'image/png' | 'image/webp',
-              data: file.base64,
             },
-          },
-        ],
-      },
-    ],
-  })
+            {
+              type: 'image',
+              source: {
+                type: 'base64',
+                media_type: mediaType,
+                data: file.base64,
+              },
+            },
+          ],
+        },
+      ],
+    })
 
-  const parsed = credentialSchema.parse(JSON.parse(extractJson(getTextResponse(response.content))))
-  return buildCandidateDrafts(file.file.name, parsed.candidates)
+    const parsed = credentialSchema.parse(
+      JSON.parse(extractJson(getTextResponse(response.content))),
+    )
+    return buildCandidateDrafts(file.file.name, parsed.candidates)
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : 'Unknown Anthropic image extraction error'
+    throw new Error(`Anthropic image extraction failed for ${file.file.name}: ${message}`)
+  }
 }

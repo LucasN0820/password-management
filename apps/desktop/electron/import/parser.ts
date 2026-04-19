@@ -21,8 +21,14 @@ const IMAGE_MIME_TYPES: Record<string, string> = {
 }
 
 type CredentialField = 'title' | 'username' | 'password' | 'url' | 'notes'
+const MAX_IMPORT_FILE_SIZE_BYTES = 25 * 1024 * 1024
+const CSV_STRUCTURED_CONFIDENCE = 0.96
 
 function decodePdfText(value: string) {
+  if (!/%[0-9A-Fa-f]{2}/.test(value)) {
+    return value
+  }
+
   try {
     return decodeURIComponent(value)
   } catch {
@@ -151,7 +157,8 @@ function buildCsvPrefilledCandidates(file: ImportFileDescriptor, csvText: string
       password: resolved.password,
       url: resolved.url ?? null,
       notes: resolved.notes ?? null,
-      confidence: 0.96,
+      // Structured CSV exports are deterministic enough to rank above LLM guesses.
+      confidence: CSV_STRUCTURED_CONFIDENCE,
       sourceExcerpt: Object.entries(record)
         .map(([key, value]) => `${key}: ${value}`)
         .join(' | ')
@@ -163,12 +170,13 @@ function buildCsvPrefilledCandidates(file: ImportFileDescriptor, csvText: string
 }
 
 async function extractTextFromPdfBuffer(buffer: Buffer) {
-  const parser = new PDFParser(null, true)
+  const parser = new PDFParser(undefined, true)
 
   return await new Promise<string>((resolve, reject) => {
     parser.on('pdfParser_dataError', error => {
       const parserError =
         error instanceof Error ? error : error.parserError
+      parser.destroy()
       reject(parserError)
     })
 
@@ -263,6 +271,12 @@ export async function parseImportFile(
 
   if (!isSupportedImportExtension(extension)) {
     throw new Error(`Unsupported file type: ${extension}`)
+  }
+
+  if (file.size > MAX_IMPORT_FILE_SIZE_BYTES) {
+    throw new Error(
+      `File exceeds the ${Math.round(MAX_IMPORT_FILE_SIZE_BYTES / (1024 * 1024))}MB import limit`,
+    )
   }
 
   if (extension in IMAGE_MIME_TYPES) {

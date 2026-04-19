@@ -10,6 +10,7 @@ import {
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 import { existsSync, mkdirSync, statSync } from 'fs'
+import { z } from 'zod'
 import {
   addPassword,
   deletePassword,
@@ -40,6 +41,21 @@ let db: PasswordDatabase | null
 
 const userDataPath = app.getPath('userData')
 const dbPath = join(userDataPath, 'passwords.db')
+const importFileSchema = z.object({
+  path: z.string().min(1),
+  name: z.string().min(1),
+  size: z.number().nonnegative(),
+  extension: z.string(),
+})
+const importFilesSchema = z.array(importFileSchema)
+const importPasswordSchema = z.object({
+  title: z.string(),
+  username: z.string(),
+  password: z.string().min(1),
+  url: z.string().nullable(),
+  notes: z.string().nullable(),
+})
+const importPasswordsSchema = z.array(importPasswordSchema)
 
 function initDatabase() {
   try {
@@ -262,7 +278,8 @@ ipcMain.handle('select-import-files', async () => {
 
   return result.filePaths.map(filePath => {
     const stats = statSync(filePath)
-    const extension = filePath.slice(filePath.lastIndexOf('.')).toLowerCase()
+    const lastDot = filePath.lastIndexOf('.')
+    const extension = lastDot > 0 ? filePath.slice(lastDot).toLowerCase() : ''
     return {
       path: filePath,
       name: filePath.split(/[/\\]/).pop() ?? filePath,
@@ -273,24 +290,32 @@ ipcMain.handle('select-import-files', async () => {
 })
 
 ipcMain.handle('run-import-workflow', async (_, files: ImportFileDescriptor[]) => {
-  return runImportWorkflow(files)
+  return runImportWorkflow(importFilesSchema.parse(files))
 })
 
 ipcMain.handle('save-imported-passwords', (_, candidates: ImportPasswordInput[]) => {
-  if (!db) return { saved: 0 }
+  if (!db || !sqlite) return { saved: 0 }
+  const passwordDb = db
+  const parsedCandidates = importPasswordsSchema.parse(candidates)
+  let saved = 0
 
-  for (const record of candidates) {
-    addPassword(db, {
-      title: record.title,
-      username: record.username,
-      password: record.password,
-      url: record.url,
-      notes: record.notes,
-      category: 'imported',
-      isFavorite: false,
-      icon: null,
-    })
-  }
+  const transaction = sqlite.transaction((records: ImportPasswordInput[]) => {
+    for (const record of records) {
+      addPassword(passwordDb, {
+        title: record.title,
+        username: record.username,
+        password: record.password,
+        url: record.url,
+        notes: record.notes,
+        category: 'imported',
+        isFavorite: false,
+        icon: null,
+      })
+      saved += 1
+    }
+  })
 
-  return { saved: candidates.length }
+  transaction(parsedCandidates)
+
+  return { saved }
 })
