@@ -5,8 +5,8 @@ import { Toaster } from '@repo/ui/primitives/toaster';
 
 function App() {
   return (
-    <div className='h-screen'>
-      <div className='h-[25px] w-screen header' />
+    <div className='flex h-screen flex-col'>
+      <div className='header h-[35px] w-screen shrink-0 border-b border-border bg-sidebar/90 backdrop-blur-sm' />
       <SidebarProvider
         style={
           {
@@ -14,7 +14,7 @@ function App() {
           } as React.CSSProperties
         }
       >
-        <div className='app'>
+        <div className='app flex-1 min-h-0'>
           <AppSidebar />
           <div className='flex-1 overflow-auto'>
             <Outlet />

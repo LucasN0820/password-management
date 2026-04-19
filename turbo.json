@@ -18,5 +18,5 @@
       "dependsOn": ["^tsc"]
     }
   },
-  "globalEnv": []
+  "globalEnv": ["AI_IMPORT_KEY"]
 }

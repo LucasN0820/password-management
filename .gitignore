@@ -51,3 +51,6 @@ android
 .yarn/cache
 .yarn/install-state.gz
 .claude/settings.json
+
+.env.local
+

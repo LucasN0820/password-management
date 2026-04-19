@@ -1,7 +1,16 @@
-import { app, BrowserWindow, ipcMain, globalShortcut, screen, nativeImage } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  globalShortcut,
+  ipcMain,
+  nativeImage,
+  screen,
+} from 'electron'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync, statSync } from 'fs'
+import { z } from 'zod'
 import {
   addPassword,
   deletePassword,
@@ -14,6 +23,16 @@ import {
   type PasswordInput,
 } from '@repo/db'
 import { createDesktopDatabase } from './db'
+import { runImportWorkflow } from './import/workflow'
+import type {
+  ImportFileDescriptor,
+  ImportPasswordInput,
+} from './import/types'
+import {
+  clearStoredAiImportKey,
+  getAiImportKeyStatus,
+  setStoredAiImportKey,
+} from './settings'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -27,6 +46,21 @@ let db: PasswordDatabase | null
 
 const userDataPath = app.getPath('userData')
 const dbPath = join(userDataPath, 'passwords.db')
+const importFileSchema = z.object({
+  path: z.string().min(1),
+  name: z.string().min(1),
+  size: z.number().nonnegative(),
+  extension: z.string(),
+})
+const importFilesSchema = z.array(importFileSchema)
+const importPasswordSchema = z.object({
+  title: z.string(),
+  username: z.string(),
+  password: z.string().min(1),
+  url: z.string().nullable(),
+  notes: z.string().nullable(),
+})
+const importPasswordsSchema = z.array(importPasswordSchema)
 
 function initDatabase() {
   try {
@@ -226,4 +260,81 @@ ipcMain.handle('search-passwords', (_, query: string) => {
 ipcMain.handle('get-categories', () => {
   if (!db) return []
   return getCategories(db)
+})
+
+ipcMain.handle('select-import-files', async () => {
+  const browserWindow = BrowserWindow.getFocusedWindow() ?? mainWindow ?? undefined
+  const options = {
+    properties: ['openFile', 'multiSelections'],
+    filters: [
+      {
+        name: 'Supported files',
+        extensions: ['csv', 'pdf', 'docx', 'md', 'markdown', 'txt', 'jpg', 'jpeg', 'png', 'webp'],
+      },
+    ],
+  } satisfies Electron.OpenDialogOptions
+  const result = browserWindow
+    ? await dialog.showOpenDialog(browserWindow, options)
+    : await dialog.showOpenDialog(options)
+
+  if (result.canceled) {
+    return []
+  }
+
+  return result.filePaths.map(filePath => {
+    const stats = statSync(filePath)
+    const lastDot = filePath.lastIndexOf('.')
+    const extension = lastDot > 0 ? filePath.slice(lastDot).toLowerCase() : ''
+    return {
+      path: filePath,
+      name: filePath.split(/[/\\]/).pop() ?? filePath,
+      size: stats.size,
+      extension,
+    } satisfies ImportFileDescriptor
+  })
+})
+
+ipcMain.handle('run-import-workflow', async (_, files: ImportFileDescriptor[]) => {
+  return runImportWorkflow(importFilesSchema.parse(files))
+})
+
+ipcMain.handle('save-imported-passwords', (_, candidates: ImportPasswordInput[]) => {
+  if (!db || !sqlite) return { saved: 0 }
+  const passwordDb = db
+  const parsedCandidates = importPasswordsSchema.parse(candidates)
+  let saved = 0
+
+  const transaction = sqlite.transaction((records: ImportPasswordInput[]) => {
+    for (const record of records) {
+      addPassword(passwordDb, {
+        title: record.title,
+        username: record.username,
+        password: record.password,
+        url: record.url,
+        notes: record.notes,
+        category: 'imported',
+        isFavorite: false,
+        icon: null,
+      })
+      saved += 1
+    }
+  })
+
+  transaction(parsedCandidates)
+
+  return { saved }
+})
+
+ipcMain.handle('get-ai-import-key-status', () => {
+  return getAiImportKeyStatus()
+})
+
+ipcMain.handle('set-ai-import-key', (_, key: string) => {
+  setStoredAiImportKey(z.string().trim().parse(key))
+  return getAiImportKeyStatus()
+})
+
+ipcMain.handle('clear-ai-import-key', () => {
+  clearStoredAiImportKey()
+  return getAiImportKeyStatus()
 })

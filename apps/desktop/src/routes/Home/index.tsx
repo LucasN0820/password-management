@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Globe, Key, Lock, Plus, Search, Star, Zap } from 'lucide-react'
+import { Bot, Globe, Key, Lock, Plus, Search, Settings, Star, Zap } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { useTranslation } from '@repo/i18n'
@@ -123,6 +123,16 @@ export function HomePage() {
                 icon: Zap,
                 label: t('home.generatePassword'),
                 action: () => navigate('/generator'),
+              },
+              {
+                icon: Bot,
+                label: 'AI Import',
+                action: () => navigate('/onboard'),
+              },
+              {
+                icon: Settings,
+                label: 'Settings',
+                action: () => navigate('/settings'),
               },
             ].map((action) => (
               <button
