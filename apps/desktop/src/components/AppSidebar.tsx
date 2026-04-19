@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Bot, Home, Key, Search, Shield } from 'lucide-react'
+import { Bot, Home, Key, Search, Settings, Shield } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router'
 import {
   Sidebar,
@@ -13,13 +13,6 @@ import {
   SidebarMenuItem,
 } from '@repo/ui/primitives/sidebar'
 import { useTranslation } from '@repo/i18n'
-import { NavUser } from './NavUser'
-
-const user = {
-  name: 'Lucas',
-  email: 'lucas@passvault.app',
-  avatar: '',
-}
 
 export function AppSidebar() {
   const { t } = useTranslation()
@@ -34,7 +27,7 @@ export function AppSidebar() {
   ], [t])
 
   return (
-    <Sidebar className="border-r border-border">
+    <Sidebar className="top-[25px] h-[calc(100svh-25px)] border-r border-border">
       <SidebarHeader className="px-4 py-3">
         <a
           href="/"
@@ -90,7 +83,16 @@ export function AppSidebar() {
             ⌘⇧P
           </kbd>
         </button>
-        <NavUser user={user} />
+        <button
+          className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm transition-colors duration-150 ${location.pathname.startsWith('/settings')
+            ? 'bg-accent text-foreground'
+            : 'text-muted-foreground hover:bg-accent'
+            }`}
+          onClick={() => navigate('/settings')}
+        >
+          <Settings className="h-4 w-4" />
+          <span>Settings</span>
+        </button>
       </SidebarFooter>
     </Sidebar>
   )

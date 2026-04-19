@@ -1,7 +1,7 @@
 import { randomUUID } from 'crypto'
 import Anthropic from '@anthropic-ai/sdk'
 import { z } from 'zod'
-import { getEnvValue } from './env'
+import { getAiImportKey } from '../settings'
 import type {
   ImportCandidateDraft,
   ParsedImageFile,
@@ -28,9 +28,9 @@ const credentialSchema = z.object({
 })
 
 function getClient() {
-  const apiKey = getEnvValue('ANTHROPIC_API_KEY')
+  const apiKey = getAiImportKey()
   if (!apiKey) {
-    throw new Error('ANTHROPIC_API_KEY is not configured')
+    throw new Error('AI_IMPORT_KEY is not configured')
   }
 
   return new Anthropic({ apiKey })

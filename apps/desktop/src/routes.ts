@@ -5,6 +5,7 @@ import PasswordPage from "./routes/Password";
 import { PasswordGeneratorPage } from "./routes/PasswordGenerator";
 import { SearchPage } from "./routes/Search";
 import OnboardPage from "./routes/Onboard";
+import SettingsPage from "./routes/Settings";
 
 export const router = createHashRouter([
   {
@@ -26,6 +27,10 @@ export const router = createHashRouter([
       {
         path: 'onboard',
         Component: OnboardPage,
+      },
+      {
+        path: 'settings',
+        Component: SettingsPage,
       }
     ]
   },

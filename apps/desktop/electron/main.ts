@@ -28,6 +28,11 @@ import type {
   ImportFileDescriptor,
   ImportPasswordInput,
 } from './import/types'
+import {
+  clearStoredAiImportKey,
+  getAiImportKeyStatus,
+  setStoredAiImportKey,
+} from './settings'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -318,4 +323,18 @@ ipcMain.handle('save-imported-passwords', (_, candidates: ImportPasswordInput[])
   transaction(parsedCandidates)
 
   return { saved }
+})
+
+ipcMain.handle('get-ai-import-key-status', () => {
+  return getAiImportKeyStatus()
+})
+
+ipcMain.handle('set-ai-import-key', (_, key: string) => {
+  setStoredAiImportKey(z.string().trim().parse(key))
+  return getAiImportKeyStatus()
+})
+
+ipcMain.handle('clear-ai-import-key', () => {
+  clearStoredAiImportKey()
+  return getAiImportKeyStatus()
 })
