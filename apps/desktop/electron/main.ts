@@ -1,7 +1,15 @@
-import { app, BrowserWindow, ipcMain, globalShortcut, screen, nativeImage } from 'electron'
+import {
+  app,
+  BrowserWindow,
+  dialog,
+  globalShortcut,
+  ipcMain,
+  nativeImage,
+  screen,
+} from 'electron'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync, statSync } from 'fs'
 import {
   addPassword,
   deletePassword,
@@ -14,6 +22,11 @@ import {
   type PasswordInput,
 } from '@repo/db'
 import { createDesktopDatabase } from './db'
+import { runImportWorkflow } from './import/workflow'
+import type {
+  ImportFileDescriptor,
+  ImportPasswordInput,
+} from './import/types'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -226,4 +239,58 @@ ipcMain.handle('search-passwords', (_, query: string) => {
 ipcMain.handle('get-categories', () => {
   if (!db) return []
   return getCategories(db)
+})
+
+ipcMain.handle('select-import-files', async () => {
+  const browserWindow = BrowserWindow.getFocusedWindow() ?? mainWindow ?? undefined
+  const options = {
+    properties: ['openFile', 'multiSelections'],
+    filters: [
+      {
+        name: 'Supported files',
+        extensions: ['csv', 'pdf', 'docx', 'md', 'markdown', 'txt', 'jpg', 'jpeg', 'png', 'webp'],
+      },
+    ],
+  } satisfies Electron.OpenDialogOptions
+  const result = browserWindow
+    ? await dialog.showOpenDialog(browserWindow, options)
+    : await dialog.showOpenDialog(options)
+
+  if (result.canceled) {
+    return []
+  }
+
+  return result.filePaths.map(filePath => {
+    const stats = statSync(filePath)
+    const extension = filePath.slice(filePath.lastIndexOf('.')).toLowerCase()
+    return {
+      path: filePath,
+      name: filePath.split(/[/\\]/).pop() ?? filePath,
+      size: stats.size,
+      extension,
+    } satisfies ImportFileDescriptor
+  })
+})
+
+ipcMain.handle('run-import-workflow', async (_, files: ImportFileDescriptor[]) => {
+  return runImportWorkflow(files)
+})
+
+ipcMain.handle('save-imported-passwords', (_, candidates: ImportPasswordInput[]) => {
+  if (!db) return { saved: 0 }
+
+  for (const record of candidates) {
+    addPassword(db, {
+      title: record.title,
+      username: record.username,
+      password: record.password,
+      url: record.url,
+      notes: record.notes,
+      category: 'imported',
+      isFavorite: false,
+      icon: null,
+    })
+  }
+
+  return { saved: candidates.length }
 })

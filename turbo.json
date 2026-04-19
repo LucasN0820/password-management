@@ -18,5 +18,5 @@
       "dependsOn": ["^tsc"]
     }
   },
-  "globalEnv": []
+  "globalEnv": ["MINIMAX_API_KEY", "ANTHROPIC_API_KEY"]
 }

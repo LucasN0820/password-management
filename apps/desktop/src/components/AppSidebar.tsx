@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { Home, Key, Search, Shield } from 'lucide-react'
+import { Bot, Home, Key, Search, Shield } from 'lucide-react'
 import { useLocation, useNavigate } from 'react-router'
 import {
   Sidebar,
@@ -30,6 +30,7 @@ export function AppSidebar() {
     { title: t('nav.home'), url: '/', icon: Home },
     { title: t('nav.passwords'), url: '/password', icon: Key },
     { title: t('nav.generator'), url: '/generator', icon: Shield },
+    { title: 'AI Import', url: '/onboard', icon: Bot },
   ], [t])
 
   return (
