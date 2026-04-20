@@ -6,6 +6,13 @@ directories:
   buildResources: build
   output: release
 
+# Inject AI import service env vars into the packaged app
+# These become available as process.env.AI_IMPORT_SERVICE_URL and
+# process.env.AI_IMPORT_SERVICE_SECRET in the packaged application
+env:
+  AI_IMPORT_SERVICE_URL: ${AI_IMPORT_SERVICE_URL}
+  AI_IMPORT_SERVICE_SECRET: ${AI_IMPORT_SERVICE_SECRET}
+
 files:
   - dist/**/*
   - dist-electron/**/*
@@ -20,7 +27,7 @@ npmRebuild: true
 
 asar: true
 asarUnpack:
-  - "**/*.node"
+  - '**/*.node'
 
 mac:
   category: public.app-category.utilities
@@ -40,7 +47,7 @@ mac:
   entitlementsInherit: build/entitlements.mac.plist
 
 dmg:
-  artifactName: "${productName}-${version}-mac-${arch}.dmg"
+  artifactName: '${productName}-${version}-mac-${arch}.dmg'
   contents:
     - x: 130
       y: 220
@@ -60,7 +67,7 @@ win:
 nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
-  artifactName: "${productName}-${version}-win-${arch}-setup.exe"
+  artifactName: '${productName}-${version}-win-${arch}-setup.exe'
 
 linux:
   icon: build/icons
@@ -75,7 +82,7 @@ linux:
         - x64
 
 appImage:
-  artifactName: "${productName}-${version}-linux-${arch}.AppImage"
+  artifactName: '${productName}-${version}-linux-${arch}.AppImage'
 
 publish:
   provider: github

@@ -7,11 +7,6 @@ import type {
   ImportWorkflowResult,
 } from './import/types'
 
-export interface AiImportKeyStatus {
-  mode: 'development' | 'production'
-  hasConfiguredKey: boolean
-}
-
 contextBridge.exposeInMainWorld('electronAPI', {
   getPasswords: (): Promise<Password[]> => ipcRenderer.invoke('get-passwords'),
   getPasswordById: (id: number): Promise<Password | null> => ipcRenderer.invoke('get-password-by-id', id),
@@ -26,12 +21,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('run-import-workflow', files),
   saveImportedPasswords: (candidates: ImportPasswordInput[]): Promise<{ saved: number }> =>
     ipcRenderer.invoke('save-imported-passwords', candidates),
-  getAiImportKeyStatus: (): Promise<AiImportKeyStatus> =>
-    ipcRenderer.invoke('get-ai-import-key-status'),
-  setAiImportKey: (key: string): Promise<AiImportKeyStatus> =>
-    ipcRenderer.invoke('set-ai-import-key', key),
-  clearAiImportKey: (): Promise<AiImportKeyStatus> =>
-    ipcRenderer.invoke('clear-ai-import-key'),
   copyToClipboard: (text: string): Promise<void> => {
     clipboard.writeText(text)
 
@@ -54,9 +43,6 @@ declare global {
       saveImportedPasswords: (
         candidates: ImportPasswordInput[],
       ) => Promise<{ saved: number }>
-      getAiImportKeyStatus: () => Promise<AiImportKeyStatus>
-      setAiImportKey: (key: string) => Promise<AiImportKeyStatus>
-      clearAiImportKey: () => Promise<AiImportKeyStatus>
       copyToClipboard: (text: string) => Promise<void>
     }
   }
