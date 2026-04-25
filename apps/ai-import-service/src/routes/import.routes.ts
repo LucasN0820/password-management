@@ -2,7 +2,7 @@ import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { randomUUID } from 'crypto';
 import { pipeline } from 'stream/promises';
 import { createWriteStream } from 'fs';
-import { mkdir } from 'fs/promises';
+import { mkdir, rm } from 'fs/promises';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import {
@@ -15,24 +15,17 @@ import { processJob } from '../workers/import.worker';
 import { isSupportedImportExtension } from '../langgraph/parser';
 import type { ImportFileDescriptor } from '../langgraph/types';
 
-const IMAGE_MIME_TYPES: Record<string, string> = {
-  '.jpg': 'image/jpeg',
-  '.jpeg': 'image/jpeg',
-  '.png': 'image/png',
-  '.webp': 'image/webp',
-};
-
 function getApiKey(): string {
-  const key = process.env.ANTHROPIC_API_KEY;
+  const key = process.env.DEEPSEEK_API_KEY;
   if (!key) {
-    throw new Error('AI_IMPORT_KEY is not configured');
+    throw new Error('DEEPSEEK_API_KEY is not configured');
   }
   return key;
 }
 
 async function authMiddleware(request: FastifyRequest, reply: FastifyReply) {
   const authHeader = request.headers.authorization;
-  const expectedSecret = process.env.AI_IMPORT_SERVICE_API_KEY;
+  const expectedSecret = process.env.AI_IMPORT_SERVICE_SECRET;
 
   if (!expectedSecret) {
     return reply.status(500).send({
@@ -72,7 +65,7 @@ export async function importRoutes(fastify: FastifyInstance) {
       return reply.status(401).send({
         error: {
           code: 'MISSING_API_KEY',
-          message: 'AI_IMPORT_KEY is not configured',
+          message: 'DEEPSEEK_API_KEY is not configured',
         },
       });
     }
@@ -144,6 +137,7 @@ export async function importRoutes(fastify: FastifyInstance) {
       });
     } catch (error) {
       // Cleanup temp files on error
+      await rm(tempDir, { recursive: true, force: true }).catch(() => undefined);
       return reply.status(500).send({
         error: {
           code: 'INTERNAL_ERROR',

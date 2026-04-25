@@ -10,8 +10,8 @@ import type {
 contextBridge.exposeInMainWorld('electronAPI', {
   getPasswords: (): Promise<Password[]> => ipcRenderer.invoke('get-passwords'),
   getPasswordById: (id: number): Promise<Password | null> => ipcRenderer.invoke('get-password-by-id', id),
-  addPassword: (data: PasswordInput): Promise<Password | null> => ipcRenderer.invoke('add-password', data),
-  updatePassword: (id: number, data: PasswordInput): Promise<Password | null> =>
+  addPassword: (data: PasswordInput): Promise<void> => ipcRenderer.invoke('add-password', data),
+  updatePassword: (id: number, data: PasswordInput): Promise<void> =>
     ipcRenderer.invoke('update-password', id, data),
   deletePassword: (id: number): Promise<boolean> => ipcRenderer.invoke('delete-password', id),
   searchPasswords: (query: string): Promise<Password[]> => ipcRenderer.invoke('search-passwords', query),
@@ -33,8 +33,8 @@ declare global {
     electronAPI: {
       getPasswords: () => Promise<Password[]>
       getPasswordById: (id: number) => Promise<Password | null>
-      addPassword: (data: PasswordInput) => Promise<Password | null>
-      updatePassword: (id: number, data: PasswordInput) => Promise<Password | null>
+      addPassword: (data: PasswordInput) => Promise<void>
+      updatePassword: (id: number, data: PasswordInput) => Promise<void>
       deletePassword: (id: number) => Promise<boolean>
       searchPasswords: (query: string) => Promise<Password[]>
       getCategories: () => Promise<string[]>

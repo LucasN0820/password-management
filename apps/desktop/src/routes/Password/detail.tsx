@@ -10,6 +10,17 @@ import {
   User,
 } from 'lucide-react'
 import { useState } from 'react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@repo/ui/primitives/alert-dialog'
 import { Button } from '@repo/ui/primitives/button'
 import { usePasswordStore } from '@/store/passwordStore'
 import { useStore } from './context'
@@ -19,6 +30,7 @@ export function PasswordDetail() {
   const { setModal } = useStore()
   const [showPassword, setShowPassword] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text)
@@ -89,14 +101,38 @@ export function PasswordDetail() {
             <Edit className="h-3.5 w-3.5 mr-1.5" />
             Edit
           </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 border-border text-destructive hover:bg-destructive/10 transition-colors duration-150"
-            onClick={() => deletePassword(selectedPassword.id)}
+          <AlertDialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
           >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8 border-border text-destructive hover:bg-destructive/10 transition-colors duration-150"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this password?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete "{selectedPassword.title}" from
+                  your vault. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20"
+                  onClick={() => deletePassword(selectedPassword.id)}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 

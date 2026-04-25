@@ -86,7 +86,18 @@ function getAppliedMigrationCount(db: PasswordDatabase) {
   return rows.length
 }
 
+function ensureDrizzleMigrationsTable(db: PasswordDatabase) {
+  db.run(sql`
+    CREATE TABLE IF NOT EXISTS "__drizzle_migrations" (
+      "id" integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+      "hash" text NOT NULL,
+      "created_at" numeric
+    )
+  `)
+}
+
 function markMigrationApplied(db: PasswordDatabase, entry: MigrationEntry) {
+  ensureDrizzleMigrationsTable(db)
   db.run(
     sql`INSERT INTO "__drizzle_migrations" ("hash", "created_at") VALUES(${entry.tag}, ${entry.when})`
   )
@@ -123,6 +134,7 @@ function bootstrapLegacyMigrations(db: PasswordDatabase) {
 }
 
 export function migratePasswordDatabase(db: PasswordDatabase) {
+  ensureDrizzleMigrationsTable(db)
   bootstrapLegacyMigrations(db)
 
   const migrations = passwordMigrations.journal.entries.map(entry => {

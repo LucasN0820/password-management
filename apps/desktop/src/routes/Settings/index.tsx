@@ -5,7 +5,8 @@ export default function SettingsPage() {
   const handleOpenServiceDocs = () => {
     toast({
       title: 'AI Import Service',
-      description: 'Configure AI_IMPORT_SERVICE_URL and AI_IMPORT_SERVICE_API_KEY in your environment.',
+      description:
+        'Configure AI_IMPORT_SERVICE_URL, AI_IMPORT_SERVICE_SECRET, and DEEPSEEK_API_KEY in your environment.',
     })
   }
 
@@ -43,10 +44,16 @@ export default function SettingsPage() {
               </div>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <code>AI_IMPORT_SERVICE_URL</code> — Service endpoint (e.g., http://localhost:3001)
+                  <code>AI_IMPORT_SERVICE_URL</code> - Service endpoint (e.g.,
+                  http://localhost:3001)
                 </li>
                 <li>
-                  <code>AI_IMPORT_SERVICE_API_KEY</code> — Shared API key for authentication
+                  <code>AI_IMPORT_SERVICE_SECRET</code> - Shared secret for
+                  desktop-to-service authentication
+                </li>
+                <li>
+                  <code>DEEPSEEK_API_KEY</code> - DeepSeek key used by the import
+                  service
                 </li>
               </ul>
             </div>

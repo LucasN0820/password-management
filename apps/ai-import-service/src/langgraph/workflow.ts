@@ -1,6 +1,6 @@
 import { createHash } from 'crypto'
 import { Annotation, END, START, StateGraph } from '@langchain/langgraph'
-import { extractCredentialsFromImageFile, extractCredentialsFromTextFile } from './anthropic'
+import { extractCredentialsFromImageFile, extractCredentialsFromTextFile } from './deepseek'
 import { parseImportFile } from './parser'
 import type {
   ImportCandidateDraft,

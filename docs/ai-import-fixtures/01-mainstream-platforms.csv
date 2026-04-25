@@ -1,0 +1,5 @@
+platform,title,username,email,password,url,notes
+Douyin,Douyin Personal,douyin_creator_2026,douyin.creator.test@example.cn,Test@Douyin_2026!,https://www.douyin.com,Fake test account for short video operations.
+Bilibili,Bilibili Creator,bili_up_test,bilibili.up.test@example.cn,Bili_Test#2026_Account,https://www.bilibili.com,Fake test account for creator dashboard.
+Meituan,Meituan Merchant,meituan_shop_demo,meituan.shop.demo@example.cn,Meituan-Demo-2026$,https://e.meituan.com,Fake test account for merchant console.
+WeChat,WeChat Official Account,wechat_official_demo,wechat.oa.demo@example.cn,WeChat_Official_2026!,https://mp.weixin.qq.com,Fake test account for official account platform.

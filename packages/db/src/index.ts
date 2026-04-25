@@ -26,3 +26,11 @@ export {
 
 export type { PasswordState } from './store'
 export { createPasswordStore } from './store'
+
+export type { RandomBytesProvider, VaultKeyProvider } from './encryption'
+export {
+  createEncryptedAdapter,
+  createVaultKey,
+  decryptSecret,
+  encryptSecret,
+} from './encryption'

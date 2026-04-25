@@ -51,38 +51,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@anthropic-ai/sdk@npm:^0.74.0":
-  version: 0.74.0
-  resolution: "@anthropic-ai/sdk@npm:0.74.0"
-  dependencies:
-    json-schema-to-ts: "npm:^3.1.1"
-  peerDependencies:
-    zod: ^3.25.0 || ^4.0.0
-  peerDependenciesMeta:
-    zod:
-      optional: true
-  bin:
-    anthropic-ai-sdk: bin/cli
-  checksum: 10c0/723fe922a387a6a66b4f24e3acd73fc14015013f51802c0a3df57a953652b2e74267c8da1cc72d35be366e89fd5b957ff4009a3d7ff3fce1e63d7d5358f86b35
-  languageName: node
-  linkType: hard
-
-"@anthropic-ai/sdk@npm:^0.90.0":
-  version: 0.90.0
-  resolution: "@anthropic-ai/sdk@npm:0.90.0"
-  dependencies:
-    json-schema-to-ts: "npm:^3.1.1"
-  peerDependencies:
-    zod: ^3.25.0 || ^4.0.0
-  peerDependenciesMeta:
-    zod:
-      optional: true
-  bin:
-    anthropic-ai-sdk: bin/cli
-  checksum: 10c0/ebf35f62e07cd1ed747e20fc95d807d7a6c8adc6ef00d1dbe8a2a36698268aea2e82309b83cddc43f32a23b344bb3c3e250a884e22cf5426761ebc066dae37b6
-  languageName: node
-  linkType: hard
-
 "@astrojs/compiler@npm:^2.0.0":
   version: 2.13.1
   resolution: "@astrojs/compiler@npm:2.13.1"
@@ -1146,17 +1114,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.18.3, @babel/runtime@npm:^7.20.13, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.27.6":
-  version: 7.29.2
-  resolution: "@babel/runtime@npm:7.29.2"
-  checksum: 10c0/30b80a0140d16467792e1bbeb06f655b0dab70407da38dfac7fedae9c859f9ae9d846ef14ad77bd3814c064295fe9b1bc551f1541ea14646ae9f22b71a8bc17a
-  languageName: node
-  linkType: hard
-
 "@babel/runtime@npm:^7.18.6, @babel/runtime@npm:^7.20.0, @babel/runtime@npm:^7.25.0":
   version: 7.28.6
   resolution: "@babel/runtime@npm:7.28.6"
   checksum: 10c0/358cf2429992ac1c466df1a21c1601d595c46930a13c1d4662fde908d44ee78ec3c183aaff513ecb01ef8c55c3624afe0309eeeb34715672dbfadb7feedb2c0d
+  languageName: node
+  linkType: hard
+
+"@babel/runtime@npm:^7.20.13, @babel/runtime@npm:^7.23.2, @babel/runtime@npm:^7.27.6":
+  version: 7.29.2
+  resolution: "@babel/runtime@npm:7.29.2"
+  checksum: 10c0/30b80a0140d16467792e1bbeb06f655b0dab70407da38dfac7fedae9c859f9ae9d846ef14ad77bd3814c064295fe9b1bc551f1541ea14646ae9f22b71a8bc17a
   languageName: node
   linkType: hard
 
@@ -3494,18 +3462,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@langchain/anthropic@npm:^1.3.26":
-  version: 1.3.26
-  resolution: "@langchain/anthropic@npm:1.3.26"
-  dependencies:
-    "@anthropic-ai/sdk": "npm:^0.74.0"
-    zod: "npm:^3.25.76 || ^4"
-  peerDependencies:
-    "@langchain/core": ^1.1.38
-  checksum: 10c0/14cea229863ed7e5c6fcec1eb8ef119ce30b6e8bbce55a13fe8c1874eaf0c8e3c6302e716fce63d8dc32ec2a0b648e2d85ef9e7cdcd1e1f11e2e4880e20ba98a
-  languageName: node
-  linkType: hard
-
 "@langchain/core@npm:^1.1.40":
   version: 1.1.40
   resolution: "@langchain/core@npm:1.1.40"
@@ -3871,6 +3827,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@noble/ciphers@npm:^2.2.0":
+  version: 2.2.0
+  resolution: "@noble/ciphers@npm:2.2.0"
+  checksum: 10c0/56396fa9b2cd7863999d9d70c6cbfcc03db9644cbbac9bb9d383d18f701bee3eb09f36878d8252a763c8d1fb6f0807339e06e2d28f18b14c525133c57c14508d
+  languageName: node
+  linkType: hard
+
 "@noble/curves@npm:^1.9.7":
   version: 1.9.7
   resolution: "@noble/curves@npm:1.9.7"
@@ -3991,9 +3954,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@password/ai-import-service@workspace:apps/ai-import-service"
   dependencies:
-    "@anthropic-ai/sdk": "npm:^0.90.0"
     "@fastify/multipart": "npm:^9.0.0"
-    "@langchain/anthropic": "npm:^1.3.26"
     "@langchain/core": "npm:^1.1.40"
     "@langchain/langgraph": "npm:^1.2.9"
     "@types/node": "npm:^20.11.24"
@@ -7211,6 +7172,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@repo/db@workspace:packages/db"
   dependencies:
+    "@noble/ciphers": "npm:^2.2.0"
     "@repo/ts-config": "workspace:*"
     drizzle-kit: "npm:0.31.10"
     drizzle-orm: "npm:0.45.2"
@@ -13267,6 +13229,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-crypto@npm:^55.0.14":
+  version: 55.0.14
+  resolution: "expo-crypto@npm:55.0.14"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/43effc84b43c257dd9138731bd90b9662f1cec6ba689058e2d481b68f1ca4b60473be68fe640b04ff481d1a8cf422a4a47825af7e2264b95fc615348cec71392
+  languageName: node
+  linkType: hard
+
 "expo-eas-client@npm:~1.0.8":
   version: 1.0.8
   resolution: "expo-eas-client@npm:1.0.8"
@@ -13466,6 +13437,15 @@ __metadata:
     react-server-dom-webpack:
       optional: true
   checksum: 10c0/d49d6df9d42b3d5813fd534afeb6e08009cc3ed9261f7355d05fdf5e564c10a4ab9080e6f659e3fa61ffe6ad5517da9abbe685da4c60c383241231875585a6ec
+  languageName: node
+  linkType: hard
+
+"expo-secure-store@npm:^55.0.13":
+  version: 55.0.13
+  resolution: "expo-secure-store@npm:55.0.13"
+  peerDependencies:
+    expo: "*"
+  checksum: 10c0/0f51e54070cab2e02094ade6b343c59c19a82d59fc637e9c3a40e9362eb0e8f2bdba80345b81fc7c337c43d766bbda6a0ea07ad2dd800e3f7da2ab1e6d6fb98e
   languageName: node
   linkType: hard
 
@@ -16002,16 +15982,6 @@ __metadata:
   dependencies:
     dequal: "npm:^2.0.3"
   checksum: 10c0/0b6f4b66951ac0f6864949c08317cf0b7f7ae94e8da0b94e40df3561dc1a0b77a69b669d60aa1511b06aa18469203886eb2e89fd6bb3dcf0be46c329d69b0115
-  languageName: node
-  linkType: hard
-
-"json-schema-to-ts@npm:^3.1.1":
-  version: 3.1.1
-  resolution: "json-schema-to-ts@npm:3.1.1"
-  dependencies:
-    "@babel/runtime": "npm:^7.18.3"
-    ts-algebra: "npm:^2.0.0"
-  checksum: 10c0/609bae04aa5e860a11b6d30ccf41445fae1c7f66fb600c1d170257cf33aa468aa9d03aa046428c3688aff0ff450c2b0c76584b66fa4a5d0da8e33799e4c439a6
   languageName: node
   linkType: hard
 
@@ -18868,12 +18838,14 @@ __metadata:
     expo: "npm:~54.0.33"
     expo-clipboard: "npm:~8.0.8"
     expo-constants: "npm:~18.0.13"
+    expo-crypto: "npm:^55.0.14"
     expo-font: "npm:~14.0.11"
     expo-haptics: "npm:^15.0.8"
     expo-image-picker: "npm:~17.0.10"
     expo-linking: "npm:~8.0.11"
     expo-localization: "npm:~17.0.8"
     expo-router: "npm:~6.0.23"
+    expo-secure-store: "npm:^55.0.13"
     expo-splash-screen: "npm:~31.0.13"
     expo-sqlite: "npm:~16.0.10"
     expo-status-bar: "npm:~3.0.9"
@@ -22462,13 +22434,6 @@ __metadata:
   dependencies:
     utf8-byte-length: "npm:^1.0.1"
   checksum: 10c0/af2b431fc4314f119b551e5fccfad49d4c0ef82e13ba9ca61be6567801195b08e732ce9643542e8ad1b3df44f3df2d7345b3dd34f723954b6bb43a14584d6b3c
-  languageName: node
-  linkType: hard
-
-"ts-algebra@npm:^2.0.0":
-  version: 2.0.0
-  resolution: "ts-algebra@npm:2.0.0"
-  checksum: 10c0/4ae93bec1bada635bba425854eec323dad50b6ffe86bc04ad2d7f9ce3fb129d673dcf483e19a6e70d07a3a9083e6a0a7f4e004bb8d2164cddc60cc9540ba187f
   languageName: node
   linkType: hard
 

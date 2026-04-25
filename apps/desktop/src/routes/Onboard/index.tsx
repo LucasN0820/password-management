@@ -96,7 +96,8 @@ export default function OnboardPage() {
                 Supported right now
               </div>
               <p className="text-sm leading-6 text-muted-foreground">
-                CSV, PDF, DOCX, Markdown, TXT, JPG, JPEG, PNG, and WEBP.
+                CSV, PDF, DOCX, Markdown, and TXT. Image OCR is not enabled for
+                the DeepSeek provider yet.
               </p>
             </div>
           </div>
@@ -137,7 +138,8 @@ export default function OnboardPage() {
             <CardHeader className="border-b border-border/70">
               <CardTitle>Selected Files</CardTitle>
               <CardDescription>
-                Files stay local until the extractor sends relevant chunks to Anthropic.
+                Files are uploaded to the configured AI Import Service, which sends
+                relevant text chunks to DeepSeek.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3 pt-6">
@@ -209,8 +211,8 @@ export default function OnboardPage() {
                       Parsing files and extracting credentials
                     </div>
                     <div className="mt-1 text-sm text-muted-foreground">
-                      This MVP runs the file workflow in the desktop backend, then brings back
-                      editable results for review.
+                      This MVP runs the file workflow in the AI Import Service, then brings
+                      back editable results for review.
                     </div>
                   </div>
                 </div>

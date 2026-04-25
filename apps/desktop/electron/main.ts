@@ -10,20 +10,19 @@ import {
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { existsSync, mkdirSync, statSync } from 'fs';
+import { readFile } from 'fs/promises';
 import { z } from 'zod';
+import { randomBytes } from 'crypto';
 import {
-  addPassword,
-  deletePassword,
-  getCategories,
-  getPasswordById,
-  getPasswords,
-  searchPasswords,
-  updatePassword,
+  createDrizzleAdapter,
+  createEncryptedAdapter,
   type PasswordDatabase,
+  type DatabaseAdapter,
   type PasswordInput,
 } from '@repo/db';
 import { createDesktopDatabase } from './db';
 import { getServiceEnvConfig } from './settings';
+import { getOrCreateDesktopVaultKey } from './vault-key';
 import type {
   ImportFileDescriptor,
   ImportPasswordInput,
@@ -39,6 +38,7 @@ let mainWindow: BrowserWindow | null;
 let searchWindow: BrowserWindow | null;
 let sqlite: ReturnType<typeof createDesktopDatabase>['client'] | null;
 let db: PasswordDatabase | null;
+let passwordAdapter: DatabaseAdapter | null;
 
 const userDataPath = app.getPath('userData');
 const dbPath = join(userDataPath, 'passwords.db');
@@ -60,6 +60,11 @@ function initDatabase() {
     const database = createDesktopDatabase(dbPath);
     sqlite = database.client;
     db = database.db;
+    passwordAdapter = createEncryptedAdapter(
+      createDrizzleAdapter(db),
+      async () => getOrCreateDesktopVaultKey(),
+      length => randomBytes(length),
+    );
 
     console.log('Database initialized at:', dbPath);
   } catch (error) {
@@ -218,38 +223,38 @@ app.on('will-quit', () => {
 
 // IPC Handlers
 ipcMain.handle('get-passwords', () => {
-  if (!db) return [];
-  return getPasswords(db);
+  if (!passwordAdapter) return [];
+  return passwordAdapter.getPasswords();
 });
 
 ipcMain.handle('get-password-by-id', (_, id: number) => {
-  if (!db) return null;
-  return getPasswordById(db, id);
+  if (!passwordAdapter) return null;
+  return passwordAdapter.getPasswordById(id);
 });
 
 ipcMain.handle('add-password', (_, data: PasswordInput) => {
-  if (!db) return null;
-  return addPassword(db, data);
+  if (!passwordAdapter) return null;
+  return passwordAdapter.addPassword(data);
 });
 
 ipcMain.handle('update-password', (_, id: number, data: PasswordInput) => {
-  if (!db) return null;
-  return updatePassword(db, id, data);
+  if (!passwordAdapter) return null;
+  return passwordAdapter.updatePassword(id, data);
 });
 
 ipcMain.handle('delete-password', (_, id: number) => {
-  if (!db) return false;
-  return deletePassword(db, id);
+  if (!passwordAdapter) return false;
+  return passwordAdapter.deletePassword(id);
 });
 
 ipcMain.handle('search-passwords', (_, query: string) => {
-  if (!db) return [];
-  return searchPasswords(db, query);
+  if (!passwordAdapter) return [];
+  return passwordAdapter.searchPasswords(query);
 });
 
 ipcMain.handle('get-categories', () => {
-  if (!db) return [];
-  return getCategories(db);
+  if (!passwordAdapter) return [];
+  return passwordAdapter.getCategories();
 });
 
 ipcMain.handle('select-import-files', async () => {
@@ -267,10 +272,6 @@ ipcMain.handle('select-import-files', async () => {
           'md',
           'markdown',
           'txt',
-          'jpg',
-          'jpeg',
-          'png',
-          'webp',
         ],
       },
     ],
@@ -307,8 +308,8 @@ ipcMain.handle(
 
     const formData = new FormData();
     for (const file of files) {
-      const response = await fetch(`file://${file.path}`);
-      const blob = await response.blob();
+      const buffer = await readFile(file.path);
+      const blob = new Blob([buffer]);
       formData.append('files', blob, file.name);
     }
 
@@ -366,29 +367,24 @@ ipcMain.handle(
 
 ipcMain.handle(
   'save-imported-passwords',
-  (_, candidates: ImportPasswordInput[]) => {
-    if (!db || !sqlite) return { saved: 0 };
-    const passwordDb = db;
+  async (_, candidates: ImportPasswordInput[]) => {
+    if (!passwordAdapter) return { saved: 0 };
     const parsedCandidates = importPasswordsSchema.parse(candidates);
     let saved = 0;
 
-    const transaction = sqlite.transaction((records: ImportPasswordInput[]) => {
-      for (const record of records) {
-        addPassword(passwordDb, {
-          title: record.title,
-          username: record.username,
-          password: record.password,
-          url: record.url,
-          notes: record.notes,
-          category: 'imported',
-          isFavorite: false,
-          icon: null,
-        });
-        saved += 1;
-      }
-    });
-
-    transaction(parsedCandidates);
+    for (const record of parsedCandidates) {
+      await passwordAdapter.addPassword({
+        title: record.title,
+        username: record.username,
+        password: record.password,
+        url: record.url,
+        notes: record.notes,
+        category: 'imported',
+        isFavorite: false,
+        icon: null,
+      });
+      saved += 1;
+    }
 
     return { saved };
   }

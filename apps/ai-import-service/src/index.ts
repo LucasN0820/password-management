@@ -1,14 +1,38 @@
-import { resolve } from 'path'
+import { dirname, join, resolve } from 'path'
+import { existsSync, readFileSync } from 'fs'
 import { config } from 'dotenv'
 
-// Load .env first, then .env.local to allow overrides
-const envPaths = [
-  resolve(process.cwd(), '.env'),
-  resolve(process.cwd(), '.env.local'),
-]
-for (const envPath of envPaths) {
-  config({ path: envPath, override: false })
+function findWorkspaceRoot(startDir: string) {
+  let current = resolve(startDir)
+
+  while (true) {
+    const packageJsonPath = join(current, 'package.json')
+    if (existsSync(packageJsonPath)) {
+      try {
+        const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
+          workspaces?: unknown
+        }
+        if (packageJson.workspaces) {
+          return current
+        }
+      } catch {
+        // Continue walking upward.
+      }
+    }
+
+    const parent = dirname(current)
+    if (parent === current) {
+      return resolve(startDir)
+    }
+    current = parent
+  }
 }
+
+const workspaceRoot = findWorkspaceRoot(process.cwd())
+
+// Load root .env first, then root .env.local to allow local overrides.
+config({ path: join(workspaceRoot, '.env'), override: false })
+config({ path: join(workspaceRoot, '.env.local'), override: true })
 
 import Fastify from 'fastify'
 import multipart from '@fastify/multipart'
