@@ -1,0 +1,27 @@
+AI Import Test Fixture - TXT free-form notes
+All credentials below are fake test data.
+
+Platform: QQ
+Title: QQ Mail
+Username: 2468135790
+Email: qqmail.demo@qq.com
+Password: QQMail_Test_2026#
+URL: https://mail.qq.com
+Notes: Fake test account for QQ Mail.
+---
+Platform: GitHub
+Title: GitHub Work
+Username: github-dev-demo
+Email: github.dev.demo@example.com
+Password: GitHub_Demo_2026!Repo
+URL: https://github.com
+Notes: Fake test account for developer repositories.
+---
+Platform: TikTok
+Title: TikTok Global
+Username: tiktok_global_demo
+Email: tiktok.global.demo@example.com
+Password: TikTok_Global_2026!
+URL: https://www.tiktok.com
+Notes: Fake test account for global video channel.
+---

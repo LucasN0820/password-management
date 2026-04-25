@@ -157,7 +157,6 @@ function buildCsvPrefilledCandidates(file: ImportFileDescriptor, csvText: string
       password: resolved.password,
       url: resolved.url ?? null,
       notes: resolved.notes ?? null,
-      // Structured CSV exports are deterministic enough to rank above LLM guesses.
       confidence: CSV_STRUCTURED_CONFIDENCE,
       sourceExcerpt: Object.entries(record)
         .map(([key, value]) => `${key}: ${value}`)

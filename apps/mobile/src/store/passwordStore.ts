@@ -2,12 +2,14 @@ import { UseBoundStore, StoreApi } from 'zustand';
 import { createContext, useContext } from 'react';
 import {
   createDrizzleAdapter,
+  createEncryptedAdapter,
   createPasswordStore,
   type Password,
   type PasswordInput,
   type PasswordState,
   type PasswordDatabase,
 } from '@repo/db';
+import { getMobileRandomBytes, getOrCreateMobileVaultKey } from './vaultKey';
 
 export type { Password, PasswordInput, PasswordState };
 
@@ -16,7 +18,11 @@ export const PasswordContext = createContext<
 >(undefined!);
 
 export function createStore(db: PasswordDatabase) {
-  const adapter = createDrizzleAdapter(db);
+  const adapter = createEncryptedAdapter(
+    createDrizzleAdapter(db),
+    getOrCreateMobileVaultKey,
+    getMobileRandomBytes,
+  );
   return createPasswordStore(adapter);
 }
 

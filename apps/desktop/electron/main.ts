@@ -6,95 +6,89 @@ import {
   ipcMain,
   nativeImage,
   screen,
-} from 'electron'
-import { fileURLToPath } from 'url'
-import { dirname, join } from 'path'
-import { existsSync, mkdirSync, statSync } from 'fs'
-import { z } from 'zod'
+} from 'electron';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+import { existsSync, mkdirSync, statSync } from 'fs';
+import { readFile } from 'fs/promises';
+import { z } from 'zod';
+import { randomBytes } from 'crypto';
 import {
-  addPassword,
-  deletePassword,
-  getCategories,
-  getPasswordById,
-  getPasswords,
-  searchPasswords,
-  updatePassword,
+  createDrizzleAdapter,
+  createEncryptedAdapter,
   type PasswordDatabase,
+  type DatabaseAdapter,
   type PasswordInput,
-} from '@repo/db'
-import { createDesktopDatabase } from './db'
-import { runImportWorkflow } from './import/workflow'
+} from '@repo/db';
+import { createDesktopDatabase } from './db';
+import { getServiceEnvConfig } from './settings';
+import { getOrCreateDesktopVaultKey } from './vault-key';
 import type {
   ImportFileDescriptor,
   ImportPasswordInput,
-} from './import/types'
-import {
-  clearStoredAiImportKey,
-  getAiImportKeyStatus,
-  setStoredAiImportKey,
-} from './settings'
+  ImportWorkflowResult,
+} from './import/types';
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
-const isDev = !app.isPackaged
+const isDev = !app.isPackaged;
 
-let mainWindow: BrowserWindow | null
-let searchWindow: BrowserWindow | null
-let sqlite: ReturnType<typeof createDesktopDatabase>['client'] | null
-let db: PasswordDatabase | null
+let mainWindow: BrowserWindow | null;
+let searchWindow: BrowserWindow | null;
+let sqlite: ReturnType<typeof createDesktopDatabase>['client'] | null;
+let db: PasswordDatabase | null;
+let passwordAdapter: DatabaseAdapter | null;
 
-const userDataPath = app.getPath('userData')
-const dbPath = join(userDataPath, 'passwords.db')
-const importFileSchema = z.object({
-  path: z.string().min(1),
-  name: z.string().min(1),
-  size: z.number().nonnegative(),
-  extension: z.string(),
-})
-const importFilesSchema = z.array(importFileSchema)
+const userDataPath = app.getPath('userData');
+const dbPath = join(userDataPath, 'passwords.db');
 const importPasswordSchema = z.object({
   title: z.string(),
   username: z.string(),
   password: z.string().min(1),
   url: z.string().nullable(),
   notes: z.string().nullable(),
-})
-const importPasswordsSchema = z.array(importPasswordSchema)
+});
+const importPasswordsSchema = z.array(importPasswordSchema);
 
 function initDatabase() {
   try {
     if (!existsSync(userDataPath)) {
-      mkdirSync(userDataPath, { recursive: true })
+      mkdirSync(userDataPath, { recursive: true });
     }
 
-    const database = createDesktopDatabase(dbPath)
-    sqlite = database.client
-    db = database.db
+    const database = createDesktopDatabase(dbPath);
+    sqlite = database.client;
+    db = database.db;
+    passwordAdapter = createEncryptedAdapter(
+      createDrizzleAdapter(db),
+      async () => getOrCreateDesktopVaultKey(),
+      length => randomBytes(length),
+    );
 
-    console.log('Database initialized at:', dbPath)
+    console.log('Database initialized at:', dbPath);
   } catch (error) {
-    console.error('Database initialization error:', error)
+    console.error('Database initialization error:', error);
   }
 }
 
 function createWindow() {
   const iconPath = isDev
     ? join(__dirname, '../public/icon-512.png')
-    : join(process.resourcesPath, 'icon-512.png')
+    : join(process.resourcesPath, 'icon-512.png');
 
-  let appIcon = nativeImage.createEmpty()
+  let appIcon = nativeImage.createEmpty();
   try {
     if (existsSync(iconPath)) {
-      appIcon = nativeImage.createFromPath(iconPath)
+      appIcon = nativeImage.createFromPath(iconPath);
     }
   } catch (error) {
-    console.warn('Failed to load app icon:', error)
+    console.warn('Failed to load app icon:', error);
   }
 
   // macOS: set Dock icon explicitly
   if (process.platform === 'darwin' && app.dock) {
-    app.dock.setIcon(appIcon)
+    app.dock.setIcon(appIcon);
   }
 
   mainWindow = new BrowserWindow({
@@ -110,35 +104,35 @@ function createWindow() {
     },
     titleBarStyle: 'hiddenInset',
     show: false,
-  })
+  });
 
   if (isDev) {
-    mainWindow.loadURL("http://localhost:5173")
+    mainWindow.loadURL('http://localhost:5173');
   } else {
-    mainWindow.loadFile(join(__dirname, '../dist/index.html'))
+    mainWindow.loadFile(join(__dirname, '../dist/index.html'));
   }
 
   mainWindow.once('ready-to-show', () => {
-    mainWindow?.show()
+    mainWindow?.show();
     if (isDev) {
-      mainWindow?.webContents.openDevTools()
+      mainWindow?.webContents.openDevTools();
     }
-  })
+  });
 
   mainWindow?.on('closed', () => {
-    mainWindow = null
-  })
+    mainWindow = null;
+  });
 }
 
 function createSearchWindow() {
   if (searchWindow) {
-    searchWindow.show()
-    searchWindow.focus()
-    return
+    searchWindow.show();
+    searchWindow.focus();
+    return;
   }
 
-  const { width, height } = screen.getPrimaryDisplay().workAreaSize
-  const windowWidth = 600
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+  const windowWidth = 600;
 
   searchWindow = new BrowserWindow({
     width: windowWidth,
@@ -158,155 +152,228 @@ function createSearchWindow() {
     transparent: true,
     backgroundColor: '#00000000',
     hasShadow: false,
-  })
+  });
 
   if (isDev) {
-    searchWindow.loadURL('http://localhost:5173/#/search')
+    searchWindow.loadURL('http://localhost:5173/#/search');
   } else {
     searchWindow.loadFile(join(__dirname, '../dist/index.html'), {
-      hash: '/search'
-    })
+      hash: '/search',
+    });
   }
 
   searchWindow.once('ready-to-show', () => {
-    searchWindow?.show()
-    searchWindow?.focus()
-  })
+    searchWindow?.show();
+    searchWindow?.focus();
+  });
 
   searchWindow.on('closed', () => {
-    searchWindow = null
-  })
+    searchWindow = null;
+  });
 
   searchWindow.on('blur', () => {
-    searchWindow?.hide()
-  })
+    searchWindow?.hide();
+  });
 }
 
 function registerGlobalShortcuts() {
-  const searchShortcut = process.platform === 'darwin' ? 'Cmd+Shift+P' : 'Ctrl+Shift+P'
-  const debugShortcut = process.platform === 'darwin' ? 'F12' : 'Fn+F12'
+  const searchShortcut =
+    process.platform === 'darwin' ? 'Cmd+Shift+P' : 'Ctrl+Shift+P';
+  const debugShortcut = process.platform === 'darwin' ? 'F12' : 'Fn+F12';
 
   globalShortcut.register(searchShortcut, () => {
-    createSearchWindow()
-  })
+    createSearchWindow();
+  });
 
   globalShortcut.register(debugShortcut, () => {
-    mainWindow?.webContents.toggleDevTools()
-    searchWindow?.webContents.toggleDevTools()
-  })
+    mainWindow?.webContents.toggleDevTools();
+    searchWindow?.webContents.toggleDevTools();
+  });
 }
 
 function unregisterGlobalShortcuts() {
-  globalShortcut.unregisterAll()
+  globalShortcut.unregisterAll();
 }
 
 app.whenReady().then(() => {
-  initDatabase()
-  createWindow()
-  registerGlobalShortcuts()
+  initDatabase();
+  createWindow();
+  registerGlobalShortcuts();
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
+      createWindow();
     }
-  })
-})
+  });
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
-    app.quit()
+    app.quit();
   }
   // Don't close database here - let it be managed by app lifecycle
-})
+});
 
 app.on('will-quit', () => {
-  unregisterGlobalShortcuts()
+  unregisterGlobalShortcuts();
   if (sqlite) {
-    sqlite.close()
+    sqlite.close();
   }
-})
+});
 
 // IPC Handlers
 ipcMain.handle('get-passwords', () => {
-  if (!db) return []
-  return getPasswords(db)
-})
+  if (!passwordAdapter) return [];
+  return passwordAdapter.getPasswords();
+});
 
 ipcMain.handle('get-password-by-id', (_, id: number) => {
-  if (!db) return null
-  return getPasswordById(db, id)
-})
+  if (!passwordAdapter) return null;
+  return passwordAdapter.getPasswordById(id);
+});
 
 ipcMain.handle('add-password', (_, data: PasswordInput) => {
-  if (!db) return null
-  return addPassword(db, data)
-})
+  if (!passwordAdapter) return null;
+  return passwordAdapter.addPassword(data);
+});
 
 ipcMain.handle('update-password', (_, id: number, data: PasswordInput) => {
-  if (!db) return null
-  return updatePassword(db, id, data)
-})
+  if (!passwordAdapter) return null;
+  return passwordAdapter.updatePassword(id, data);
+});
 
 ipcMain.handle('delete-password', (_, id: number) => {
-  if (!db) return false
-  return deletePassword(db, id)
-})
+  if (!passwordAdapter) return false;
+  return passwordAdapter.deletePassword(id);
+});
 
 ipcMain.handle('search-passwords', (_, query: string) => {
-  if (!db) return []
-  return searchPasswords(db, query)
-})
+  if (!passwordAdapter) return [];
+  return passwordAdapter.searchPasswords(query);
+});
 
 ipcMain.handle('get-categories', () => {
-  if (!db) return []
-  return getCategories(db)
-})
+  if (!passwordAdapter) return [];
+  return passwordAdapter.getCategories();
+});
 
 ipcMain.handle('select-import-files', async () => {
-  const browserWindow = BrowserWindow.getFocusedWindow() ?? mainWindow ?? undefined
+  const browserWindow =
+    BrowserWindow.getFocusedWindow() ?? mainWindow ?? undefined;
   const options = {
     properties: ['openFile', 'multiSelections'],
     filters: [
       {
         name: 'Supported files',
-        extensions: ['csv', 'pdf', 'docx', 'md', 'markdown', 'txt', 'jpg', 'jpeg', 'png', 'webp'],
+        extensions: [
+          'csv',
+          'pdf',
+          'docx',
+          'md',
+          'markdown',
+          'txt',
+        ],
       },
     ],
-  } satisfies Electron.OpenDialogOptions
+  } satisfies Electron.OpenDialogOptions;
   const result = browserWindow
     ? await dialog.showOpenDialog(browserWindow, options)
-    : await dialog.showOpenDialog(options)
+    : await dialog.showOpenDialog(options);
 
   if (result.canceled) {
-    return []
+    return [];
   }
 
   return result.filePaths.map(filePath => {
-    const stats = statSync(filePath)
-    const lastDot = filePath.lastIndexOf('.')
-    const extension = lastDot > 0 ? filePath.slice(lastDot).toLowerCase() : ''
+    const stats = statSync(filePath);
+    const lastDot = filePath.lastIndexOf('.');
+    const extension = lastDot > 0 ? filePath.slice(lastDot).toLowerCase() : '';
     return {
       path: filePath,
       name: filePath.split(/[/\\]/).pop() ?? filePath,
       size: stats.size,
       extension,
-    } satisfies ImportFileDescriptor
-  })
-})
+    } satisfies ImportFileDescriptor;
+  });
+});
 
-ipcMain.handle('run-import-workflow', async (_, files: ImportFileDescriptor[]) => {
-  return runImportWorkflow(importFilesSchema.parse(files))
-})
+ipcMain.handle(
+  'run-import-workflow',
+  async (_, files: ImportFileDescriptor[]) => {
+    const { url: serviceUrl, secret } = getServiceEnvConfig();
 
-ipcMain.handle('save-imported-passwords', (_, candidates: ImportPasswordInput[]) => {
-  if (!db || !sqlite) return { saved: 0 }
-  const passwordDb = db
-  const parsedCandidates = importPasswordsSchema.parse(candidates)
-  let saved = 0
+    if (!serviceUrl || !secret) {
+      throw new Error('Env not found.');
+    }
 
-  const transaction = sqlite.transaction((records: ImportPasswordInput[]) => {
-    for (const record of records) {
-      addPassword(passwordDb, {
+    const formData = new FormData();
+    for (const file of files) {
+      const buffer = await readFile(file.path);
+      const blob = new Blob([buffer]);
+      formData.append('files', blob, file.name);
+    }
+
+    // Create job
+    const createResponse = await fetch(`${serviceUrl}/import/jobs`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${secret}`,
+      },
+      body: formData,
+    });
+
+    if (!createResponse.ok) {
+      const error = await createResponse
+        .json()
+        .catch(() => ({ error: { message: 'Failed to create import job' } }));
+      throw new Error(error.error?.message || 'Failed to create import job');
+    }
+
+    const { jobId } = (await createResponse.json()) as { jobId: string };
+
+    // Poll for completion
+    while (true) {
+      const statusResponse = await fetch(`${serviceUrl}/import/jobs/${jobId}`, {
+        headers: {
+          Authorization: `Bearer ${secret}`,
+        },
+      });
+
+      if (!statusResponse.ok) {
+        throw new Error('Failed to get import job status');
+      }
+
+      const job = (await statusResponse.json()) as {
+        status: string;
+        result?: ImportWorkflowResult;
+        error?: { code: string; message: string };
+      };
+
+      if (job.status === 'completed') {
+        return job.result;
+      }
+      if (job.status === 'failed') {
+        throw new Error(job.error?.message || 'Import job failed');
+      }
+      if (job.status === 'cancelled') {
+        throw new Error('Import was cancelled');
+      }
+
+      // Wait before polling again
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+);
+
+ipcMain.handle(
+  'save-imported-passwords',
+  async (_, candidates: ImportPasswordInput[]) => {
+    if (!passwordAdapter) return { saved: 0 };
+    const parsedCandidates = importPasswordsSchema.parse(candidates);
+    let saved = 0;
+
+    for (const record of parsedCandidates) {
+      await passwordAdapter.addPassword({
         title: record.title,
         username: record.username,
         password: record.password,
@@ -315,26 +382,10 @@ ipcMain.handle('save-imported-passwords', (_, candidates: ImportPasswordInput[])
         category: 'imported',
         isFavorite: false,
         icon: null,
-      })
-      saved += 1
+      });
+      saved += 1;
     }
-  })
 
-  transaction(parsedCandidates)
-
-  return { saved }
-})
-
-ipcMain.handle('get-ai-import-key-status', () => {
-  return getAiImportKeyStatus()
-})
-
-ipcMain.handle('set-ai-import-key', (_, key: string) => {
-  setStoredAiImportKey(z.string().trim().parse(key))
-  return getAiImportKeyStatus()
-})
-
-ipcMain.handle('clear-ai-import-key', () => {
-  clearStoredAiImportKey()
-  return getAiImportKeyStatus()
-})
+    return { saved };
+  }
+);

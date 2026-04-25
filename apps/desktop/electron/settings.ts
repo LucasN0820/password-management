@@ -1,175 +1,100 @@
-import { app, safeStorage } from 'electron'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
-import { dirname, join, resolve } from 'path'
-import { fileURLToPath } from 'url'
+import { app } from 'electron';
+import { existsSync, readFileSync } from 'fs';
+import { dirname, join, resolve } from 'path';
+import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
-const envCache = new Map<string, string>()
-const settingsFileName = 'desktop-settings.json'
-
-interface StoredDesktopSettings {
-  aiImportKey?: string
-  aiImportKeyEncrypted?: boolean
-}
-
-export interface AiImportKeyStatus {
-  mode: 'development' | 'production'
-  hasConfiguredKey: boolean
-}
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 function parseEnvFile(filePath: string): Record<string, string> {
-  const content = readFileSync(filePath, 'utf8')
-  const result: Record<string, string> = {}
+  const content = readFileSync(filePath, 'utf8');
+  const result: Record<string, string> = {};
 
   for (const line of content.split(/\r?\n/)) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
 
-    const separatorIndex = trimmed.indexOf('=')
-    if (separatorIndex === -1) continue
+    const separatorIndex = trimmed.indexOf('=');
+    if (separatorIndex === -1) continue;
 
-    const key = trimmed.slice(0, separatorIndex).trim()
-    let value = trimmed.slice(separatorIndex + 1).trim()
+    const key = trimmed.slice(0, separatorIndex).trim();
+    let value = trimmed.slice(separatorIndex + 1).trim();
 
     if (
       (value.startsWith('"') && value.endsWith('"')) ||
       (value.startsWith("'") && value.endsWith("'"))
     ) {
-      value = value.slice(1, -1)
+      value = value.slice(1, -1);
     }
 
-    result[key] = value
+    result[key] = value;
   }
 
-  return result
+  return result;
 }
 
-function getCandidateEnvPaths() {
-  return [
-    resolve(process.cwd(), '.env.local'),
-    resolve(process.cwd(), '.env'),
-    resolve(app.getAppPath(), '.env.local'),
-    resolve(app.getAppPath(), '.env'),
-    resolve(app.getAppPath(), '../../.env.local'),
-    resolve(app.getAppPath(), '../../.env'),
-    join(__dirname, '../../../../.env.local'),
-    join(__dirname, '../../../../.env'),
-  ]
-}
+function findWorkspaceRoot(startDir: string) {
+  let current = resolve(startDir);
 
-function getSettingsFilePath() {
-  return join(app.getPath('userData'), settingsFileName)
-}
+  while (true) {
+    const packageJsonPath = join(current, 'package.json');
+    if (existsSync(packageJsonPath)) {
+      try {
+        const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
+          workspaces?: unknown;
+        };
+        if (packageJson.workspaces) {
+          return current;
+        }
+      } catch {
+        // Continue walking upward.
+      }
+    }
 
-function ensureSettingsDirectory() {
-  const settingsPath = getSettingsFilePath()
-  const settingsDir = dirname(settingsPath)
-  if (!existsSync(settingsDir)) {
-    mkdirSync(settingsDir, { recursive: true })
-  }
-  return settingsPath
-}
-
-function readStoredSettings(): StoredDesktopSettings {
-  const settingsPath = getSettingsFilePath()
-  if (!existsSync(settingsPath)) {
-    return {}
-  }
-
-  try {
-    return JSON.parse(readFileSync(settingsPath, 'utf8')) as StoredDesktopSettings
-  } catch {
-    return {}
+    const parent = dirname(current);
+    if (parent === current) {
+      return resolve(startDir);
+    }
+    current = parent;
   }
 }
 
-function writeStoredSettings(settings: StoredDesktopSettings) {
-  const settingsPath = ensureSettingsDirectory()
-  writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8')
+function getCandidateWorkspaceRoots() {
+  return Array.from(
+    new Set([
+      findWorkspaceRoot(process.cwd()),
+      findWorkspaceRoot(app.getAppPath()),
+      findWorkspaceRoot(__dirname),
+    ]),
+  );
 }
 
-function getDevelopmentAiImportKey() {
-  const cachedValue = envCache.get('AI_IMPORT_KEY')
-  if (cachedValue) {
-    return cachedValue
-  }
+function getRootEnvPaths() {
+  return getCandidateWorkspaceRoots().flatMap(root => [
+    join(root, '.env'),
+    join(root, '.env.local'),
+  ]);
+}
 
-  const fromProcess = process.env.AI_IMPORT_KEY
-  if (fromProcess) {
-    envCache.set('AI_IMPORT_KEY', fromProcess)
-    return fromProcess
-  }
+export function getServiceEnvConfig(): {
+  url: string | undefined;
+  secret: string | undefined;
+} {
+  let url = process.env.AI_IMPORT_SERVICE_URL;
+  let secret = process.env.AI_IMPORT_SERVICE_SECRET;
 
-  for (const filePath of getCandidateEnvPaths()) {
-    if (!existsSync(filePath)) continue
-    const parsed = parseEnvFile(filePath)
-    const value = parsed.AI_IMPORT_KEY
-    if (value) {
-      envCache.set('AI_IMPORT_KEY', value)
-      return value
+  for (const filePath of getRootEnvPaths()) {
+    if (url && secret) break;
+    if (!existsSync(filePath)) continue;
+
+    const parsed = parseEnvFile(filePath);
+    if (!url && parsed.AI_IMPORT_SERVICE_URL) {
+      url = parsed.AI_IMPORT_SERVICE_URL;
+    }
+    if (!secret && parsed.AI_IMPORT_SERVICE_SECRET) {
+      secret = parsed.AI_IMPORT_SERVICE_SECRET;
     }
   }
 
-  return undefined
-}
-
-export function getStoredAiImportKey() {
-  const settings = readStoredSettings()
-  const rawValue = settings.aiImportKey
-  if (!rawValue) {
-    return undefined
-  }
-
-  if (settings.aiImportKeyEncrypted) {
-    if (!safeStorage.isEncryptionAvailable()) {
-      throw new Error('Secure storage is unavailable on this system')
-    }
-
-    return safeStorage.decryptString(Buffer.from(rawValue, 'base64'))
-  }
-
-  return rawValue
-}
-
-export function setStoredAiImportKey(key: string) {
-  const trimmedKey = key.trim()
-  if (!trimmedKey) {
-    clearStoredAiImportKey()
-    return
-  }
-
-  if (safeStorage.isEncryptionAvailable()) {
-    writeStoredSettings({
-      aiImportKey: safeStorage.encryptString(trimmedKey).toString('base64'),
-      aiImportKeyEncrypted: true,
-    })
-    return
-  }
-
-  writeStoredSettings({
-    aiImportKey: trimmedKey,
-    aiImportKeyEncrypted: false,
-  })
-}
-
-export function clearStoredAiImportKey() {
-  writeStoredSettings({})
-}
-
-export function getAiImportKey() {
-  if (!app.isPackaged) {
-    return getDevelopmentAiImportKey()
-  }
-
-  return getStoredAiImportKey()
-}
-
-export function getAiImportKeyStatus(): AiImportKeyStatus {
-  return {
-    mode: app.isPackaged ? 'production' : 'development',
-    hasConfiguredKey: app.isPackaged
-      ? Boolean(getStoredAiImportKey())
-      : Boolean(getDevelopmentAiImportKey()),
-  }
+  return { url, secret };
 }
