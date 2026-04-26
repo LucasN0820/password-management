@@ -5,6 +5,11 @@ on:
     tags:
       - 'desktop-v*'
   workflow_dispatch:
+    inputs:
+      ai_import_service_url:
+        description: 'AI import service URL used by the packaged desktop app'
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -54,6 +59,24 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Configure desktop AI import environment
+        shell: bash
+        env:
+          AI_IMPORT_SERVICE_URL_INPUT: ${{ inputs.ai_import_service_url }}
+          AI_IMPORT_SERVICE_URL_SECRET: ${{ secrets.AI_IMPORT_SERVICE_URL }}
+          AI_IMPORT_SERVICE_SECRET: ${{ secrets.AI_IMPORT_SERVICE_SECRET }}
+        run: |
+          set -euo pipefail
+          AI_IMPORT_SERVICE_URL="${AI_IMPORT_SERVICE_URL_INPUT:-$AI_IMPORT_SERVICE_URL_SECRET}"
+          {
+            if [ -n "$AI_IMPORT_SERVICE_URL" ]; then
+              printf 'AI_IMPORT_SERVICE_URL=%s\n' "$AI_IMPORT_SERVICE_URL"
+            fi
+            if [ -n "$AI_IMPORT_SERVICE_SECRET" ]; then
+              printf 'AI_IMPORT_SERVICE_SECRET=%s\n' "$AI_IMPORT_SERVICE_SECRET"
+            fi
+          } > apps/desktop/.env.local
+
       # macOS: generate .icns from source PNG (iconutil is macOS-only)
       - name: Generate macOS icon
         if: matrix.platform == 'mac'
@@ -100,6 +123,8 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AI_IMPORT_SERVICE_URL: ${{ inputs.ai_import_service_url || secrets.AI_IMPORT_SERVICE_URL }}
+          AI_IMPORT_SERVICE_SECRET: ${{ secrets.AI_IMPORT_SERVICE_SECRET }}
           # Disable auto code signing discovery — only sign when secrets are explicitly configured
           CSC_IDENTITY_AUTO_DISCOVERY: false
         working-directory: apps/desktop
