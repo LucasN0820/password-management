@@ -1,5 +1,5 @@
-// Load .env and .env.local before running electron-builder
-const { readFileSync, existsSync } = require('fs')
+// Load env files and materialize packaged runtime config before electron-builder.
+const { mkdirSync, readFileSync, existsSync, writeFileSync } = require('fs')
 const { resolve } = require('path')
 
 function parseEnvFile(filePath) {
@@ -21,8 +21,15 @@ function parseEnvFile(filePath) {
   return vars
 }
 
-const envDir = process.cwd()
-const env = { ...parseEnvFile(resolve(envDir, '.env')), ...parseEnvFile(resolve(envDir, '.env.local')) }
+const appDir = process.cwd()
+const rootDir = resolve(appDir, '../..')
+const env = {
+  ...parseEnvFile(resolve(rootDir, '.env')),
+  ...parseEnvFile(resolve(rootDir, '.env.local')),
+  ...parseEnvFile(resolve(appDir, '.env')),
+  ...parseEnvFile(resolve(appDir, '.env.local')),
+  ...process.env,
+}
 
 // Inject into process.env for electron-builder to pick up
 for (const [key, val] of Object.entries(env)) {
@@ -30,6 +37,20 @@ for (const [key, val] of Object.entries(env)) {
     process.env[key] = val
   }
 }
+
+mkdirSync(resolve(appDir, 'build'), { recursive: true })
+writeFileSync(
+  resolve(appDir, 'build/desktop-env.json'),
+  JSON.stringify(
+    {
+      AI_IMPORT_SERVICE_URL: env.AI_IMPORT_SERVICE_URL ?? '',
+      AI_IMPORT_SERVICE_SECRET: env.AI_IMPORT_SERVICE_SECRET ?? '',
+    },
+    null,
+    2
+  ),
+  'utf8'
+)
 
 // Now run electron-builder with the rest of the arguments
 const { spawn } = require('child_process')

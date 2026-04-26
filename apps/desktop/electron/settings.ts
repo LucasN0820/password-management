@@ -33,6 +33,18 @@ function parseEnvFile(filePath: string): Record<string, string> {
   return result;
 }
 
+function readJsonConfigFile(filePath: string): Record<string, string> {
+  if (!existsSync(filePath)) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(readFileSync(filePath, 'utf8')) as Record<string, string>;
+  } catch {
+    return {};
+  }
+}
+
 function findWorkspaceRoot(startDir: string) {
   let current = resolve(startDir);
 
@@ -76,12 +88,28 @@ function getRootEnvPaths() {
   ]);
 }
 
+function getPackagedDesktopEnv() {
+  if (!app.isPackaged) {
+    return {};
+  }
+
+  return readJsonConfigFile(join(process.resourcesPath, 'desktop-env.json'));
+}
+
 export function getServiceEnvConfig(): {
   url: string | undefined;
   secret: string | undefined;
 } {
   let url = process.env.AI_IMPORT_SERVICE_URL;
   let secret = process.env.AI_IMPORT_SERVICE_SECRET;
+
+  const packagedEnv = getPackagedDesktopEnv();
+  if (!url && packagedEnv.AI_IMPORT_SERVICE_URL) {
+    url = packagedEnv.AI_IMPORT_SERVICE_URL;
+  }
+  if (!secret && packagedEnv.AI_IMPORT_SERVICE_SECRET) {
+    secret = packagedEnv.AI_IMPORT_SERVICE_SECRET;
+  }
 
   for (const filePath of getRootEnvPaths()) {
     if (url && secret) break;

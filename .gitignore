@@ -17,6 +17,7 @@ release/
 *.snap
 *.zip.blockmap
 builder-effective-config.yaml
+apps/desktop/build/desktop-env.json
 
 # Expo
 .expo/

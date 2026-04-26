@@ -6,13 +6,6 @@ directories:
   buildResources: build
   output: release
 
-# Inject AI import service env vars into the packaged app
-# These become available as process.env.AI_IMPORT_SERVICE_URL and
-# process.env.AI_IMPORT_SERVICE_SECRET in the packaged application
-env:
-  AI_IMPORT_SERVICE_URL: ${AI_IMPORT_SERVICE_URL}
-  AI_IMPORT_SERVICE_SECRET: ${AI_IMPORT_SERVICE_SECRET}
-
 files:
   - dist/**/*
   - dist-electron/**/*
@@ -20,6 +13,8 @@ files:
 extraResources:
   - from: public/icon-512.png
     to: icon-512.png
+  - from: build/desktop-env.json
+    to: desktop-env.json
 
 # Rebuild better-sqlite3 for the target Electron version
 nodeGypRebuild: false
