@@ -1,398 +1,534 @@
-# Desktop AI Import Roadmap
+# Desktop AI Import Implementation
 
-## 文档目的
+本文档记录当前项目中 `AI Import` 的真实实现状态，覆盖 Desktop 端、`ai-import-service` 服务、DeepSeek 调用、文件解析、鉴权、配置和发布相关行为。
 
-本文档用于整理 Desktop 端 `AI Import` 功能从当前 MVP 走向稳定可用版本的后续开发路线。
+## 当前目标
 
-当前已经具备的能力：
+`AI Import` 的职责是让用户在 Desktop App 中选择本地文件，将文件上传到独立的 Node.js 服务 `ai-import-service`，由服务解析文件并调用 DeepSeek 提取账号密码候选项。用户在 Desktop App 中人工 review、编辑、取消勾选后，再保存到本地加密数据库。
 
-- 用户上传多种文件后触发后台导入流程
-- 基础文件解析与 AI 提取
-- 用户在 review 页面手动确认和编辑结果
-- 确认后保存到数据库
-- 开发环境读取 `AI_IMPORT_KEY`
-- 生产环境通过设置页配置 `AI_IMPORT_KEY`
+当前实现不是纯本地 AI import。重型解析和模型调用已经抽离到 `apps/ai-import-service`，Desktop App 只负责文件选择、上传、轮询、review 和保存。
 
-当前尚未完善的部分主要集中在：
+## 技术架构
 
-- 任务状态与可取消能力
-- 文件解析稳健性
-- 真正的 RAG 能力
-- 审核体验
-- 生产级安全与稳定性
-- 测试与可观测性
+```mermaid
+flowchart LR
+  UI["Desktop Renderer\nOnboardPage + importStore"]
+  IPC["Electron preload/main\nIPC bridge"]
+  Service["ai-import-service\nFastify HTTP API"]
+  Worker["Import worker\nin-memory jobs"]
+  Graph["LangGraph workflow\nparse -> extract -> normalize"]
+  DeepSeek["DeepSeek Chat Completions"]
+  DB["Local SQLite\nEncrypted adapter"]
 
-## Roadmap 总览
+  UI --> IPC
+  IPC --> Service
+  Service --> Worker
+  Worker --> Graph
+  Graph --> DeepSeek
+  UI --> IPC
+  IPC --> DB
+```
 
-建议按以下阶段推进：
+主要模块：
 
-1. `P0` 稳定可用
-2. `P1` 提取质量与审核体验
-3. `P2` 生产级能力与可扩展架构
+- Desktop UI: `apps/desktop/src/routes/Onboard/index.tsx`
+- Desktop store: `apps/desktop/src/store/importStore.ts`
+- Electron IPC: `apps/desktop/electron/main.ts`
+- Preload API: `apps/desktop/electron/preload.ts`
+- Desktop service config: `apps/desktop/electron/settings.ts`
+- Service entry: `apps/ai-import-service/src/index.ts`
+- Service routes: `apps/ai-import-service/src/routes/import.routes.ts`
+- Job state: `apps/ai-import-service/src/services/job.service.ts`
+- Worker: `apps/ai-import-service/src/workers/import.worker.ts`
+- Workflow: `apps/ai-import-service/src/langgraph/workflow.ts`
+- Parser: `apps/ai-import-service/src/langgraph/parser.ts`
+- DeepSeek provider: `apps/ai-import-service/src/langgraph/deepseek.ts`
 
----
+## Desktop 端流程
 
-## P0 稳定可用
+### 1. 选择文件
 
-目标：把当前 MVP 从“能跑”提升到“可以稳定演示和内部使用”。
+用户在 `OnboardPage` 点击 `Choose Files` 后调用：
 
-### 1. 导入任务状态机
+```ts
+window.electronAPI.selectImportFiles()
+```
 
-需要补齐更明确的任务阶段：
+Electron main process 通过 `dialog.showOpenDialog` 打开本地文件选择器。当前 Desktop 端文件过滤只允许：
 
-- `idle`
-- `selecting`
-- `parsing`
-- `extracting`
-- `review`
-- `saving`
+- `.csv`
+- `.pdf`
+- `.docx`
+- `.md`
+- `.markdown`
+- `.txt`
+
+返回给 renderer 的文件描述结构为：
+
+```ts
+interface ImportFileDescriptor {
+  path: string
+  name: string
+  size: number
+  extension: string
+}
+```
+
+注意：`ai-import-service` 的 parser 代码中仍保留了图片扩展名支持判断，但 Desktop UI 当前不会让用户选择图片。DeepSeek provider 目前没有图片提取实现，图片会返回“不支持”的错误。
+
+### 2. 启动导入
+
+用户点击 `Start AI Import` 后，`importStore.runImport()` 将状态切换为 `processing`，然后调用：
+
+```ts
+window.electronAPI.runImportWorkflow(files)
+```
+
+Electron main process 会：
+
+1. 从配置中读取 `AI_IMPORT_SERVICE_URL` 和 `AI_IMPORT_SERVICE_SECRET`
+2. 将本地文件读取成 `Blob`
+3. 通过 `multipart/form-data` 上传到 `${serviceUrl}/import/jobs`
+4. 请求头带上 `Authorization: Bearer ${secret}`
+5. 获得 `jobId` 后每 1 秒轮询 `${serviceUrl}/import/jobs/:jobId`
+6. job 完成后把 `ImportWorkflowResult` 返回给 renderer
+
+如果服务 URL 或 secret 不存在，Desktop 端会抛出：
+
+```text
+Env not found.
+```
+
+### 3. Review 和保存
+
+服务返回候选项后，`importStore` 将状态切换为 `review`，并给每个 candidate 增加 `selected: true`。
+
+用户可以在 UI 中编辑：
+
+- title
+- url
+- username
+- password
+- notes
+
+也可以取消勾选或删除单条候选项。点击 `Save Selected` 后调用：
+
+```ts
+window.electronAPI.saveImportedPasswords(candidates)
+```
+
+Electron main process 对数据做 zod 校验，然后调用 `passwordAdapter.addPassword` 保存。当前保存时固定：
+
+- `category: 'imported'`
+- `isFavorite: false`
+- `icon: null`
+
+数据库写入经过 `createEncryptedAdapter`，密码和 notes 会先加密再写入本地 SQLite。
+
+## ai-import-service 流程
+
+### 服务启动
+
+`apps/ai-import-service/src/index.ts` 使用 Fastify 启动 HTTP 服务。
+
+配置加载顺序：
+
+1. 查找 monorepo workspace root
+2. 加载根目录 `.env`
+3. 加载根目录 `.env.local`，并允许覆盖 `.env`
+
+服务监听：
+
+```ts
+host = '0.0.0.0'
+port = Number(process.env.PORT ?? '3001')
+```
+
+这适配 Railway 等平台：Railway 会通过 `PORT` 注入端口，`0.0.0.0` 允许容器外部访问。
+
+### 环境变量
+
+当前相关变量统一放在项目根目录 `.env` / `.env.local` 管理：
+
+```env
+AI_IMPORT_SERVICE_URL=http://localhost:3001
+AI_IMPORT_SERVICE_SECRET=...
+DEEPSEEK_API_KEY=...
+DEEPSEEK_MODEL=deepseek-v4-pro
+MAX_FILE_SIZE_MB=25
+```
+
+说明：
+
+- `AI_IMPORT_SERVICE_URL`: Desktop App 调用服务的 HTTP 地址。
+- `AI_IMPORT_SERVICE_SECRET`: Desktop App 和服务之间的共享 secret，用于 Bearer 鉴权。
+- `DEEPSEEK_API_KEY`: 服务调用 DeepSeek API 的 key。
+- `DEEPSEEK_MODEL`: DeepSeek 模型名，默认 `deepseek-v4-pro`。
+- `MAX_FILE_SIZE_MB`: Fastify multipart 层面的上传文件大小限制，默认 25MB。
+
+Desktop 打包时，GitHub Actions 支持通过 secrets 或 workflow input 注入：
+
+- `AI_IMPORT_SERVICE_URL`
+- `AI_IMPORT_SERVICE_SECRET`
+
+打包脚本会生成 `apps/desktop/build/desktop-env.json`，并通过 electron-builder 的 `extraResources` 打进安装包。生产包运行时会从 `process.resourcesPath/desktop-env.json` 读取服务配置。
+
+### 鉴权
+
+除健康检查外，所有 import API 都需要：
+
+```http
+Authorization: Bearer <AI_IMPORT_SERVICE_SECRET>
+```
+
+未配置服务 secret 时返回 500：
+
+```json
+{
+  "error": {
+    "code": "INTERNAL_ERROR",
+    "message": "Service API key not configured"
+  }
+}
+```
+
+请求未带 secret 或 secret 不匹配时返回 401：
+
+```json
+{
+  "error": {
+    "code": "UNAUTHORIZED",
+    "message": "Invalid or missing API key"
+  }
+}
+```
+
+创建 job 前还会检查 `DEEPSEEK_API_KEY`。如果服务端没有配置 DeepSeek key，会返回：
+
+```json
+{
+  "error": {
+    "code": "MISSING_API_KEY",
+    "message": "DEEPSEEK_API_KEY is not configured"
+  }
+}
+```
+
+### HTTP API
+
+#### `GET /import/health`
+
+无需鉴权，用于健康检查。
+
+响应示例：
+
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-04-26T00:00:00.000Z"
+}
+```
+
+#### `POST /import/jobs`
+
+需要 Bearer 鉴权。接收 `multipart/form-data`，字段名为 `files`。
+
+行为：
+
+1. 校验 DeepSeek API key 是否配置
+2. 创建临时目录 `os.tmpdir()/ai-import-<uuid>`
+3. 流式写入上传文件
+4. 校验文件扩展名
+5. 创建内存 job
+6. 后台异步执行 `processJob(job)`
+7. 立即返回 202 和 `jobId`
+
+响应示例：
+
+```json
+{
+  "jobId": "uuid",
+  "status": "queued",
+  "createdAt": "2026-04-26T00:00:00.000Z"
+}
+```
+
+#### `GET /import/jobs/:jobId`
+
+需要 Bearer 鉴权。Desktop 端用它轮询任务状态。
+
+可能状态：
+
+- `queued`
+- `processing`
 - `completed`
 - `failed`
-- `canceled`
+- `cancelled`
 
-需要做的事情：
+完成后会返回：
 
-- 在前端 store 中补完整状态机
-- 每个文件展示当前处理阶段
-- 区分全局失败与单文件失败
-- 在 UI 中显示更明确的错误原因
+```ts
+interface ImportWorkflowResult {
+  files: ImportFileResult[]
+  candidates: ImportCandidateDraft[]
+  warnings: string[]
+}
+```
 
-### 2. 可取消导入流程
+#### `DELETE /import/jobs/:jobId`
 
-当前“取消”更像是清空前端状态，不是真正中断后台任务。
+需要 Bearer 鉴权。用于请求取消任务。
 
-需要做的事情：
+当前服务端会：
 
-- 为导入任务分配 `jobId`
-- 在 Electron 侧维护可取消任务
-- 增加 `cancel-import-job` IPC
-- 被取消后停止后续解析、提取和保存
+1. 标记 cancellation requested
+2. 从内存 job map 删除 job
+3. 返回 `cancelled`
 
-### 3. 设置页能力补齐
+注意：Desktop UI 目前的 Cancel 只是 reset 当前前端状态，没有调用该 DELETE API，因此还不是完整的远程取消。
 
-当前设置页只支持保存和清除 key，还缺少可用性验证。
+## LangGraph 工作流
 
-需要做的事情：
+`runImportWorkflow(files)` 内部使用 LangGraph StateGraph，当前节点顺序固定：
 
-- 增加“测试 AI_IMPORT_KEY”按钮
-- 区分以下错误：
-  - key 缺失
-  - key 无效
-  - 网络错误
-  - 额度不足
-  - 模型权限不足
-- 在设置页显示最近一次测试结果
+```mermaid
+flowchart LR
+  START --> Parse["parseFiles"]
+  Parse --> Extract["extractCandidates"]
+  Extract --> Normalize["normalizeCandidates"]
+  Normalize --> END
+```
 
-### 4. 文件大小与输入约束
+### `parseFiles`
 
-当前已有基础限制，但还不够完整。
+逐个文件调用 `parseImportFile(file)`。成功时生成 `ParsedImportFile`，失败时记录 warning 和 file result。
 
-需要做的事情：
+支持解析：
 
-- 对不同文件类型设置不同大小上限
-- 对 PDF 增加页数限制
-- 对图片增加分辨率限制
-- 在文件选择后立刻提示不支持或过大的文件
-- 把 warning 做成用户可理解的提示文案
+- CSV: 读取 UTF-8 文本，并尝试结构化列映射
+- PDF: 使用 `pdf2json` 提取文本
+- DOCX: 使用 `mammoth.extractRawText`
+- TXT / MD / Markdown: 读取 UTF-8 文本
+- 图片: parser 可读取为 base64，但 DeepSeek provider 当前不支持图片提取
 
-### 5. 保存链路补强
+parser 内部还会：
 
-当前保存已经有事务，但还缺导入级别的记录与反馈。
+- 标准化换行和空白
+- 将长文本切分成 chunk
+- 按关键词、URL、email、分隔符等启发式评分
+- 选择最多 6 段相关 excerpt 传给模型
 
-需要做的事情：
+### CSV 结构化预填充
 
-- 保存后展示导入摘要
-- 记录本次导入新增了多少条
-- 明确哪些条目被跳过或失败
-- 为未来导入历史预留结果结构
+CSV 有一条快捷路径：如果表头能识别出 password 字段，则不调用 DeepSeek，直接构造高置信度 candidate。
 
-### 6. 导入前缺 key 引导
+可识别字段：
 
-当前如果没有 key，错误会在导入过程中暴露。
+- title: `title`, `name`, `service`, `site`, `website name`
+- username: `username`, `user`, `login`, `account`, `email`
+- password: `password`, `pass`, `secret`
+- url: `url`, `website`, `site url`, `login url`
+- notes: `notes`, `memo`, `remark`
 
-需要做的事情：
+CSV 结构化候选项默认置信度：
 
-- 在进入 `AI Import` 页面时检查 key 状态
-- 缺少 key 时显示明确引导
-- 提供一键跳转到 `Settings`
-- 在 development 和 production 下分别显示不同说明
+```ts
+CSV_STRUCTURED_CONFIDENCE = 0.96
+```
 
----
+### `extractCandidates`
 
-## P1 提取质量与审核体验
+对每个 parsed file 调用：
 
-目标：提升提取准确率、可解释性和用户审核效率。
+- text: `extractCredentialsFromTextFile`
+- image: `extractCredentialsFromImageFile`
 
-### 1. 审核页面增强
+当前 image provider 直接抛错：
 
-当前 review 页面功能偏基础。
+```text
+Image import is not supported by the current DeepSeek provider
+```
 
-需要做的事情：
+text provider 如果已经存在 CSV prefilled candidates，则直接返回，不再调用 DeepSeek。
 
-- 支持按文件分组展示候选项
-- 支持批量勾选 / 取消勾选
-- 支持批量删除
-- 支持按置信度、文件名排序
-- 支持搜索候选结果
+### `normalizeCandidates`
 
-### 2. 重复项检测与合并
+对候选项做去重和排序。
 
-当前只有基础 dedupe，没有用户层面的重复处理体验。
+去重 fingerprint 使用：
 
-需要做的事情：
+- title lower-case
+- username lower-case
+- password
+- url lower-case
 
-- 检测与现有密码库重复的候选项
-- 检测导入批次内部重复项
-- 提供处理方式：
-  - 跳过
-  - 保留两条
-  - 覆盖已有项
-  - 合并备注
+fingerprint 经过 SHA-256 hash 作为 key。如果重复，保留 confidence 更高的一条。最后按 confidence 降序返回。
 
-### 3. Evidence 展示增强
+## DeepSeek Provider
+
+DeepSeek 调用文件：
+
+```text
+apps/ai-import-service/src/langgraph/deepseek.ts
+```
+
+当前 API：
+
+```text
+POST https://api.deepseek.com/chat/completions
+```
+
+请求配置：
+
+```json
+{
+  "model": "deepseek-v4-pro",
+  "response_format": { "type": "json_object" },
+  "temperature": 0,
+  "max_tokens": 2000,
+  "stream": false
+}
+```
+
+模型必须返回 JSON：
+
+```json
+{
+  "candidates": [
+    {
+      "title": "service name",
+      "username": "login or email",
+      "password": "plaintext password",
+      "url": "https://example.com or null",
+      "notes": "supporting detail or null",
+      "confidence": 0.0,
+      "sourceExcerpt": "short evidence excerpt"
+    }
+  ]
+}
+```
+
+服务端会用 zod 校验模型响应，并过滤掉没有 password 的候选项。
+
+为了容错，provider 会尝试从以下格式中提取 JSON：
 
-当前 evidence 只是简单文本片段。
+1. 纯 JSON
+2. ```json fenced code block
+3. 文本中的第一个 `{ ... }` 对象
 
-需要做的事情：
-
-- 高亮命中的字段片段
-- 展示来源文件、页码、行号、块编号
-- 支持在 review 界面查看更长的上下文
-- 让用户能更快判断 AI 是否抽对
-
-### 4. CSV 导入规则增强
-
-CSV 是最容易做成高可靠导入的格式。
-
-需要做的事情：
-
-- 兼容常见密码管理器导出格式
-- 增强列名映射规则
-- 自动识别 URL、用户名、邮箱、备注列
-- 对已知格式优先走规则导入而不是 LLM
-
-### 5. PDF 与文档解析增强
-
-当前 PDF 解析已可用，但还不是最终形态。
-
-需要做的事情：
-
-- 增加更稳的 PDF 文本提取 fallback
-- 处理扫描 PDF 与低质量文本
-- 对 `docx` 表格做更强的结构化提取
-- 区分文本型 PDF 与图片型 PDF
-
-### 6. 图片 OCR 能力
-
-当前图片路径主要依赖模型直接理解，缺少显式 OCR 层。
-
-需要做的事情：
-
-- 引入独立 OCR 步骤
-- 提取版面块和文本区域
-- 再进入 chunk、召回和结构化提取
-- 针对截图和扫描件做单独优化
-
----
-
-## P1.5 RAG 升级
-
-目标：把当前“启发式片段排序”升级为真正可控的检索增强提取。
-
-### 1. Chunk 元数据标准化
-
-需要做的事情：
-
-- 为所有 chunk 增加统一结构
-- 记录：
-  - `chunkId`
-  - `fileName`
-  - `sourceType`
-  - `page`
-  - `row`
-  - `sectionTitle`
-  - `rawText`
-
-### 2. 混合召回
-
-当前主要是规则型片段排序，还不算完整 RAG。
-
-需要做的事情：
-
-- 保留规则召回
-- 增加 embedding 检索
-- 组合 lexical + semantic 的混合召回
-- 保留匹配原因，方便调试
-
-### 3. Candidate Aggregation
-
-需要做的事情：
-
-- 合并相邻 chunk
-- 合并同一页、同一表格、同一段落的内容
-- 构造更完整的 candidate context
-- 降低用户名和密码错配风险
-
-### 4. Evidence Linking
-
-需要做的事情：
-
-- 每个提取字段都绑定来源 chunk
-- 输出更强的来源追踪结构
-- 支持 UI 展示和调试定位
-
----
-
-## P2 生产级能力与架构扩展
-
-目标：让 AI Import 成为可长期维护、可扩展、可上线的正式功能。
-
-### 1. Staging 表与导入历史
-
-当前 review 数据主要在内存中，缺少完整的导入记录。
-
-建议新增：
-
-- `import_jobs`
-- `import_job_files`
-- `import_candidates`
-
-需要做的事情：
-
-- 导入任务写入 staging
-- review 页面从 staging 读取
-- 用户确认后再写正式 `passwords`
-- 支持查看导入历史
-
-### 2. 导入撤销能力
-
-需要做的事情：
-
-- 记录一次导入新增的 password ids
-- 支持“撤销最近一次导入”
-- 在导入历史里展示撤销状态
-
-### 3. 任务与重型解析解耦
-
-当前解析和提取主要还在 Electron main 侧。
-
-后续建议：
-
-- 把重型 PDF / OCR / 大文件解析迁到 worker
-- 或迁到 sidecar 本地服务
-- 避免主进程阻塞
-- 为大文件并行处理做准备
-
-### 4. Provider 抽象
-
-当前主模型是 Anthropic，未来可能接入更多模型。
-
-需要做的事情：
-
-- 抽象统一 provider 接口
-- 把 Anthropic、未来 MiniMax、可能的本地模型统一接入
-- 在设置页支持切换 provider 或配置模型
-
-### 5. 安全与隐私加强
-
-需要做的事情：
-
-- 临时文件清理策略
-- 导入缓存生命周期控制
-- 避免日志里出现明文密码
-- 更明确的数据发送边界
-- 增加本地模式与云模式说明
-
-### 6. 可观测性与排障
-
-需要做的事情：
-
-- 导入任务日志分级
-- 文件级错误报告
-- 模型调用失败分类
-- debug 模式下保留更详细 trace
-- 方便用户反馈问题时快速定位
-
----
-
-## 测试 Roadmap
-
-目标：让 AI Import 的改动可以持续演进，而不是每次靠手测回归。
-
-### 1. 单元测试
-
-需要覆盖：
-
-- env / settings 读取逻辑
-- parser 各分支
-- workflow 节点
-- Anthropic 响应解析
-- 输入校验 schema
-
-### 2. 集成测试
-
-需要覆盖：
-
-- 上传文件到 review 的完整流程
-- review 后保存到数据库
-- cancel 流程
-- 缺 key 场景
-- 大文件与异常文件场景
-
-### 3. 样本文件集
-
-建议建立固定测试样本：
-
-- 常规 CSV
-- 复杂 CSV
-- 文本型 PDF
-- 扫描 PDF
-- `docx` 表格
-- Markdown 账号清单
-- 截图 / 扫描图像
-- 重复记录样本
-
----
-
-## 推荐优先级
-
-### 第一优先级
-
-- 导入任务状态机
-- 可取消流程
-- 设置页增加 key 测试
-- 缺 key 跳转引导
-- 文件限制和错误提示
-- 导入结果摘要
-
-### 第二优先级
-
-- review 页面增强
-- 重复项检测与合并
-- CSV 规则增强
-- PDF / OCR 稳定性增强
-- evidence 展示增强
-
-### 第三优先级
-
-- staging 表与导入历史
-- 撤销导入
-- 混合召回与 candidate aggregation
-- worker / sidecar 解耦
-- provider 抽象
-- 测试体系完善
-
----
-
-## 建议的下一步
-
-如果按投入产出比来排，建议先做下面 6 件事：
-
-1. 完成导入任务状态机与真正的 cancel 机制
-2. 在设置页加入 `AI_IMPORT_KEY` 可用性测试
-3. 在 AI Import 页面加入缺 key 引导
-4. 为 review 页面增加重复检测与批量操作
-5. 为 PDF 和图片补更稳定的解析路径
-6. 开始落 staging 表和导入历史
-
-这 6 项完成后，`AI Import` 会从当前 MVP 进入可持续迭代阶段。
+## 数据结构
+
+候选项结构：
+
+```ts
+interface ImportCandidateDraft {
+  id: string
+  sourceFile: string
+  title: string
+  username: string
+  password: string
+  url: string | null
+  notes: string | null
+  confidence: number
+  sourceExcerpt: string
+}
+```
+
+文件处理结果：
+
+```ts
+interface ImportFileResult {
+  fileName: string
+  extension: string
+  status: 'processed' | 'failed'
+  candidateCount: number
+  warning?: string
+}
+```
+
+完整 workflow 返回：
+
+```ts
+interface ImportWorkflowResult {
+  files: ImportFileResult[]
+  candidates: ImportCandidateDraft[]
+  warnings: string[]
+}
+```
+
+## 安全设计
+
+当前已有安全措施：
+
+- Desktop 和 service 之间用 `AI_IMPORT_SERVICE_SECRET` 做 Bearer 鉴权。
+- DeepSeek API key 只存在服务端环境变量中，Desktop App 不直接持有 DeepSeek key。
+- 上传文件保存到系统临时目录，job 完成、失败或取消后 worker 会清理临时目录。
+- Desktop 保存导入结果时走加密数据库 adapter，敏感字段不会明文落库。
+- 打包时 `desktop-env.json` 被加入 `.gitignore`，避免本地构建配置进入仓库。
+
+当前仍需注意：
+
+- `AI_IMPORT_SERVICE_SECRET` 是共享 secret，不是设备级签名；泄露后需要轮换。
+- 服务端 job 状态保存在内存中，服务重启会丢失 job。
+- Desktop 端还没有调用远程 cancel API。
+- DeepSeek 调用会发送候选文本 excerpt 到云端模型服务，需要在产品层面明确隐私边界。
+- 日志中应继续避免打印密码、token、完整文件内容和模型原始输出。
+
+## Railway 部署说明
+
+当前 `ai-import-service` 已适配 Railway 的基本运行方式：
+
+- 使用 `process.env.PORT` 作为优先端口
+- 监听 `0.0.0.0`
+- 不再依赖 `localhost` 作为服务 host
+- 健康检查地址为 `/import/health`
+
+Railway 上至少需要配置：
+
+```env
+AI_IMPORT_SERVICE_SECRET=...
+DEEPSEEK_API_KEY=...
+DEEPSEEK_MODEL=deepseek-v4-pro
+MAX_FILE_SIZE_MB=25
+```
+
+Desktop 打包时则需要把 Railway 生成的公网地址配置为：
+
+```env
+AI_IMPORT_SERVICE_URL=https://<your-railway-domain>
+AI_IMPORT_SERVICE_SECRET=...
+```
+
+## GitHub Actions 打包集成
+
+`release-desktop.yml` 当前支持在 Desktop 打包时注入：
+
+- `AI_IMPORT_SERVICE_URL`
+- `AI_IMPORT_SERVICE_SECRET`
+
+workflow 会构建 macOS、Windows、Linux 三端安装包，并在 `desktop-v*` tag 触发时创建对应 GitHub Release。当前 release 发布不再依赖 electron-builder 自动发布，而是在所有平台构建完成后显式上传产物到当前 tag。
+
+这避免了 electron-builder 根据 `package.json` 默认发布到 `v<version>`，导致和项目使用的 `desktop-v<version>` tag 不一致。
+
+## 已知限制和后续 TODO
+
+- Desktop UI 的 `Cancel` 还没有调用 `DELETE /import/jobs/:jobId`，只是清空本地 store。
+- 服务端 job 是内存态，不适合多实例部署，也不支持服务重启恢复。
+- 图片导入在 parser 层有入口，但 DeepSeek provider 目前不支持图片提取，Desktop 端也已隐藏图片选择。
+- PDF 解析只走 `pdf2json` 文本提取，对扫描型 PDF 没有 OCR fallback。
+- DOCX 只提取 raw text，对复杂表格结构没有专门优化。
+- CSV 只支持一批常见英文表头映射。
+- Review 页面支持编辑和单条删除，但还没有批量选择、重复检测、按文件分组等增强能力。
+- 没有 import history / staging table，review 数据只存在前端内存中。
+- 没有针对 workflow、parser、DeepSeek 响应解析的自动化测试。
+
+## 建议下一步
+
+优先级较高的后续工作：
+
+1. 让 Desktop 端保存 `jobId`，并在 Cancel 时调用远程 `DELETE /import/jobs/:jobId`。
+2. 将 job state 从内存迁移到 Redis 或数据库，以支持 Railway 上更稳的运行和多实例扩展。
+3. 为 parser、CSV prefill、DeepSeek JSON extraction 增加单元测试。
+4. 增加服务端请求 trace id，但继续避免记录敏感字段。
+5. 增加 OCR 或明确移除 parser 层图片支持，保持 UI、服务和 provider 能力一致。
+6. 增加 import staging/history，支持导入记录、撤销和问题排查。
