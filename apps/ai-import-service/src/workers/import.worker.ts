@@ -14,11 +14,11 @@ async function cleanupJobFiles(job: ImportJob) {
 }
 
 export async function processJob(job: ImportJob): Promise<void> {
-  updateJobStatus(job.id, 'processing')
+  await updateJobStatus(job.id, 'processing')
 
   // Check cancellation before starting
-  if (isCancellationRequested(job.id)) {
-    updateJobStatus(job.id, 'cancelled')
+  if (await isCancellationRequested(job.id)) {
+    await updateJobStatus(job.id, 'cancelled')
     return
   }
 
@@ -26,17 +26,17 @@ export async function processJob(job: ImportJob): Promise<void> {
     const result = await runImportWorkflow(job.files)
 
     // Check cancellation after workflow (between steps)
-    if (isCancellationRequested(job.id)) {
-      updateJobStatus(job.id, 'cancelled')
+    if (await isCancellationRequested(job.id)) {
+      await updateJobStatus(job.id, 'cancelled')
       return
     }
 
-    updateJobStatus(job.id, 'completed', result)
+    await updateJobStatus(job.id, 'completed', result)
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
-    const isCancelled = isCancellationRequested(job.id)
+    const isCancelled = await isCancellationRequested(job.id)
 
-    updateJobStatus(job.id, isCancelled ? 'cancelled' : 'failed', undefined, {
+    await updateJobStatus(job.id, isCancelled ? 'cancelled' : 'failed', undefined, {
       code: 'AI_EXTRACTION_FAILED',
       message,
     })

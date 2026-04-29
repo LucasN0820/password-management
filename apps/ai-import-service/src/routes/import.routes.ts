@@ -123,7 +123,7 @@ export async function importRoutes(fastify: FastifyInstance) {
         });
       }
 
-      const job = createJob(files);
+      const job = await createJob(files);
 
       // Start processing in background
       processJob(job).catch(error => {
@@ -150,7 +150,7 @@ export async function importRoutes(fastify: FastifyInstance) {
   // GET /import/jobs/:jobId - get job status and result
   fastify.get('/import/jobs/:jobId', async (request, reply) => {
     const { jobId } = request.params as { jobId: string };
-    const job = getJob(jobId);
+    const job = await getJob(jobId);
 
     if (!job) {
       return reply.status(404).send({
@@ -182,7 +182,7 @@ export async function importRoutes(fastify: FastifyInstance) {
   // DELETE /import/jobs/:jobId - cancel a job
   fastify.delete('/import/jobs/:jobId', async (request, reply) => {
     const { jobId } = request.params as { jobId: string };
-    const job = getJob(jobId);
+    const job = await getJob(jobId);
 
     if (!job) {
       return reply.status(404).send({
@@ -203,8 +203,8 @@ export async function importRoutes(fastify: FastifyInstance) {
       });
     }
 
-    requestCancellation(jobId);
-    deleteJob(jobId);
+    await requestCancellation(jobId);
+    await deleteJob(jobId);
 
     return reply.send({ jobId, status: 'cancelled' });
   });
