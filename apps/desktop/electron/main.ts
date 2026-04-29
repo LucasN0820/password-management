@@ -297,6 +297,9 @@ ipcMain.handle('select-import-files', async () => {
   });
 });
 
+let currentImportJobId: string | null = null;
+let currentImportAbortController: AbortController | null = null;
+
 ipcMain.handle(
   'run-import-workflow',
   async (_, files: ImportFileDescriptor[]) => {
@@ -305,6 +308,9 @@ ipcMain.handle(
     if (!serviceUrl || !secret) {
       throw new Error('Env not found.');
     }
+
+    const abortController = new AbortController();
+    currentImportAbortController = abortController;
 
     const formData = new FormData();
     for (const file of files) {
@@ -320,9 +326,12 @@ ipcMain.handle(
         Authorization: `Bearer ${secret}`,
       },
       body: formData,
+      signal: abortController.signal,
     });
 
     if (!createResponse.ok) {
+      currentImportJobId = null;
+      currentImportAbortController = null;
       const error = await createResponse
         .json()
         .catch(() => ({ error: { message: 'Failed to create import job' } }));
@@ -330,16 +339,20 @@ ipcMain.handle(
     }
 
     const { jobId } = (await createResponse.json()) as { jobId: string };
+    currentImportJobId = jobId;
 
     // Poll for completion
-    while (true) {
+    while (!abortController.signal.aborted) {
       const statusResponse = await fetch(`${serviceUrl}/import/jobs/${jobId}`, {
         headers: {
           Authorization: `Bearer ${secret}`,
         },
+        signal: abortController.signal,
       });
 
       if (!statusResponse.ok) {
+        currentImportJobId = null;
+        currentImportAbortController = null;
         throw new Error('Failed to get import job status');
       }
 
@@ -350,20 +363,51 @@ ipcMain.handle(
       };
 
       if (job.status === 'completed') {
+        currentImportJobId = null;
+        currentImportAbortController = null;
         return job.result;
       }
       if (job.status === 'failed') {
+        currentImportJobId = null;
+        currentImportAbortController = null;
         throw new Error(job.error?.message || 'Import job failed');
       }
       if (job.status === 'cancelled') {
+        currentImportJobId = null;
+        currentImportAbortController = null;
         throw new Error('Import was cancelled');
       }
 
       // Wait before polling again
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
+
+    // If we get here, the abort controller was triggered
+    currentImportJobId = null;
+    currentImportAbortController = null;
+    throw new Error('Import was cancelled');
   }
 );
+
+ipcMain.handle('cancel-import-workflow', async () => {
+  const { url: serviceUrl, secret } = getServiceEnvConfig();
+  const jobId = currentImportJobId;
+
+  if (jobId && serviceUrl && secret) {
+    // Cancel the server-side job
+    await fetch(`${serviceUrl}/import/jobs/${jobId}`, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${secret}`,
+      },
+    }).catch(() => undefined);
+  }
+
+  // Abort the local polling loop
+  currentImportAbortController?.abort();
+  currentImportJobId = null;
+  currentImportAbortController = null;
+});
 
 ipcMain.handle(
   'save-imported-passwords',
