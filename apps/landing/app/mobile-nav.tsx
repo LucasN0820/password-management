@@ -3,10 +3,11 @@
 import { useState } from 'react';
 
 const navItems = [
-  { href: '#product', label: '产品' },
+  { href: '#features', label: '产品' },
   { href: '#security', label: '安全' },
-  { href: '#plans', label: '价格' },
+  { href: '#pricing', label: '价格' },
   { href: '#teams', label: '企业' },
+  { href: '#download', label: '下载' },
 ];
 
 function MenuIcon({ open }: { open: boolean }) {
@@ -34,12 +35,12 @@ export function MobileNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <div className='md:hidden'>
+    <div className='relative md:hidden'>
       <button
         aria-controls='mobile-menu'
         aria-expanded={isMenuOpen}
         aria-label={isMenuOpen ? '关闭菜单' : '打开菜单'}
-        className='flex h-10 w-10 items-center justify-center rounded-md border border-line bg-white text-ink'
+        className='flex h-10 w-10 items-center justify-center rounded-lg border border-cream-3 bg-cream-2 text-charcoal transition hover:bg-white'
         onClick={() => setIsMenuOpen(open => !open)}
         type='button'
       >
@@ -48,13 +49,13 @@ export function MobileNav() {
 
       {isMenuOpen && (
         <div
-          className='absolute left-0 right-0 top-[72px] border-b border-line bg-background px-5 py-5 shadow-soft'
+          className='absolute right-0 top-12 z-50 w-[min(76vw,260px)] rounded-2xl border border-cream-3 bg-cream p-3 shadow-feature'
           id='mobile-menu'
         >
           <div className='grid gap-1'>
             {navItems.map(item => (
               <a
-                className='rounded-md px-2 py-3 text-sm font-semibold text-muted transition-colors hover:bg-white hover:text-ink'
+                className='rounded-xl px-3 py-3 text-sm font-semibold text-charcoal-3 transition-colors hover:bg-white hover:text-charcoal'
                 href={item.href}
                 key={item.href}
                 onClick={() => setIsMenuOpen(false)}
@@ -63,20 +64,13 @@ export function MobileNav() {
               </a>
             ))}
           </div>
-          <div className='mt-4 grid gap-2 border-t border-line pt-4'>
+          <div className='mt-3 border-t border-cream-3 pt-3'>
             <a
-              className='rounded-md border border-line bg-white px-4 py-3 text-center text-sm font-semibold text-ink'
-              href='#plans'
+              className='flex items-center justify-center rounded-lg !bg-[#1a1916] px-4 py-3 text-sm font-semibold !text-[#faf9f7] transition hover:!bg-[#3a3834]'
+              href='#download'
               onClick={() => setIsMenuOpen(false)}
             >
-              了解价格
-            </a>
-            <a
-              className='rounded-md bg-ink px-4 py-3 text-center text-sm font-semibold text-white'
-              href='#product'
-              onClick={() => setIsMenuOpen(false)}
-            >
-              免费开始
+              下载应用
             </a>
           </div>
         </div>

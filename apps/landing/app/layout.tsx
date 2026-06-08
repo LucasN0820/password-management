@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
-import { Noto_Sans_SC, Noto_Serif_SC } from 'next/font/google';
+import { DM_Sans, Source_Serif_4 } from 'next/font/google';
 import './globals.css';
 
-const body = Noto_Sans_SC({
+const body = DM_Sans({
   subsets: ['latin'],
   variable: '--font-body',
   weight: ['400', '500', '600', '700'],
 });
 
-const display = Noto_Serif_SC({
+const display = Source_Serif_4({
   subsets: ['latin'],
   variable: '--font-display',
   weight: ['400', '500', '600', '700'],

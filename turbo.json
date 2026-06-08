@@ -18,5 +18,13 @@
       "dependsOn": ["^tsc"]
     }
   },
-  "globalEnv": ["AI_IMPORT_SERVICE_URL", "AI_IMPORT_SERVICE_SECRET", "DEEPSEEK_API_KEY", "DEEPSEEK_MODEL", "REDIS_URL"]
+  "globalEnv": [
+    "AI_IMPORT_SERVICE_URL",
+    "AI_IMPORT_SERVICE_SECRET",
+    "DEEPSEEK_API_KEY",
+    "DEEPSEEK_MODEL",
+    "GITHUB_RELEASES_TOKEN",
+    "GITHUB_TOKEN",
+    "REDIS_URL"
+  ]
 }

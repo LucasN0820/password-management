@@ -1,41 +1,22 @@
 @import 'tailwindcss';
 
-:root {
-  --background: #f8f7f2;
-  --foreground: #1f1e1b;
-  --ink: #171614;
-  --charcoal: #44423d;
-  --muted: #78736b;
-  --line: #dfddd5;
-  --warm: #f2efe7;
-  --clay: #d97757;
-  --clay-dark: #b45d44;
-  --clay-light: #f0a283;
-  --clay-soft: #fff1eb;
-  --white: #ffffff;
-  --radius: 0.5rem;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-ink: var(--ink);
-  --color-charcoal: var(--charcoal);
-  --color-muted: var(--muted);
-  --color-line: var(--line);
-  --color-warm: var(--warm);
-  --color-clay: var(--clay);
-  --color-clay-dark: var(--clay-dark);
-  --color-clay-light: var(--clay-light);
-  --color-clay-soft: var(--clay-soft);
-  --color-white: var(--white);
-  --font-sans: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+  --color-cream: #faf9f7;
+  --color-cream-2: #f4f1ec;
+  --color-cream-3: #ede9e0;
+  --color-sand: #d9d2c5;
+  --color-charcoal: #1a1916;
+  --color-charcoal-2: #3a3834;
+  --color-charcoal-3: #6b6860;
+  --color-terra: #c26b4a;
+  --color-terra-light: #f9ede8;
+  --color-terra-mid: #e8a88e;
+  --font-sans: var(--font-body), 'PingFang SC', sans-serif;
   --font-serif: var(--font-display), Georgia, serif;
-  --shadow-soft: 0 18px 50px rgb(31 30 27 / 0.08);
-  --shadow-status: 0 16px 30px rgb(23 22 20 / 0.24);
-  --radius-sm: calc(var(--radius) - 0.125rem);
-  --radius-md: var(--radius);
-  --radius-lg: var(--radius);
+  --shadow-vault: 0 4px 20px rgb(0 0 0 / 0.05), 0 1px 3px rgb(0 0 0 / 0.04);
+  --shadow-feature: 0 6px 28px rgb(0 0 0 / 0.06);
+  --shadow-price: 0 8px 40px rgb(0 0 0 / 0.15);
+  --shadow-toast: 0 4px 16px rgb(0 0 0 / 0.18);
 }
 
 * {
@@ -44,37 +25,23 @@
 
 html {
   scroll-behavior: smooth;
-  background: var(--background);
+  background: #faf9f7;
 }
 
 body {
   min-height: 100vh;
-  background: var(--background);
-  color: var(--foreground);
-  font-feature-settings:
-    'kern' 1,
-    'palt' 1;
+  margin: 0;
+  background: #faf9f7;
+  color: #1a1916;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-}
-
-::selection {
-  background: var(--clay);
-  color: var(--white);
 }
 
 a {
   text-decoration: none;
 }
 
-.credential-row:nth-child(2) {
-  margin-left: 1rem;
-  width: calc(100% - 1rem);
-}
-
-@media (max-width: 767px) {
-  .credential-row:nth-child(2) {
-    margin-left: 0.625rem;
-    width: calc(100% - 0.625rem);
-  }
+::selection {
+  background: #c26b4a;
+  color: #faf9f7;
 }
