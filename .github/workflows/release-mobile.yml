@@ -5,6 +5,11 @@ on:
     tags:
       - 'mobile-v*'
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Mobile release version, for example 1.1.0 or mobile-v1.1.0'
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -16,6 +21,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -68,9 +75,54 @@ jobs:
       - name: Download APK
         run: curl -L -o android-release.apk "${{ steps.build-url.outputs.url }}"
 
+      - name: Resolve release tag
+        id: release-meta
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_REF" == refs/tags/mobile-v* ]]; then
+            tag_name="$GITHUB_REF_NAME"
+          else
+            release_version="${INPUT_VERSION#mobile-v}"
+            if [ -z "$release_version" ]; then
+              echo "workflow_dispatch requires a version input."
+              exit 1
+            fi
+            tag_name="mobile-v${release_version}"
+          fi
+
+          if [[ ! "$tag_name" =~ ^mobile-v[0-9]+(\.[0-9]+){1,2}([-.+][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid mobile release tag: $tag_name"
+            echo "Use a value like 1.1.0 or mobile-v1.1.0."
+            exit 1
+          fi
+
+          echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure release tag exists
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          TAG_NAME: ${{ steps.release-meta.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null 2>&1; then
+            echo "Release tag ${TAG_NAME} already exists."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG_NAME" "$GITHUB_SHA"
+          git push origin "refs/tags/${TAG_NAME}"
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ steps.release-meta.outputs.tag_name }}
           files: android-release.apk
           generate_release_notes: true

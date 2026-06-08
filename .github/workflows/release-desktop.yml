@@ -6,6 +6,10 @@ on:
       - 'desktop-v*'
   workflow_dispatch:
     inputs:
+      version:
+        description: 'Desktop release version, for example 1.1.0 or desktop-v1.1.0'
+        required: true
+        type: string
       ai_import_service_url:
         description: 'AI import service URL used by the packaged desktop app'
         required: false
@@ -151,24 +155,73 @@ jobs:
   release:
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/desktop-v')
+    if: startsWith(github.ref, 'refs/tags/desktop-v') || github.event_name == 'workflow_dispatch'
     permissions:
       contents: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Download packaged artifacts
         uses: actions/download-artifact@v4
         with:
           path: release-artifacts
 
+      - name: Resolve release tag
+        id: release-meta
+        shell: bash
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$GITHUB_REF" == refs/tags/desktop-v* ]]; then
+            tag_name="$GITHUB_REF_NAME"
+          else
+            release_version="${INPUT_VERSION#desktop-v}"
+            if [ -z "$release_version" ]; then
+              echo "workflow_dispatch requires a version input."
+              exit 1
+            fi
+            tag_name="desktop-v${release_version}"
+          fi
+
+          if [[ ! "$tag_name" =~ ^desktop-v[0-9]+(\.[0-9]+){1,2}([-.+][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid desktop release tag: $tag_name"
+            echo "Use a value like 1.1.0 or desktop-v1.1.0."
+            exit 1
+          fi
+
+          echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
+          echo "release_version=${tag_name#desktop-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure release tag exists
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          TAG_NAME: ${{ steps.release-meta.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+
+          if git ls-remote --exit-code --tags origin "refs/tags/${TAG_NAME}" >/dev/null 2>&1; then
+            echo "Release tag ${TAG_NAME} already exists."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag "$TAG_NAME" "$GITHUB_SHA"
+          git push origin "refs/tags/${TAG_NAME}"
+
       - name: Create GitHub release
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ github.ref_name }}
+          TAG_NAME: ${{ steps.release-meta.outputs.tag_name }}
+          RELEASE_VERSION: ${{ steps.release-meta.outputs.release_version }}
         run: |
           set -euo pipefail
 
@@ -196,9 +249,8 @@ jobs:
             exit 1
           fi
 
-          release_version="${TAG_NAME#desktop-v}"
-          release_title="Password Volt Desktop ${release_version}"
-          release_notes="Desktop release ${release_version}."
+          release_title="Password Volt Desktop ${RELEASE_VERSION}"
+          release_notes="Desktop release ${RELEASE_VERSION}."
 
           if gh release view "$TAG_NAME" >/dev/null 2>&1; then
             gh release upload "$TAG_NAME" "${files[@]}" --clobber
