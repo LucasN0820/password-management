@@ -39,6 +39,7 @@ config({ path: join(workspaceRoot, '.env.local'), override: true });
 import Fastify from 'fastify';
 import multipart from '@fastify/multipart';
 import { importRoutes } from './routes/import.routes';
+import { initRedis } from './services/redis';
 
 const fastify = Fastify({
   logger: {
@@ -57,6 +58,11 @@ async function start() {
   const host = '0.0.0.0';
   const port = parseInt(process.env.PORT ?? '3001');
 
+  // Initialize Redis
+  const redis = initRedis();
+  await redis.connect();
+  fastify.log.info(`Redis connected at ${process.env.REDIS_URL ?? 'redis://localhost:6379'}`);
+
   // Register multipart plugin for file uploads
   await fastify.register(multipart, {
     limits: {
@@ -74,6 +80,7 @@ async function start() {
     process.on(signal, async () => {
       fastify.log.info(`Received ${signal}, shutting down gracefully...`);
       await fastify.close();
+      await redis.quit();
       process.exit(0);
     });
   }

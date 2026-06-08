@@ -115,6 +115,9 @@ export const useImportStore = create<ImportState>((set, get) => ({
     return result.saved
   },
   reset: () => {
+    if (get().stage === 'processing') {
+      window.electronAPI.cancelImportWorkflow()
+    }
     set(initialState)
   },
 }))

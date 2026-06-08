@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   selectImportFiles: (): Promise<ImportFileDescriptor[]> => ipcRenderer.invoke('select-import-files'),
   runImportWorkflow: (files: ImportFileDescriptor[]): Promise<ImportWorkflowResult> =>
     ipcRenderer.invoke('run-import-workflow', files),
+  cancelImportWorkflow: (): Promise<void> =>
+    ipcRenderer.invoke('cancel-import-workflow'),
   saveImportedPasswords: (candidates: ImportPasswordInput[]): Promise<{ saved: number }> =>
     ipcRenderer.invoke('save-imported-passwords', candidates),
   copyToClipboard: (text: string): Promise<void> => {
@@ -40,6 +42,7 @@ declare global {
       getCategories: () => Promise<string[]>
       selectImportFiles: () => Promise<ImportFileDescriptor[]>
       runImportWorkflow: (files: ImportFileDescriptor[]) => Promise<ImportWorkflowResult>
+      cancelImportWorkflow: () => Promise<void>
       saveImportedPasswords: (
         candidates: ImportPasswordInput[],
       ) => Promise<{ saved: number }>
