@@ -18,6 +18,9 @@ release/
 *.zip.blockmap
 builder-effective-config.yaml
 apps/desktop/build/desktop-env.json
+!apps/desktop/bin/
+!apps/desktop/bin/llama.cpp/
+!apps/desktop/bin/llama.cpp/**
 
 # Expo
 .expo/

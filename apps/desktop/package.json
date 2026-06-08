@@ -23,6 +23,7 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@repo/ai-import-core": "workspace:*",
     "@repo/db": "workspace:*",
     "@repo/i18n": "workspace:*",
     "@repo/ui": "workspace:*",

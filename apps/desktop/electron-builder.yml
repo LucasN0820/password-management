@@ -13,6 +13,8 @@ files:
 extraResources:
   - from: public/icon-512.png
     to: icon-512.png
+  - from: bin/llama.cpp
+    to: llama.cpp
   - from: build/desktop-env.json
     to: desktop-env.json
 

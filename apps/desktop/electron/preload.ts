@@ -6,6 +6,7 @@ import type {
   ImportPasswordInput,
   ImportWorkflowResult,
 } from './import/types'
+import type { LocalModelStatus } from './ai-import/model-cache'
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getPasswords: (): Promise<Password[]> => ipcRenderer.invoke('get-passwords'),
@@ -16,6 +17,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   deletePassword: (id: number): Promise<boolean> => ipcRenderer.invoke('delete-password', id),
   searchPasswords: (query: string): Promise<Password[]> => ipcRenderer.invoke('search-passwords', query),
   getCategories: (): Promise<string[]> => ipcRenderer.invoke('get-categories'),
+  getLocalImportModelStatus: (): Promise<LocalModelStatus> =>
+    ipcRenderer.invoke('get-local-import-model-status'),
+  prepareLocalImportModel: (): Promise<LocalModelStatus> =>
+    ipcRenderer.invoke('prepare-local-import-model'),
   selectImportFiles: (): Promise<ImportFileDescriptor[]> => ipcRenderer.invoke('select-import-files'),
   runImportWorkflow: (files: ImportFileDescriptor[]): Promise<ImportWorkflowResult> =>
     ipcRenderer.invoke('run-import-workflow', files),
@@ -40,6 +45,8 @@ declare global {
       deletePassword: (id: number) => Promise<boolean>
       searchPasswords: (query: string) => Promise<Password[]>
       getCategories: () => Promise<string[]>
+      getLocalImportModelStatus: () => Promise<LocalModelStatus>
+      prepareLocalImportModel: () => Promise<LocalModelStatus>
       selectImportFiles: () => Promise<ImportFileDescriptor[]>
       runImportWorkflow: (files: ImportFileDescriptor[]) => Promise<ImportWorkflowResult>
       cancelImportWorkflow: () => Promise<void>
@@ -57,3 +64,4 @@ export type {
   ImportPasswordInput,
   ImportWorkflowResult,
 }
+export type { LocalModelStatus }

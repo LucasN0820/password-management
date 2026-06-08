@@ -109,8 +109,8 @@ export default function OnboardPage() {
                 Import passwords from mixed files and review them before saving.
               </h1>
               <p className='mt-3 max-w-xl text-base text-muted-foreground'>
-                Upload password exports, notes, scans, or screenshots. The
-                desktop app parses them in the background, extracts likely
+                Choose password exports or notes. The desktop app parses them
+                locally, asks the bundled llama.cpp model to extract likely
                 credentials, and lets you fix anything before it reaches the
                 database.
               </p>
@@ -122,7 +122,7 @@ export default function OnboardPage() {
               </div>
               <p className='text-sm leading-6 text-muted-foreground'>
                 CSV, PDF, DOCX, Markdown, and TXT. Image OCR is not enabled for
-                the DeepSeek provider yet.
+                the local text provider yet.
               </p>
             </div>
           </div>
@@ -166,8 +166,8 @@ export default function OnboardPage() {
             <CardHeader className='border-b border-border/70'>
               <CardTitle>Selected Files</CardTitle>
               <CardDescription>
-                Files are uploaded to the configured AI Import Service, which
-                sends relevant text chunks to DeepSeek.
+                Files stay on this device. Only selected text excerpts are sent
+                to the local llama.cpp runtime.
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-3 pt-6'>
@@ -242,8 +242,8 @@ export default function OnboardPage() {
                       Parsing files and extracting credentials
                     </div>
                     <div className='mt-1 text-sm text-muted-foreground'>
-                      This MVP runs the file workflow in the AI Import Service,
-                      then brings back editable results for review.
+                      This MVP runs the import workflow locally, then brings
+                      back editable results for review.
                     </div>
                   </div>
                 </div>

@@ -1,0 +1,139 @@
+import { Annotation, END, START, StateGraph } from '@langchain/langgraph'
+import { parseImportFile } from './parser.js'
+import { normalizeCandidates } from './normalize.js'
+import type {
+  ImportCandidateDraft,
+  ImportExtractor,
+  ImportFileDescriptor,
+  ImportFileResult,
+  ImportWorkflowResult,
+  ParsedImportFile,
+} from './types.js'
+
+const ImportState = Annotation.Root({
+  files: Annotation<ImportFileDescriptor[]>({
+    reducer: (_, right) => right,
+    default: () => [],
+  }),
+  parsedFiles: Annotation<ParsedImportFile[]>({
+    reducer: (_, right) => right,
+    default: () => [],
+  }),
+  candidates: Annotation<ImportCandidateDraft[]>({
+    reducer: (_, right) => right,
+    default: () => [],
+  }),
+  fileResults: Annotation<ImportFileResult[]>({
+    reducer: (_, right) => right,
+    default: () => [],
+  }),
+  warnings: Annotation<string[]>({
+    reducer: (left, right) => [...left, ...right],
+    default: () => [],
+  }),
+})
+
+function createWorkflow(extract: ImportExtractor) {
+  const parseFilesNode = async (state: typeof ImportState.State) => {
+    const parsedFiles: ParsedImportFile[] = []
+    const fileResults: ImportFileResult[] = []
+    const warnings: string[] = []
+
+    for (const file of state.files) {
+      try {
+        const parsed = await parseImportFile(file)
+        parsedFiles.push(parsed)
+        fileResults.push({
+          fileName: file.name,
+          extension: file.extension,
+          status: 'processed',
+          candidateCount: 0,
+        })
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown file parse error'
+        warnings.push(`${file.name}: ${message}`)
+        fileResults.push({
+          fileName: file.name,
+          extension: file.extension,
+          status: 'failed',
+          candidateCount: 0,
+          warning: message,
+        })
+      }
+    }
+
+    return {
+      parsedFiles,
+      fileResults,
+      warnings,
+    }
+  }
+
+  const extractCandidatesNode = async (state: typeof ImportState.State) => {
+    const candidates: ImportCandidateDraft[] = []
+    const warnings: string[] = []
+    const resultMap = new Map(
+      state.fileResults.map(result => [result.fileName, result] as const),
+    )
+
+    for (const parsedFile of state.parsedFiles) {
+      try {
+        const extracted = await extract(parsedFile)
+        candidates.push(...extracted)
+        const result = resultMap.get(parsedFile.file.name)
+        if (result) {
+          resultMap.set(parsedFile.file.name, {
+            ...result,
+            candidateCount: extracted.length,
+          })
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : 'Unknown extraction error'
+        warnings.push(`${parsedFile.file.name}: ${message}`)
+        const result = resultMap.get(parsedFile.file.name)
+        if (result) {
+          resultMap.set(parsedFile.file.name, {
+            ...result,
+            status: 'failed',
+            warning: message,
+          })
+        }
+      }
+    }
+
+    return {
+      candidates,
+      fileResults: Array.from(resultMap.values()),
+      warnings,
+    }
+  }
+
+  const normalizeCandidatesNode = async (state: typeof ImportState.State) => ({
+    candidates: normalizeCandidates(state.candidates),
+  })
+
+  return new StateGraph(ImportState)
+    .addNode('parseFiles', parseFilesNode)
+    .addNode('extractCandidates', extractCandidatesNode)
+    .addNode('normalizeCandidates', normalizeCandidatesNode)
+    .addEdge(START, 'parseFiles')
+    .addEdge('parseFiles', 'extractCandidates')
+    .addEdge('extractCandidates', 'normalizeCandidates')
+    .addEdge('normalizeCandidates', END)
+    .compile()
+}
+
+export async function runImportWorkflow(
+  files: ImportFileDescriptor[],
+  extract: ImportExtractor,
+): Promise<ImportWorkflowResult> {
+  const workflow = createWorkflow(extract)
+  const result = await workflow.invoke({ files })
+  return {
+    files: result.fileResults,
+    candidates: result.candidates,
+    warnings: result.warnings,
+  }
+}

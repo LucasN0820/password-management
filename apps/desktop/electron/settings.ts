@@ -126,3 +126,68 @@ export function getServiceEnvConfig(): {
 
   return { url, secret };
 }
+
+export interface LocalAiImportConfig {
+  provider: 'local-llama' | 'remote-service'
+  modelRepo: string
+  modelQuant: string
+  modelFile: string | undefined
+  modelSha256: string | undefined
+  modelDownloadUrl: string | undefined
+  modelPath: string | undefined
+  llamaServerPath: string | undefined
+  contextSize: number
+  maxTokens: number
+  keepServerAliveMs: number
+}
+
+function readMergedEnv() {
+  const merged: Record<string, string> = {}
+
+  for (const filePath of getRootEnvPaths()) {
+    if (!existsSync(filePath)) continue
+    Object.assign(merged, parseEnvFile(filePath))
+  }
+
+  return {
+    ...merged,
+    ...getPackagedDesktopEnv(),
+    ...process.env,
+  } as Record<string, string | undefined>
+}
+
+function readNumberEnv(
+  env: Record<string, string | undefined>,
+  key: string,
+  fallback: number,
+) {
+  const value = Number(env[key])
+  return Number.isFinite(value) && value > 0 ? value : fallback
+}
+
+export function getLocalAiImportConfig(): LocalAiImportConfig {
+  const env = readMergedEnv()
+  const provider =
+    env.AI_IMPORT_PROVIDER === 'remote-service'
+      ? 'remote-service'
+      : 'local-llama'
+
+  return {
+    provider,
+    modelRepo:
+      env.AI_IMPORT_MODEL_REPO ?? 'ggml-org/gemma-4-26B-A4B-it-GGUF',
+    modelQuant: env.AI_IMPORT_MODEL_QUANT ?? 'Q4_K_M',
+    modelFile: env.AI_IMPORT_MODEL_FILE || undefined,
+    modelSha256: env.AI_IMPORT_MODEL_SHA256 || undefined,
+    modelDownloadUrl: env.AI_IMPORT_MODEL_DOWNLOAD_URL || undefined,
+    modelPath: env.AI_IMPORT_MODEL_PATH || undefined,
+    llamaServerPath: env.AI_IMPORT_LLAMA_SERVER_PATH || undefined,
+    contextSize: readNumberEnv(env, 'AI_IMPORT_CONTEXT_SIZE', 8192),
+    maxTokens: readNumberEnv(env, 'AI_IMPORT_MAX_TOKENS', 2000),
+    keepServerAliveMs: readNumberEnv(
+      env,
+      'AI_IMPORT_KEEP_SERVER_ALIVE_MS',
+      300000,
+    ),
+  }
+}

@@ -21,8 +21,14 @@ import {
   type PasswordInput,
 } from '@repo/db';
 import { createDesktopDatabase } from './db';
-import { getServiceEnvConfig } from './settings';
+import { getLocalAiImportConfig, getServiceEnvConfig } from './settings';
 import { getOrCreateDesktopVaultKey } from './vault-key';
+import { runLocalImportWorkflow } from './ai-import/local-import-workflow';
+import { stopLlamaServer } from './ai-import/llama-runtime';
+import {
+  ensureLocalModel,
+  getLocalModelStatus,
+} from './ai-import/model-cache';
 import type {
   ImportFileDescriptor,
   ImportPasswordInput,
@@ -257,6 +263,16 @@ ipcMain.handle('get-categories', () => {
   return passwordAdapter.getCategories();
 });
 
+ipcMain.handle('get-local-import-model-status', async () => {
+  return getLocalModelStatus(getLocalAiImportConfig());
+});
+
+ipcMain.handle('prepare-local-import-model', async () => {
+  const config = getLocalAiImportConfig();
+  const path = await ensureLocalModel(config);
+  return getLocalModelStatus({ ...config, modelPath: path });
+});
+
 ipcMain.handle('select-import-files', async () => {
   const browserWindow =
     BrowserWindow.getFocusedWindow() ?? mainWindow ?? undefined;
@@ -300,94 +316,94 @@ ipcMain.handle('select-import-files', async () => {
 let currentImportJobId: string | null = null;
 let currentImportAbortController: AbortController | null = null;
 
-ipcMain.handle(
-  'run-import-workflow',
-  async (_, files: ImportFileDescriptor[]) => {
-    const { url: serviceUrl, secret } = getServiceEnvConfig();
+async function runRemoteImportWorkflow(
+  files: ImportFileDescriptor[],
+  abortController: AbortController,
+) {
+  const { url: serviceUrl, secret } = getServiceEnvConfig();
 
-    if (!serviceUrl || !secret) {
-      throw new Error('Env not found.');
-    }
+  if (!serviceUrl || !secret) {
+    throw new Error('Env not found.');
+  }
 
-    const abortController = new AbortController();
-    currentImportAbortController = abortController;
+  const formData = new FormData();
+  for (const file of files) {
+    const buffer = await readFile(file.path);
+    const blob = new Blob([buffer]);
+    formData.append('files', blob, file.name);
+  }
 
-    const formData = new FormData();
-    for (const file of files) {
-      const buffer = await readFile(file.path);
-      const blob = new Blob([buffer]);
-      formData.append('files', blob, file.name);
-    }
+  const createResponse = await fetch(`${serviceUrl}/import/jobs`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${secret}`,
+    },
+    body: formData,
+    signal: abortController.signal,
+  });
 
-    // Create job
-    const createResponse = await fetch(`${serviceUrl}/import/jobs`, {
-      method: 'POST',
+  if (!createResponse.ok) {
+    const error = await createResponse
+      .json()
+      .catch(() => ({ error: { message: 'Failed to create import job' } }));
+    throw new Error(error.error?.message || 'Failed to create import job');
+  }
+
+  const { jobId } = (await createResponse.json()) as { jobId: string };
+  currentImportJobId = jobId;
+
+  while (!abortController.signal.aborted) {
+    const statusResponse = await fetch(`${serviceUrl}/import/jobs/${jobId}`, {
       headers: {
         Authorization: `Bearer ${secret}`,
       },
-      body: formData,
       signal: abortController.signal,
     });
 
-    if (!createResponse.ok) {
-      currentImportJobId = null;
-      currentImportAbortController = null;
-      const error = await createResponse
-        .json()
-        .catch(() => ({ error: { message: 'Failed to create import job' } }));
-      throw new Error(error.error?.message || 'Failed to create import job');
+    if (!statusResponse.ok) {
+      throw new Error('Failed to get import job status');
     }
 
-    const { jobId } = (await createResponse.json()) as { jobId: string };
-    currentImportJobId = jobId;
+    const job = (await statusResponse.json()) as {
+      status: string;
+      result?: ImportWorkflowResult;
+      error?: { code: string; message: string };
+    };
 
-    // Poll for completion
-    while (!abortController.signal.aborted) {
-      const statusResponse = await fetch(`${serviceUrl}/import/jobs/${jobId}`, {
-        headers: {
-          Authorization: `Bearer ${secret}`,
-        },
-        signal: abortController.signal,
-      });
-
-      if (!statusResponse.ok) {
-        currentImportJobId = null;
-        currentImportAbortController = null;
-        throw new Error('Failed to get import job status');
+    if (job.status === 'completed') {
+      if (!job.result) {
+        throw new Error('Import job completed without a result');
       }
-
-      const job = (await statusResponse.json()) as {
-        status: string;
-        result?: ImportWorkflowResult;
-        error?: { code: string; message: string };
-      };
-
-      if (job.status === 'completed') {
-        currentImportJobId = null;
-        currentImportAbortController = null;
-        return job.result;
-      }
-      if (job.status === 'failed') {
-        currentImportJobId = null;
-        currentImportAbortController = null;
-        throw new Error(job.error?.message || 'Import job failed');
-      }
-      if (job.status === 'cancelled') {
-        currentImportJobId = null;
-        currentImportAbortController = null;
-        throw new Error('Import was cancelled');
-      }
-
-      // Wait before polling again
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      return job.result;
+    }
+    if (job.status === 'failed') {
+      throw new Error(job.error?.message || 'Import job failed');
+    }
+    if (job.status === 'cancelled') {
+      throw new Error('Import was cancelled');
     }
 
-    // If we get here, the abort controller was triggered
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  throw new Error('Import was cancelled');
+}
+
+ipcMain.handle('run-import-workflow', async (_, files: ImportFileDescriptor[]) => {
+  const abortController = new AbortController();
+  currentImportAbortController = abortController;
+  currentImportJobId = null;
+
+  try {
+    const config = getLocalAiImportConfig();
+    return config.provider === 'remote-service'
+      ? await runRemoteImportWorkflow(files, abortController)
+      : await runLocalImportWorkflow(files, abortController.signal);
+  } finally {
     currentImportJobId = null;
     currentImportAbortController = null;
-    throw new Error('Import was cancelled');
   }
-);
+});
 
 ipcMain.handle('cancel-import-workflow', async () => {
   const { url: serviceUrl, secret } = getServiceEnvConfig();
@@ -405,6 +421,7 @@ ipcMain.handle('cancel-import-workflow', async () => {
 
   // Abort the local polling loop
   currentImportAbortController?.abort();
+  stopLlamaServer();
   currentImportJobId = null;
   currentImportAbortController = null;
 });

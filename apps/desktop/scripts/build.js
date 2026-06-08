@@ -1,6 +1,14 @@
 // Load env files and materialize packaged runtime config before electron-builder.
-const { mkdirSync, readFileSync, existsSync, writeFileSync } = require('fs')
-const { resolve } = require('path')
+const {
+  chmodSync,
+  existsSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+  writeFileSync,
+} = require('fs')
+const { extname, join, resolve } = require('path')
 
 function parseEnvFile(filePath) {
   if (!existsSync(filePath)) return {}
@@ -33,7 +41,7 @@ const env = {
 
 // Inject into process.env for electron-builder to pick up
 for (const [key, val] of Object.entries(env)) {
-  if (key.startsWith('AI_IMPORT_SERVICE_')) {
+  if (key.startsWith('AI_IMPORT_')) {
     process.env[key] = val
   }
 }
@@ -43,6 +51,20 @@ writeFileSync(
   resolve(appDir, 'build/desktop-env.json'),
   JSON.stringify(
     {
+      AI_IMPORT_PROVIDER: env.AI_IMPORT_PROVIDER ?? 'local-llama',
+      AI_IMPORT_MODEL_REPO:
+        env.AI_IMPORT_MODEL_REPO ?? 'ggml-org/gemma-4-26B-A4B-it-GGUF',
+      AI_IMPORT_MODEL_QUANT: env.AI_IMPORT_MODEL_QUANT ?? 'Q4_K_M',
+      AI_IMPORT_MODEL_FILE:
+        env.AI_IMPORT_MODEL_FILE ?? 'gemma-4-26B-A4B-it-Q4_K_M.gguf',
+      AI_IMPORT_MODEL_SHA256: env.AI_IMPORT_MODEL_SHA256 ?? '',
+      AI_IMPORT_MODEL_DOWNLOAD_URL: env.AI_IMPORT_MODEL_DOWNLOAD_URL ?? '',
+      AI_IMPORT_MODEL_PATH: env.AI_IMPORT_MODEL_PATH ?? '',
+      AI_IMPORT_LLAMA_SERVER_PATH: env.AI_IMPORT_LLAMA_SERVER_PATH ?? '',
+      AI_IMPORT_CONTEXT_SIZE: env.AI_IMPORT_CONTEXT_SIZE ?? '8192',
+      AI_IMPORT_MAX_TOKENS: env.AI_IMPORT_MAX_TOKENS ?? '2000',
+      AI_IMPORT_KEEP_SERVER_ALIVE_MS:
+        env.AI_IMPORT_KEEP_SERVER_ALIVE_MS ?? '300000',
       AI_IMPORT_SERVICE_URL: env.AI_IMPORT_SERVICE_URL ?? '',
       AI_IMPORT_SERVICE_SECRET: env.AI_IMPORT_SERVICE_SECRET ?? '',
     },
@@ -51,6 +73,26 @@ writeFileSync(
   ),
   'utf8'
 )
+
+function ensureRuntimeExecutableBits(runtimeDir) {
+  if (process.platform === 'win32' || !existsSync(runtimeDir)) return
+
+  for (const entry of readdirSync(runtimeDir)) {
+    const filePath = join(runtimeDir, entry)
+    const stats = statSync(filePath)
+    if (stats.isDirectory()) {
+      ensureRuntimeExecutableBits(filePath)
+      continue
+    }
+
+    const extension = extname(entry)
+    if (!extension || extension === '.dylib' || extension === '.so') {
+      chmodSync(filePath, 0o755)
+    }
+  }
+}
+
+ensureRuntimeExecutableBits(resolve(appDir, 'bin/llama.cpp'))
 
 // Now run electron-builder with the rest of the arguments
 const { spawn } = require('child_process')
