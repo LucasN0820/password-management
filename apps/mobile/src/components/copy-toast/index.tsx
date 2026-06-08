@@ -18,7 +18,11 @@ interface Props {
   onHide: () => void;
 }
 
-export function CopyToast({ visible, message = 'Copied to clipboard', onHide }: Props) {
+export function CopyToast({
+  visible,
+  message = 'Copied to clipboard',
+  onHide,
+}: Props) {
   const scheme = useColorScheme() ?? 'light';
   const c = Colors[scheme];
   const insets = useSafeAreaInsets();
@@ -62,11 +66,13 @@ export function CopyToast({ visible, message = 'Copied to clipboard', onHide }: 
   if (!isMounted) return null;
 
   return (
-    <Animated.View style={[
-      styles.container,
-      animatedStyle,
-      { top: insets.top + 8, backgroundColor: c.accentGreen },
-    ]}>
+    <Animated.View
+      style={[
+        styles.container,
+        animatedStyle,
+        { top: insets.top + 8, backgroundColor: c.foreground },
+      ]}
+    >
       <Text style={[styles.text, { fontFamily: fonts.bodySemiBold }]}>
         {message} ✓
       </Text>

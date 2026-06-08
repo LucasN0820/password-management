@@ -1,4 +1,5 @@
-import { View, Text, ActivityIndicator } from 'react-native';
+import { ActivityIndicator, View } from 'react-native';
+import { Lock } from 'lucide-react-native';
 
 interface LanguageLoaderProps {
   color?: string;
@@ -8,11 +9,30 @@ interface LanguageLoaderProps {
  * Full-screen skeleton loader shown while i18n language is being detected.
  * Prevents flash of blank/unstyled content during initialization.
  */
-export function LanguageLoader({ color = '#007AFF' }: LanguageLoaderProps) {
+export function LanguageLoader({ color = '#D97757' }: LanguageLoaderProps) {
   return (
-    <View className="flex-1 flex items-center justify-center bg-background">
-      <View className="flex flex-col items-center gap-3">
-        <Text className="text-4xl">🔐</Text>
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#F8F7F2',
+      }}
+    >
+      <View style={{ alignItems: 'center', gap: 12 }}>
+        <View
+          style={{
+            width: 48,
+            height: 48,
+            borderRadius: 12,
+            borderCurve: 'continuous',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#171614',
+          }}
+        >
+          <Lock size={20} color="#FFFFFF" />
+        </View>
         <ActivityIndicator size="small" color={color} />
       </View>
     </View>

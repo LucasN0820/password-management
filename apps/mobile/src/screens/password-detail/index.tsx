@@ -19,7 +19,7 @@ export function PasswordDetailScreen({ id }: { id: number }) {
   });
 
   if (isLoading) {
-    return <LoadingSkeleton className="p-4" />;
+    return <LoadingSkeleton style={{ padding: 16 }} />;
   }
 
   if (!data) {

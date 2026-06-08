@@ -55,14 +55,21 @@ export function DeleteDialog({ visible, title, onClose, onConfirm }: Props) {
   }));
 
   const handleConfirm = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    if (process.env.EXPO_OS === 'ios') {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
     onConfirm();
   };
 
   if (!isMounted) return null;
 
   return (
-    <Modal transparent visible={isMounted} animationType="none" onRequestClose={onClose}>
+    <Modal
+      transparent
+      visible={isMounted}
+      animationType="none"
+      onRequestClose={onClose}
+    >
       <View style={styles.container}>
         <Animated.View style={[styles.overlay, overlayStyle]}>
           <Pressable
@@ -74,14 +81,30 @@ export function DeleteDialog({ visible, title, onClose, onConfirm }: Props) {
           />
         </Animated.View>
 
-        <Animated.View style={[styles.card, cardStyle, {
-          backgroundColor: c.background,
-          borderColor: c.border,
-        }]}>
-          <Text style={[styles.title, { color: c.foreground, fontFamily: fonts.heading }]}>
+        <Animated.View
+          style={[
+            styles.card,
+            cardStyle,
+            {
+              backgroundColor: c.background,
+              borderColor: c.border,
+            },
+          ]}
+        >
+          <Text
+            style={[
+              styles.title,
+              { color: c.foreground, fontFamily: fonts.heading },
+            ]}
+          >
             Delete "{title}"?
           </Text>
-          <Text style={[styles.description, { color: c.mutedForeground, fontFamily: fonts.body }]}>
+          <Text
+            style={[
+              styles.description,
+              { color: c.mutedForeground, fontFamily: fonts.body },
+            ]}
+          >
             This action cannot be undone.
           </Text>
 
@@ -94,7 +117,12 @@ export function DeleteDialog({ visible, title, onClose, onConfirm }: Props) {
                 pressed && { backgroundColor: c.hover },
               ]}
             >
-              <Text style={[styles.buttonText, { color: c.foreground, fontFamily: fonts.bodySemiBold }]}>
+              <Text
+                style={[
+                  styles.buttonText,
+                  { color: c.foreground, fontFamily: fonts.bodySemiBold },
+                ]}
+              >
                 Cancel
               </Text>
             </Pressable>
@@ -106,7 +134,12 @@ export function DeleteDialog({ visible, title, onClose, onConfirm }: Props) {
                 pressed && { opacity: 0.9 },
               ]}
             >
-              <Text style={[styles.buttonText, { color: '#FFFFFF', fontFamily: fonts.bodySemiBold }]}>
+              <Text
+                style={[
+                  styles.buttonText,
+                  { color: '#FFFFFF', fontFamily: fonts.bodySemiBold },
+                ]}
+              >
                 Delete
               </Text>
             </Pressable>
@@ -126,19 +159,16 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(55, 53, 47, 0.2)',
+    backgroundColor: 'rgba(31, 30, 27, 0.28)',
   },
   card: {
     width: '100%',
-    borderRadius: 20,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     borderWidth: 1,
     padding: 28,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 24,
-    elevation: 8,
+    boxShadow: '0 18px 40px rgba(31, 30, 27, 0.16)',
   },
   title: {
     fontSize: 22,
@@ -160,6 +190,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     borderRadius: 12,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
   },

@@ -10,33 +10,20 @@ import { I18nProvider } from '@/providers/i18n';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Render } from './render';
 
-// Fonts
-import {
-  Caveat_600SemiBold,
-  Caveat_700Bold,
-} from '@expo-google-fonts/caveat';
-import {
-  Nunito_400Regular,
-  Nunito_600SemiBold,
-  Nunito_700Bold,
-} from '@expo-google-fonts/nunito';
-import {
-  JetBrainsMono_400Regular,
-  JetBrainsMono_500Medium,
-} from '@expo-google-fonts/jetbrains-mono';
+import { JetBrainsMono_400Regular } from '@expo-google-fonts/jetbrains-mono/400Regular';
+import { NotoSansSC_400Regular } from '@expo-google-fonts/noto-sans-sc/400Regular';
+import { NotoSansSC_600SemiBold } from '@expo-google-fonts/noto-sans-sc/600SemiBold';
+import { NotoSerifSC_500Medium } from '@expo-google-fonts/noto-serif-sc/500Medium';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync();
 
 export function RootScreen() {
   const [loaded, error] = useFonts({
-    Caveat_600SemiBold,
-    Caveat_700Bold,
-    Nunito_400Regular,
-    Nunito_600SemiBold,
-    Nunito_700Bold,
+    NotoSansSC_400Regular,
+    NotoSansSC_600SemiBold,
+    NotoSerifSC_500Medium,
     JetBrainsMono_400Regular,
-    JetBrainsMono_500Medium,
   });
   const queryClient = useMemo(() => new QueryClient(), []);
 

@@ -1,11 +1,5 @@
 import { Password, usePasswordStore } from '@/store/passwordStore';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Image,
-  useColorScheme,
-} from 'react-native';
+import { View, Text, StyleSheet, Image, useColorScheme } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -37,7 +31,18 @@ function clamp(val: number, min: number, max: number) {
   return Math.min(Math.max(val, min), max);
 }
 
-export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props) {
+function impact(style: Haptics.ImpactFeedbackStyle) {
+  if (process.env.EXPO_OS === 'ios') {
+    void Haptics.impactAsync(style);
+  }
+}
+
+export function PasswordItem({
+  password,
+  onEdit,
+  onDelete,
+  onLongPress,
+}: Props) {
   const { toggleFavorite } = usePasswordStore();
   const router = useRouter();
   const translateX = useSharedValue(0);
@@ -86,7 +91,7 @@ export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props)
     .onStart(() => {
       'worklet';
       itemScale.value = withSpring(0.97, { damping: 15 });
-      runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Medium);
+      runOnJS(impact)(Haptics.ImpactFeedbackStyle.Medium);
     })
     .onEnd(() => {
       'worklet';
@@ -119,9 +124,12 @@ export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props)
       const currentTranslation = translateX.value;
       const { velocityX } = e;
       let shouldSnapOpen = false;
-      if (currentTranslation < -80 || (currentTranslation < -40 && velocityX < -500)) {
+      if (
+        currentTranslation < -80 ||
+        (currentTranslation < -40 && velocityX < -500)
+      ) {
         shouldSnapOpen = true;
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        impact(Haptics.ImpactFeedbackStyle.Light);
       }
       translateX.value = withSpring(shouldSnapOpen ? -120 : 0, {
         damping: 20,
@@ -169,13 +177,29 @@ export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props)
 
       {/* Main content */}
       <GestureDetector gesture={gesture}>
-        <Animated.View style={[styles.content, { backgroundColor: c.surface }, animatedStyles]}>
+        <Animated.View
+          style={[
+            styles.content,
+            { backgroundColor: c.card, borderColor: c.border },
+            animatedStyles,
+          ]}
+        >
           {/* Icon circle */}
-          <View style={[styles.iconCircle, { backgroundColor: c.background, borderColor: c.border }]}>
+          <View
+            style={[
+              styles.iconCircle,
+              { backgroundColor: c.background, borderColor: c.border },
+            ]}
+          >
             {password.icon ? (
               <Image source={{ uri: password.icon }} style={styles.iconImage} />
             ) : (
-              <Text style={[styles.iconText, { color: c.foreground, fontFamily: fonts.bodySemiBold }]}>
+              <Text
+                style={[
+                  styles.iconText,
+                  { color: c.foreground, fontFamily: fonts.bodySemiBold },
+                ]}
+              >
                 {getDomainIcon()}
               </Text>
             )}
@@ -184,13 +208,19 @@ export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props)
           {/* Text content */}
           <View style={styles.textContent}>
             <Text
-              style={[styles.title, { color: c.foreground, fontFamily: fonts.bodySemiBold }]}
+              style={[
+                styles.title,
+                { color: c.foreground, fontFamily: fonts.bodySemiBold },
+              ]}
               numberOfLines={1}
             >
               {password.title}
             </Text>
             <Text
-              style={[styles.username, { color: c.mutedForeground, fontFamily: fonts.body }]}
+              style={[
+                styles.username,
+                { color: c.mutedForeground, fontFamily: fonts.body },
+              ]}
               numberOfLines={1}
             >
               {password.username}
@@ -199,7 +229,10 @@ export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props)
               <View style={styles.urlRow}>
                 <Globe size={11} color={c.textTertiary} />
                 <Text
-                  style={[styles.url, { color: c.textTertiary, fontFamily: fonts.body }]}
+                  style={[
+                    styles.url,
+                    { color: c.textTertiary, fontFamily: fonts.body },
+                  ]}
                   numberOfLines={1}
                 >
                   {password.url}
@@ -217,15 +250,15 @@ export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props)
       <Animated.View style={[styles.favoriteButtonOverlay, animatedStyles]}>
         <Pressable
           onPress={() => {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            impact(Haptics.ImpactFeedbackStyle.Light);
             favoriteMutate();
           }}
           style={styles.favoriteButtonHit}
         >
           <Star
             size={18}
-            color={password.isFavorite ? c.accentYellow : c.textTertiary}
-            fill={password.isFavorite ? c.accentYellow : 'none'}
+            color={password.isFavorite ? c.accentBlue : c.textTertiary}
+            fill={password.isFavorite ? c.accentBlue : 'none'}
           />
         </Pressable>
       </Animated.View>
@@ -236,8 +269,8 @@ export function PasswordItem({ password, onEdit, onDelete, onLongPress }: Props)
 const styles = StyleSheet.create({
   wrapper: {
     marginHorizontal: 20,
-    marginBottom: 8,
-    borderRadius: 16,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     overflow: 'hidden',
   },
   actionButtons: {
@@ -258,13 +291,17 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 76,
     padding: 16,
-    borderRadius: 16,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    borderWidth: 1,
   },
   iconCircle: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -274,7 +311,7 @@ const styles = StyleSheet.create({
   iconImage: {
     width: 44,
     height: 44,
-    borderRadius: 12,
+    borderRadius: 10,
   },
   iconText: {
     fontSize: 18,
@@ -313,6 +350,9 @@ const styles = StyleSheet.create({
     zIndex: 200,
   },
   favoriteButtonHit: {
-    padding: 8,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

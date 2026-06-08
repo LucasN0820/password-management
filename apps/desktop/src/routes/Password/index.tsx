@@ -1,23 +1,23 @@
-import { useMemo } from "react"
-import { createStore, PasswordStoreContext } from "./context"
-import { PasswordDetail } from "./detail"
-import { PasswordList } from "./list"
-import { ModalController } from "./modal-controller"
+import { useMemo } from 'react';
+import { createStore, PasswordStoreContext } from './context';
+import { PasswordDetail } from './detail';
+import { PasswordList } from './list';
+import { ModalController } from './modal-controller';
 
 export default function PasswordPage() {
-  const store = useMemo(() => createStore(), [])
+  const store = useMemo(() => createStore(), []);
 
   return (
     <PasswordStoreContext.Provider value={store}>
-      <div className="flex flex-row h-full bg-background">
-        <div className="w-80 h-full bg-background border-r border-border/50">
+      <div className='flex h-full flex-row bg-background'>
+        <div className='h-full w-80 border-r border-border bg-warm/45'>
           <PasswordList />
         </div>
-        <div className="flex-1">
+        <div className='flex-1'>
           <PasswordDetail />
         </div>
         <ModalController />
       </div>
     </PasswordStoreContext.Provider>
-  )
+  );
 }

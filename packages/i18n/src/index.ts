@@ -3,11 +3,21 @@ export { i18n, supportedLanguages, resources };
 export type { SupportedLanguage } from './config';
 export { useTranslation } from 'react-i18next';
 
-// Auto-persist language preference when language changes
-i18n.on('languageChanged', (lng) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('language', lng);
+const getBrowserStorage = (): Storage | null => {
+  if (typeof window === 'undefined' || !('localStorage' in window)) {
+    return null;
   }
+
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+};
+
+// Auto-persist language preference when language changes
+i18n.on('languageChanged', lng => {
+  getBrowserStorage()?.setItem('language', lng);
 });
 
 // Re-export changeLanguage for convenience
@@ -25,8 +35,13 @@ export const detectAndSetLanguage = async () => {
 
     // Check localStorage first (user preference) - browser only
     if (isBrowser) {
-      const stored = localStorage.getItem('language');
-      if (stored && supportedLanguages.includes(stored as typeof supportedLanguages[number])) {
+      const stored = getBrowserStorage()?.getItem('language');
+      if (
+        stored &&
+        supportedLanguages.includes(
+          stored as (typeof supportedLanguages)[number]
+        )
+      ) {
         await i18n.changeLanguage(stored);
         return;
       }
@@ -37,7 +52,9 @@ export const detectAndSetLanguage = async () => {
       // Handle zh-CN, zh-TW, en-US formats
       const lang = navigator.language.split('-')[0];
       // zh cases map to 'zh', others to 'en'
-      const mappedLang = supportedLanguages.includes(lang as typeof supportedLanguages[number])
+      const mappedLang = supportedLanguages.includes(
+        lang as (typeof supportedLanguages)[number]
+      )
         ? lang
         : 'en';
       await i18n.changeLanguage(mappedLang);
@@ -57,17 +74,12 @@ export const detectAndSetLanguage = async () => {
  * Get current language from localStorage or device
  */
 export const getStoredLanguage = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('language');
-  }
-  return null;
+  return getBrowserStorage()?.getItem('language') ?? null;
 };
 
 /**
  * Store language preference to localStorage
  */
 export const storeLanguage = (lng: string) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('language', lng);
-  }
+  getBrowserStorage()?.setItem('language', lng);
 };

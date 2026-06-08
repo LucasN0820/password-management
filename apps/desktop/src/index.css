@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Nunito:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
@@ -9,47 +9,57 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #FFFFFF;
-  --foreground: #37352F;
-  --card: #FFFFFF;
-  --card-foreground: #37352F;
-  --popover: #FFFFFF;
-  --popover-foreground: #37352F;
-  --primary: #37352F;
-  --primary-foreground: #FFFFFF;
-  --secondary: #F7F6F3;
-  --secondary-foreground: #37352F;
-  --muted: #F7F6F3;
-  --muted-foreground: #787774;
-  --accent: #EFEFEF;
-  --accent-foreground: #37352F;
-  --destructive: #EB5757;
-  --destructive-foreground: #FFFFFF;
-  --border: #E9E9E7;
-  --input: #E9E9E7;
-  --ring: #2EAADC;
+  --background: #f8f7f2;
+  --foreground: #1f1e1b;
+  --card: #ffffff;
+  --card-foreground: #1f1e1b;
+  --popover: #ffffff;
+  --popover-foreground: #1f1e1b;
+  --primary: #171614;
+  --primary-foreground: #ffffff;
+  --secondary: #f2efe7;
+  --secondary-foreground: #1f1e1b;
+  --muted: #f2efe7;
+  --muted-foreground: #78736b;
+  --accent: #eee9dd;
+  --accent-foreground: #1f1e1b;
+  --destructive: #b84d3d;
+  --destructive-foreground: #ffffff;
+  --border: #dfddd5;
+  --input: #dfddd5;
+  --ring: #d97757;
   --radius: 0.5rem;
-  --sidebar: #FBFBFA;
-  --sidebar-foreground: #37352F;
-  --sidebar-primary: #37352F;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #EFEFEF;
-  --sidebar-accent-foreground: #37352F;
-  --sidebar-border: #E9E9E7;
-  --sidebar-ring: #2EAADC;
+  --sidebar: #f2efe7;
+  --sidebar-foreground: #1f1e1b;
+  --sidebar-primary: #171614;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #e8e1d2;
+  --sidebar-accent-foreground: #1f1e1b;
+  --sidebar-border: #ddd8cc;
+  --sidebar-ring: #d97757;
 
-  /* Custom Notion-inspired tokens */
-  --text-tertiary: #C0BFB9;
-  --selected-bg: #E8F5FD;
-  --accent-blue: #2EAADC;
-  --accent-green: #0F7B6C;
-  --accent-red: #EB5757;
-  --accent-yellow: #F5C542;
-  --surface: #F7F6F3;
+  /* Claude-inspired desktop tokens */
+  --ink: #171614;
+  --charcoal: #44423d;
+  --warm: #f2efe7;
+  --clay: #d97757;
+  --clay-dark: #b45d44;
+  --clay-soft: #fff1eb;
+  --text-tertiary: #b6b0a5;
+  --selected-bg: #efe5d7;
+  --accent-blue: #8b6f5a;
+  --accent-green: #6e7d5a;
+  --accent-red: #b84d3d;
+  --accent-yellow: #c5894b;
+  --surface: #f2efe7;
 }
 
 body {
-  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family:
+    'Noto Sans SC',
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
   background: var(--background);
@@ -58,7 +68,7 @@ body {
 
 /* Font utility classes */
 .font-heading {
-  font-family: 'Caveat', cursive;
+  font-family: 'Noto Serif SC', Georgia, serif;
 }
 
 .font-mono {
@@ -141,6 +151,12 @@ body.spotlight-window #root {
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-selected-bg: var(--selected-bg);
+  --color-ink: var(--ink);
+  --color-charcoal: var(--charcoal);
+  --color-warm: var(--warm);
+  --color-clay: var(--clay);
+  --color-clay-dark: var(--clay-dark);
+  --color-clay-soft: var(--clay-soft);
   --color-accent-blue: var(--accent-blue);
   --color-accent-green: var(--accent-green);
   --color-accent-red: var(--accent-red);
@@ -159,28 +175,60 @@ body.spotlight-window #root {
 
 /* Modal animations */
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slide-in-from-bottom-4 {
-  from { transform: translateY(1rem); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slide-out-to-bottom-4 {
-  from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(1rem); opacity: 0; }
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(1rem);
+    opacity: 0;
+  }
 }
 
 @keyframes fade-out {
-  from { opacity: 1; }
-  to { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
-.animate-in { animation-fill-mode: both; }
-.animate-out { animation-fill-mode: both; }
-.fade-in { animation: fade-in 0.2s ease-out; }
-.fade-out { animation: fade-out 0.2s ease-in; }
-.slide-in-from-bottom-4 { animation: slide-in-from-bottom-4 0.2s cubic-bezier(0.16, 1, 0.3); }
-.slide-out-to-bottom-4 { animation: slide-out-to-bottom-4 0.2s ease-in; }
+.animate-in {
+  animation-fill-mode: both;
+}
+.animate-out {
+  animation-fill-mode: both;
+}
+.fade-in {
+  animation: fade-in 0.2s ease-out;
+}
+.fade-out {
+  animation: fade-out 0.2s ease-in;
+}
+.slide-in-from-bottom-4 {
+  animation: slide-in-from-bottom-4 0.2s cubic-bezier(0.16, 1, 0.3);
+}
+.slide-out-to-bottom-4 {
+  animation: slide-out-to-bottom-4 0.2s ease-in;
+}

@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
   Modal,
-  Platform,
   View,
   Pressable,
   Text,
@@ -36,21 +35,29 @@ export function ModalAddPassword({ onClose, initialPassword }: Props) {
   }, []);
 
   const { mutate, isPending } = useMutation({
-    mutationFn: async (data: Omit<Password, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (
+      data: Omit<Password, 'id' | 'created_at' | 'updated_at'>
+    ) => {
       await addPassword(data);
     },
     onSuccess: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (process.env.EXPO_OS === 'ios') {
+        void Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success
+        );
+      }
       handleClose();
     },
     onError: () => {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      if (process.env.EXPO_OS === 'ios') {
+        void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
       Alert.alert('Error', 'Failed to save password. Please try again.');
     },
   });
 
   useEffect(() => {
-    if (Platform.OS === 'android' && !visible) {
+    if (process.env.EXPO_OS === 'android' && !visible) {
       setTimeout(() => onClose?.(), 300);
     }
   }, [visible, onClose]);
@@ -74,22 +81,34 @@ export function ModalAddPassword({ onClose, initialPassword }: Props) {
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: c.border }]}>
           <Pressable onPress={handleClose} disabled={isPending}>
-            <Text style={[styles.cancelText, { color: c.accentBlue, fontFamily: fonts.body }]}>
+            <Text
+              style={[
+                styles.cancelText,
+                { color: c.accentBlue, fontFamily: fonts.body },
+              ]}
+            >
               Cancel
             </Text>
           </Pressable>
-          <Text style={[styles.title, { color: c.foreground, fontFamily: fonts.heading }]}>
+          <Text
+            style={[
+              styles.title,
+              { color: c.foreground, fontFamily: fonts.heading },
+            ]}
+          >
             Add Password
           </Text>
           <Pressable
             onPress={() => formRef.current?.requestSubmit()}
             disabled={isPending}
           >
-            <Text style={[
-              styles.saveText,
-              { fontFamily: fonts.bodySemiBold },
-              isPending ? { color: c.textTertiary } : { color: c.accentBlue },
-            ]}>
+            <Text
+              style={[
+                styles.saveText,
+                { fontFamily: fonts.bodySemiBold },
+                isPending ? { color: c.textTertiary } : { color: c.accentBlue },
+              ]}
+            >
               {isPending ? 'Saving...' : 'Save'}
             </Text>
           </Pressable>
@@ -97,19 +116,22 @@ export function ModalAddPassword({ onClose, initialPassword }: Props) {
 
         {/* Form */}
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          behavior={process.env.EXPO_OS === 'ios' ? 'padding' : 'height'}
           style={styles.formWrapper}
         >
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.formContent}
+            contentInsetAdjustmentBehavior="automatic"
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
             <PasswordForm
               ref={formRef}
               onSubmit={mutate}
-              initialValue={initialPassword ? { password: initialPassword } : undefined}
+              initialValue={
+                initialPassword ? { password: initialPassword } : undefined
+              }
             />
           </ScrollView>
         </KeyboardAvoidingView>

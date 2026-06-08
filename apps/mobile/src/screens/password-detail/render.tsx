@@ -38,7 +38,9 @@ import { Edit, Share2, Trash2 } from 'lucide-react-native';
 export function Render({ passwordItem }: { passwordItem: Password }) {
   const { toggleFavorite } = usePasswordStore();
   const [showPassword, setShowPassword] = useState(false);
-  const [optimisticFavorite, setOptimisticFavorite] = useState<boolean | null>(null);
+  const [optimisticFavorite, setOptimisticFavorite] = useState<boolean | null>(
+    null
+  );
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
@@ -48,8 +50,10 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   const scheme = useColorScheme() ?? 'light';
   const c = Colors[scheme];
 
-  const { id, title, username, password, url, notes, isFavorite, icon } = passwordItem;
-  const currentFavorite = optimisticFavorite !== null ? optimisticFavorite : isFavorite;
+  const { id, title, username, password, url, notes, isFavorite, icon } =
+    passwordItem;
+  const currentFavorite =
+    optimisticFavorite !== null ? optimisticFavorite : isFavorite;
 
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
@@ -58,12 +62,16 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
 
   const handleCopy = async (text: string, label: string) => {
     await Clipboard.setStringAsync(text);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    if (process.env.EXPO_OS === 'ios') {
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    }
     showToast(`${label} copied`);
   };
 
   const handleToggleFavorite = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (process.env.EXPO_OS === 'ios') {
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     const newFavorite = !currentFavorite;
     setOptimisticFavorite(newFavorite);
     try {
@@ -81,7 +89,11 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   };
 
   const handleDelete = () => {
-    setModal({ type: 'delete-password', id: passwordItem.id, title: passwordItem.title });
+    setModal({
+      type: 'delete-password',
+      id: passwordItem.id,
+      title: passwordItem.title,
+    });
   };
 
   const getDomainIcon = () => {
@@ -106,7 +118,9 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
       icon: Share2,
       onPress: async () => {
         const { Share } = await import('react-native');
-        Share.share({ message: `${title}\nUsername: ${username}\nPassword: ${password}` });
+        Share.share({
+          message: `${title}\nUsername: ${username}\nPassword: ${password}`,
+        });
       },
     },
     {
@@ -121,9 +135,13 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
     <>
       <Stack.Screen
         options={{
-          headerTitle: '',
+          title,
           headerStyle: { backgroundColor: c.background },
           headerShadowVisible: false,
+          headerTitleStyle: {
+            color: c.foreground,
+            fontFamily: fonts.bodySemiBold,
+          },
           headerLeft: () => (
             <Pressable onPress={() => router.back()} style={styles.backButton}>
               <ChevronLeft size={24} color={c.foreground} />
@@ -142,6 +160,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
       <ScrollView
         style={[styles.container, { backgroundColor: c.background }]}
         contentContainerStyle={styles.scrollContent}
+        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         {/* Hero section */}
@@ -150,41 +169,68 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
             {icon ? (
               <Image source={{ uri: icon }} style={styles.heroIconImage} />
             ) : (
-              <Text style={[styles.heroIconText, { fontFamily: fonts.bodySemiBold }]}>
+              <Text
+                style={[
+                  styles.heroIconText,
+                  { fontFamily: fonts.bodySemiBold },
+                ]}
+              >
                 {getDomainIcon()}
               </Text>
             )}
           </View>
 
           <View style={styles.heroTitleRow}>
-            <Text style={[styles.heroTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
+            <Text
+              selectable
+              style={[
+                styles.heroTitle,
+                { color: c.foreground, fontFamily: fonts.heading },
+              ]}
+            >
               {title}
             </Text>
             <Pressable onPress={handleToggleFavorite} style={styles.heroStar}>
               <Star
                 size={22}
-                color={currentFavorite ? c.accentYellow : c.textTertiary}
-                fill={currentFavorite ? c.accentYellow : 'none'}
+                color={currentFavorite ? c.accentBlue : c.textTertiary}
+                fill={currentFavorite ? c.accentBlue : 'none'}
               />
             </Pressable>
           </View>
         </View>
 
         {/* Username card */}
-        <View style={[styles.detailCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+        <View
+          style={[
+            styles.detailCard,
+            { backgroundColor: c.card, borderColor: c.border },
+          ]}
+        >
           <View style={styles.cardLabel}>
             <User size={14} color={c.textTertiary} />
-            <Text style={[styles.cardLabelText, { color: c.textTertiary, fontFamily: fonts.bodySemiBold }]}>
+            <Text
+              style={[
+                styles.cardLabelText,
+                { color: c.textTertiary, fontFamily: fonts.bodySemiBold },
+              ]}
+            >
               USERNAME
             </Text>
           </View>
           <View style={styles.cardContent}>
-            <Text style={[styles.cardValue, { color: c.foreground, fontFamily: fonts.body }]}>
+            <Text
+              selectable
+              style={[
+                styles.cardValue,
+                { color: c.foreground, fontFamily: fonts.body },
+              ]}
+            >
               {username}
             </Text>
             <Pressable
               onPress={() => handleCopy(username, 'Username')}
-              style={[styles.copyBtn, { backgroundColor: c.hover }]}
+              style={[styles.copyBtn, { backgroundColor: c.surface }]}
             >
               <Copy size={16} color={c.accentBlue} />
             </Pressable>
@@ -192,24 +238,40 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
         </View>
 
         {/* Password card */}
-        <View style={[styles.detailCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+        <View
+          style={[
+            styles.detailCard,
+            { backgroundColor: c.card, borderColor: c.border },
+          ]}
+        >
           <View style={styles.cardLabel}>
             <Key size={14} color={c.textTertiary} />
-            <Text style={[styles.cardLabelText, { color: c.textTertiary, fontFamily: fonts.bodySemiBold }]}>
+            <Text
+              style={[
+                styles.cardLabelText,
+                { color: c.textTertiary, fontFamily: fonts.bodySemiBold },
+              ]}
+            >
               PASSWORD
             </Text>
           </View>
           <View style={styles.cardContent}>
-            <Text style={[
-              styles.cardValue,
-              { color: c.foreground, fontFamily: showPassword ? fonts.mono : fonts.body },
-            ]}>
+            <Text
+              selectable={showPassword}
+              style={[
+                styles.cardValue,
+                {
+                  color: c.foreground,
+                  fontFamily: showPassword ? fonts.mono : fonts.body,
+                },
+              ]}
+            >
               {showPassword ? password : '••••••••••'}
             </Text>
             <View style={styles.cardActions}>
               <Pressable
                 onPress={() => setShowPassword(!showPassword)}
-                style={[styles.copyBtn, { backgroundColor: c.hover }]}
+                style={[styles.copyBtn, { backgroundColor: c.surface }]}
               >
                 {showPassword ? (
                   <EyeOff size={16} color={c.accentBlue} />
@@ -219,7 +281,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
               </Pressable>
               <Pressable
                 onPress={() => handleCopy(password, 'Password')}
-                style={[styles.copyBtn, { backgroundColor: c.hover }]}
+                style={[styles.copyBtn, { backgroundColor: c.surface }]}
               >
                 <Copy size={16} color={c.accentBlue} />
               </Pressable>
@@ -229,18 +291,29 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
 
         {/* URL card */}
         {url && (
-          <View style={[styles.detailCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+          <View
+            style={[
+              styles.detailCard,
+              { backgroundColor: c.card, borderColor: c.border },
+            ]}
+          >
             <View style={styles.cardLabel}>
               <Globe size={14} color={c.textTertiary} />
-              <Text style={[styles.cardLabelText, { color: c.textTertiary, fontFamily: fonts.bodySemiBold }]}>
+              <Text
+                style={[
+                  styles.cardLabelText,
+                  { color: c.textTertiary, fontFamily: fonts.bodySemiBold },
+                ]}
+              >
                 URL
               </Text>
             </View>
             <Pressable
               onPress={() => {
-                const target = url.startsWith('http://') || url.startsWith('https://')
-                  ? url
-                  : `https://${url}`;
+                const target =
+                  url.startsWith('http://') || url.startsWith('https://')
+                    ? url
+                    : `https://${url}`;
                 Linking.canOpenURL(target).then(supported => {
                   if (supported) Linking.openURL(target);
                   else Alert.alert('Invalid URL');
@@ -248,10 +321,16 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
               }}
               style={styles.cardContent}
             >
-              <Text style={[styles.cardValue, { color: c.accentBlue, fontFamily: fonts.body }]}>
+              <Text
+                selectable
+                style={[
+                  styles.cardValue,
+                  { color: c.accentBlue, fontFamily: fonts.body },
+                ]}
+              >
                 {url}
               </Text>
-              <View style={[styles.copyBtn, { backgroundColor: c.hover }]}>
+              <View style={[styles.copyBtn, { backgroundColor: c.surface }]}>
                 <Globe size={16} color={c.accentBlue} />
               </View>
             </Pressable>
@@ -260,14 +339,30 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
 
         {/* Notes card */}
         {notes && (
-          <View style={[styles.detailCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+          <View
+            style={[
+              styles.detailCard,
+              { backgroundColor: c.card, borderColor: c.border },
+            ]}
+          >
             <View style={styles.cardLabel}>
               <FileText size={14} color={c.textTertiary} />
-              <Text style={[styles.cardLabelText, { color: c.textTertiary, fontFamily: fonts.bodySemiBold }]}>
+              <Text
+                style={[
+                  styles.cardLabelText,
+                  { color: c.textTertiary, fontFamily: fonts.bodySemiBold },
+                ]}
+              >
                 NOTES
               </Text>
             </View>
-            <Text style={[styles.notesText, { color: c.foreground, fontFamily: fonts.body }]}>
+            <Text
+              selectable
+              style={[
+                styles.notesText,
+                { color: c.foreground, fontFamily: fonts.body },
+              ]}
+            >
               {notes}
             </Text>
           </View>
@@ -296,6 +391,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
+    gap: 12,
   },
   backButton: {
     padding: 4,
@@ -305,12 +401,13 @@ const styles = StyleSheet.create({
   },
   heroSection: {
     alignItems: 'center',
-    marginBottom: 24,
+    paddingBottom: 12,
   },
   heroIcon: {
     width: 64,
     height: 64,
-    borderRadius: 16,
+    borderRadius: 14,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -319,7 +416,7 @@ const styles = StyleSheet.create({
   heroIconImage: {
     width: 64,
     height: 64,
-    borderRadius: 16,
+    borderRadius: 14,
   },
   heroIconText: {
     fontSize: 24,
@@ -331,16 +428,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   heroTitle: {
-    fontSize: 28,
+    fontSize: 34,
+    textAlign: 'center',
   },
   heroStar: {
     padding: 4,
   },
   detailCard: {
     borderRadius: 12,
+    borderCurve: 'continuous',
     borderWidth: 1,
     padding: 16,
-    marginBottom: 12,
   },
   cardLabel: {
     flexDirection: 'row',
@@ -366,9 +464,10 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   copyBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
+    minWidth: 44,
+    minHeight: 44,
+    borderRadius: 10,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
   },

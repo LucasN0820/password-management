@@ -130,7 +130,11 @@ export function AlertDialog({
           <Animated.View style={[styles.innerContent, rCardFadeStyle]}>
             <Card
               // Card has no rounded corners, background or shadow (delegated to wrapper)
-              style={{ backgroundColor: 'transparent', elevation: 0 }}
+              style={{
+                backgroundColor: 'transparent',
+                borderWidth: 0,
+                boxShadow: 'none',
+              }}
             >
               {(title || description) && (
                 <CardHeader>

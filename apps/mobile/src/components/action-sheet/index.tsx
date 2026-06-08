@@ -84,7 +84,12 @@ export function ActionSheet({ visible, onClose, options }: Props) {
   if (!isMounted) return null;
 
   return (
-    <Modal transparent visible={isMounted} animationType="none" onRequestClose={onClose}>
+    <Modal
+      transparent
+      visible={isMounted}
+      animationType="none"
+      onRequestClose={onClose}
+    >
       <View style={styles.container}>
         <Animated.View style={[styles.overlay, overlayStyle]}>
           <Pressable
@@ -96,18 +101,27 @@ export function ActionSheet({ visible, onClose, options }: Props) {
           />
         </Animated.View>
 
-        <Animated.View style={[styles.sheet, sheetStyle, { backgroundColor: c.background }]}>
+        <Animated.View
+          style={[styles.sheet, sheetStyle, { backgroundColor: c.background }]}
+        >
           {/* Drag handle */}
           <View style={styles.handleContainer}>
             <View style={[styles.handle, { backgroundColor: c.border }]} />
           </View>
 
           {/* Options */}
-          <View style={[styles.optionsContainer, { borderColor: c.border }]}>
+          <View
+            style={[
+              styles.optionsContainer,
+              { backgroundColor: c.card, borderColor: c.border },
+            ]}
+          >
             {options.map((option, i) => {
               const Icon = option.icon;
               const textColor = option.destructive ? c.accentRed : c.foreground;
-              const iconColor = option.destructive ? c.accentRed : c.mutedForeground;
+              const iconColor = option.destructive
+                ? c.accentRed
+                : c.mutedForeground;
               const isLast = i === options.length - 1;
 
               return (
@@ -116,12 +130,20 @@ export function ActionSheet({ visible, onClose, options }: Props) {
                   onPress={() => handleOptionPress(option)}
                   style={[
                     styles.option,
-                    !isLast && { borderBottomWidth: 1, borderBottomColor: c.border },
+                    !isLast && {
+                      borderBottomWidth: 1,
+                      borderBottomColor: c.border,
+                    },
                   ]}
                 >
                   <View style={styles.optionRow}>
                     {Icon && <Icon size={20} color={iconColor} />}
-                    <Text style={[styles.optionText, { color: textColor, fontFamily: fonts.body }]}>
+                    <Text
+                      style={[
+                        styles.optionText,
+                        { color: textColor, fontFamily: fonts.body },
+                      ]}
+                    >
                       {option.label}
                     </Text>
                   </View>
@@ -133,9 +155,14 @@ export function ActionSheet({ visible, onClose, options }: Props) {
           {/* Cancel button */}
           <Pressable
             onPress={onClose}
-            style={[styles.cancelButton, { backgroundColor: c.surface }]}
+            style={[styles.cancelButton, { backgroundColor: c.card }]}
           >
-            <Text style={[styles.cancelText, { color: c.accentBlue, fontFamily: fonts.bodySemiBold }]}>
+            <Text
+              style={[
+                styles.cancelText,
+                { color: c.accentBlue, fontFamily: fonts.bodySemiBold },
+              ]}
+            >
               Cancel
             </Text>
           </Pressable>
@@ -152,11 +179,12 @@ const styles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(55, 53, 47, 0.4)',
+    backgroundColor: 'rgba(31, 30, 27, 0.36)',
   },
   sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    borderCurve: 'continuous',
     paddingHorizontal: 12,
     paddingBottom: 34,
   },
@@ -170,7 +198,9 @@ const styles = StyleSheet.create({
     borderRadius: 2,
   },
   optionsContainer: {
-    borderRadius: 16,
+    borderRadius: 12,
+    borderCurve: 'continuous',
+    borderWidth: 1,
     overflow: 'hidden',
     marginBottom: 8,
   },
@@ -189,7 +219,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   cancelButton: {
-    borderRadius: 16,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     paddingVertical: 16,
     alignItems: 'center',
   },

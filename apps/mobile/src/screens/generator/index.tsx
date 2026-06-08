@@ -17,6 +17,24 @@ import { fonts } from '@/theme/globals';
 import { CopyToast } from '@/components/copy-toast';
 import { ModalAddPassword } from '@/components/modal-add-password';
 
+function impact(style: Haptics.ImpactFeedbackStyle) {
+  if (process.env.EXPO_OS === 'ios') {
+    void Haptics.impactAsync(style);
+  }
+}
+
+function selection() {
+  if (process.env.EXPO_OS === 'ios') {
+    void Haptics.selectionAsync();
+  }
+}
+
+function notify(type: Haptics.NotificationFeedbackType) {
+  if (process.env.EXPO_OS === 'ios') {
+    void Haptics.notificationAsync(type);
+  }
+}
+
 export function GeneratorScreen() {
   const { t } = useTranslation();
   const [length, setLength] = useState(16);
@@ -55,21 +73,28 @@ export function GeneratorScreen() {
     }
     setGeneratedPassword(pw);
     setCopied(false);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-  }, [length, includeUppercase, includeLowercase, includeNumbers, includeSymbols]);
+    impact(Haptics.ImpactFeedbackStyle.Medium);
+  }, [
+    length,
+    includeUppercase,
+    includeLowercase,
+    includeNumbers,
+    includeSymbols,
+  ]);
 
   const copyToClipboard = async () => {
     if (generatedPassword) {
       await Clipboard.setStringAsync(generatedPassword);
       setCopied(true);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      notify(Haptics.NotificationFeedbackType.Success);
       setToastVisible(true);
       setTimeout(() => setCopied(false), 2000);
     }
   };
 
   const getStrength = () => {
-    if (!generatedPassword) return { label: '', color: c.textTertiary, ratio: 0 };
+    if (!generatedPassword)
+      return { label: '', color: c.textTertiary, ratio: 0 };
     let score = 0;
     if (generatedPassword.length >= 12) score++;
     if (generatedPassword.length >= 16) score++;
@@ -79,8 +104,9 @@ export function GeneratorScreen() {
     if (/[^A-Za-z0-9]/.test(generatedPassword)) score++;
 
     if (score <= 2) return { label: 'Weak', color: c.accentRed, ratio: 0.25 };
-    if (score <= 4) return { label: 'Medium', color: c.accentYellow, ratio: 0.6 };
-    return { label: 'Strong', color: c.accentGreen, ratio: 1 };
+    if (score <= 4)
+      return { label: 'Medium', color: c.accentYellow, ratio: 0.6 };
+    return { label: 'Strong', color: c.accentBlue, ratio: 1 };
   };
 
   const strength = getStrength();
@@ -90,21 +116,36 @@ export function GeneratorScreen() {
       <ScrollView
         style={[styles.container, { backgroundColor: c.background }]}
         contentContainerStyle={styles.scrollContent}
+        contentInsetAdjustmentBehavior="automatic"
         showsVerticalScrollIndicator={false}
       >
         {/* Page title */}
-        <Text style={[styles.pageTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
+        <Text
+          style={[
+            styles.pageTitle,
+            { color: c.foreground, fontFamily: fonts.heading },
+          ]}
+        >
           {t('generator.title')}
         </Text>
 
         {/* Password display card */}
-        <View style={[styles.passwordCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+        <View
+          style={[
+            styles.passwordCard,
+            { backgroundColor: c.card, borderColor: c.border },
+          ]}
+        >
           <Pressable onPress={generatedPassword ? copyToClipboard : undefined}>
             <Text
+              selectable={Boolean(generatedPassword)}
               style={[
                 styles.passwordText,
                 { color: c.foreground, fontFamily: fonts.mono },
-                !generatedPassword && { color: c.textTertiary, fontFamily: fonts.body },
+                !generatedPassword && {
+                  color: c.textTertiary,
+                  fontFamily: fonts.body,
+                },
               ]}
               numberOfLines={2}
             >
@@ -115,13 +156,25 @@ export function GeneratorScreen() {
           {/* Strength bar */}
           {generatedPassword && (
             <View style={styles.strengthSection}>
-              <View style={[styles.strengthTrack, { backgroundColor: c.border }]}>
-                <View style={[
-                  styles.strengthFill,
-                  { backgroundColor: strength.color, width: `${strength.ratio * 100}%` },
-                ]} />
+              <View
+                style={[styles.strengthTrack, { backgroundColor: c.border }]}
+              >
+                <View
+                  style={[
+                    styles.strengthFill,
+                    {
+                      backgroundColor: strength.color,
+                      width: `${strength.ratio * 100}%`,
+                    },
+                  ]}
+                />
               </View>
-              <Text style={[styles.strengthLabel, { color: strength.color, fontFamily: fonts.bodySemiBold }]}>
+              <Text
+                style={[
+                  styles.strengthLabel,
+                  { color: strength.color, fontFamily: fonts.bodySemiBold },
+                ]}
+              >
                 {strength.label}
               </Text>
             </View>
@@ -134,7 +187,12 @@ export function GeneratorScreen() {
               style={[styles.regenerateBtn, { borderColor: c.foreground }]}
             >
               <RefreshCw size={16} color={c.foreground} />
-              <Text style={[styles.regenerateText, { color: c.foreground, fontFamily: fonts.bodySemiBold }]}>
+              <Text
+                style={[
+                  styles.regenerateText,
+                  { color: c.foreground, fontFamily: fonts.bodySemiBold },
+                ]}
+              >
                 {t('generator.regenerate')}
               </Text>
             </Pressable>
@@ -143,32 +201,47 @@ export function GeneratorScreen() {
               disabled={!generatedPassword}
               style={[
                 styles.copyBtn,
-                { backgroundColor: generatedPassword ? c.foreground : c.border },
+                {
+                  backgroundColor: generatedPassword ? c.foreground : c.border,
+                },
               ]}
             >
               {copied ? (
                 <Check size={18} color={c.background} />
               ) : (
-                <Copy size={18} color={generatedPassword ? c.background : c.textTertiary} />
+                <Copy
+                  size={18}
+                  color={generatedPassword ? c.background : c.textTertiary}
+                />
               )}
             </Pressable>
           </View>
         </View>
 
         {/* Length section */}
-        <Text style={[styles.sectionTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
+        <Text
+          style={[
+            styles.sectionTitle,
+            { color: c.foreground, fontFamily: fonts.heading },
+          ]}
+        >
           {t('generator.passwordLength')}
         </Text>
-        <View style={[styles.sliderCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+        <View
+          style={[
+            styles.sliderCard,
+            { backgroundColor: c.card, borderColor: c.border },
+          ]}
+        >
           <View style={styles.lengthControls}>
             <Pressable
               onPress={() => {
                 setLength(Math.max(4, length - 1));
-                Haptics.selectionAsync();
+                selection();
               }}
               onLongPress={() => {
                 setLength(Math.max(4, length - 5));
-                Haptics.selectionAsync();
+                selection();
               }}
               style={[styles.lengthButton, { backgroundColor: c.foreground }]}
             >
@@ -176,26 +249,36 @@ export function GeneratorScreen() {
             </Pressable>
 
             <View style={styles.lengthDisplay}>
-              <Text style={[styles.sliderValue, { color: c.foreground, fontFamily: fonts.bodySemiBold }]}>
+              <Text
+                style={[
+                  styles.sliderValue,
+                  { color: c.foreground, fontFamily: fonts.bodySemiBold },
+                ]}
+              >
                 {length}
               </Text>
               {/* Visual progress bar */}
               <View style={[styles.lengthTrack, { backgroundColor: c.border }]}>
-                <View style={[
-                  styles.lengthFill,
-                  { backgroundColor: c.foreground, width: `${((length - 4) / 60) * 100}%` },
-                ]} />
+                <View
+                  style={[
+                    styles.lengthFill,
+                    {
+                      backgroundColor: c.accentBlue,
+                      width: `${((length - 4) / 60) * 100}%`,
+                    },
+                  ]}
+                />
               </View>
             </View>
 
             <Pressable
               onPress={() => {
                 setLength(Math.min(64, length + 1));
-                Haptics.selectionAsync();
+                selection();
               }}
               onLongPress={() => {
                 setLength(Math.min(64, length + 5));
-                Haptics.selectionAsync();
+                selection();
               }}
               style={[styles.lengthButton, { backgroundColor: c.foreground }]}
             >
@@ -203,16 +286,40 @@ export function GeneratorScreen() {
             </Pressable>
           </View>
           <View style={styles.sliderLabels}>
-            <Text style={[styles.sliderLabel, { color: c.textTertiary, fontFamily: fonts.body }]}>Min: 4</Text>
-            <Text style={[styles.sliderLabel, { color: c.textTertiary, fontFamily: fonts.body }]}>Max: 64</Text>
+            <Text
+              style={[
+                styles.sliderLabel,
+                { color: c.textTertiary, fontFamily: fonts.body },
+              ]}
+            >
+              Min: 4
+            </Text>
+            <Text
+              style={[
+                styles.sliderLabel,
+                { color: c.textTertiary, fontFamily: fonts.body },
+              ]}
+            >
+              Max: 64
+            </Text>
           </View>
         </View>
 
         {/* Characters section */}
-        <Text style={[styles.sectionTitle, { color: c.foreground, fontFamily: fonts.heading }]}>
+        <Text
+          style={[
+            styles.sectionTitle,
+            { color: c.foreground, fontFamily: fonts.heading },
+          ]}
+        >
           {t('generator.characters')}
         </Text>
-        <View style={[styles.toggleCard, { backgroundColor: c.surface, borderColor: c.border }]}>
+        <View
+          style={[
+            styles.toggleCard,
+            { backgroundColor: c.card, borderColor: c.border },
+          ]}
+        >
           <ToggleRow
             label={t('generator.uppercase')}
             value={includeUppercase}
@@ -249,7 +356,12 @@ export function GeneratorScreen() {
             style={[styles.saveButton, { backgroundColor: c.foreground }]}
           >
             <Save size={18} color={c.background} />
-            <Text style={[styles.saveButtonText, { color: c.background, fontFamily: fonts.bodySemiBold }]}>
+            <Text
+              style={[
+                styles.saveButtonText,
+                { color: c.background, fontFamily: fonts.bodySemiBold },
+              ]}
+            >
               {t('generator.saveToVault')}
             </Text>
           </Pressable>
@@ -286,20 +398,27 @@ function ToggleRow({
   showBorder?: boolean;
 }) {
   return (
-    <View style={[
-      styles.toggleRow,
-      showBorder && { borderBottomWidth: 1, borderBottomColor: c.border },
-    ]}>
-      <Text style={[styles.toggleLabel, { color: c.foreground, fontFamily: fonts.body }]}>
+    <View
+      style={[
+        styles.toggleRow,
+        showBorder && { borderBottomWidth: 1, borderBottomColor: c.border },
+      ]}
+    >
+      <Text
+        style={[
+          styles.toggleLabel,
+          { color: c.foreground, fontFamily: fonts.body },
+        ]}
+      >
         {label}
       </Text>
       <Switch
         value={value}
         onValueChange={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          impact(Haptics.ImpactFeedbackStyle.Light);
           onToggle();
         }}
-        trackColor={{ false: c.border, true: c.foreground }}
+        trackColor={{ false: c.border, true: c.accentBlue }}
         thumbColor="#FFFFFF"
       />
     </View>
@@ -312,15 +431,17 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingTop: 18,
     paddingBottom: 40,
   },
   pageTitle: {
-    fontSize: 32,
+    fontSize: 40,
     marginBottom: 20,
+    letterSpacing: -0.2,
   },
   passwordCard: {
-    borderRadius: 20,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     borderWidth: 1,
     padding: 24,
     marginBottom: 28,
@@ -361,26 +482,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 999,
+    minHeight: 44,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     borderWidth: 1,
   },
   regenerateText: {
     fontSize: 14,
   },
   copyBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
   },
   sectionTitle: {
-    fontSize: 22,
+    fontSize: 26,
     marginBottom: 12,
   },
   sliderCard: {
-    borderRadius: 16,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     borderWidth: 1,
     padding: 20,
     marginBottom: 28,
@@ -392,9 +516,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   lengthButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -425,7 +550,8 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
   toggleCard: {
-    borderRadius: 16,
+    borderRadius: 12,
+    borderCurve: 'continuous',
     borderWidth: 1,
     overflow: 'hidden',
     marginBottom: 28,
@@ -435,6 +561,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
+    minHeight: 56,
     paddingVertical: 14,
   },
   toggleLabel: {
@@ -446,7 +573,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     height: 52,
-    borderRadius: 16,
+    borderRadius: 12,
+    borderCurve: 'continuous',
   },
   saveButtonText: {
     fontSize: 15,

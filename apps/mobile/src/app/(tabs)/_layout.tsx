@@ -1,7 +1,10 @@
 import { Tabs } from 'expo-router';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { KeyRound, Wand2 } from 'lucide-react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useTranslation } from '@repo/i18n';
 import { Colors } from '@/theme/colors';
@@ -9,22 +12,34 @@ import { fonts } from '@/theme/globals';
 import * as Haptics from 'expo-haptics';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
-function NotionTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+function VaultTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { t } = useTranslation();
   const scheme = useColorScheme() ?? 'light';
   const c = Colors[scheme];
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.tabBar, { backgroundColor: c.background, borderTopColor: c.border, paddingBottom: Math.max(insets.bottom, 24) }]}>
+    <View
+      style={[
+        styles.tabBar,
+        {
+          backgroundColor: c.background,
+          borderTopColor: c.border,
+          paddingBottom: Math.max(insets.bottom, 18),
+        },
+      ]}
+    >
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key]!;
         const isFocused = state.index === index;
         const color = isFocused ? c.foreground : c.tabIconDefault;
 
-        const icon = index === 0
-          ? <KeyRound size={22} color={color} />
-          : <Wand2 size={22} color={color} />;
+        const icon =
+          index === 0 ? (
+            <KeyRound size={22} color={color} />
+          ) : (
+            <Wand2 size={22} color={color} />
+          );
 
         const label = index === 0 ? t('tabs.myVault') : t('tabs.generate');
 
@@ -50,14 +65,21 @@ function NotionTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             accessibilityLabel={options.tabBarAccessibilityLabel}
           >
             {icon}
-            <Text style={[
-              styles.tabLabel,
-              { color, fontFamily: isFocused ? fonts.bodySemiBold : fonts.body },
-            ]}>
+            <Text
+              style={[
+                styles.tabLabel,
+                {
+                  color,
+                  fontFamily: isFocused ? fonts.bodySemiBold : fonts.body,
+                },
+              ]}
+            >
               {label}
             </Text>
             {isFocused && (
-              <View style={[styles.activeDot, { backgroundColor: c.accentBlue }]} />
+              <View
+                style={[styles.activeDot, { backgroundColor: c.accentBlue }]}
+              />
             )}
           </Pressable>
         );
@@ -68,9 +90,9 @@ function NotionTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
 export default function TabLayout() {
   return (
-    <SafeAreaView edges={['top']} className="flex-1">
+    <SafeAreaView edges={['top']} style={styles.safeArea}>
       <Tabs
-        tabBar={props => <NotionTabBar {...props} />}
+        tabBar={props => <VaultTabBar {...props} />}
         screenOptions={{ headerShown: false }}
       >
         <Tabs.Screen name="index" />
@@ -81,24 +103,28 @@ export default function TabLayout() {
 }
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+  },
   tabBar: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    paddingTop: 8,
-    paddingHorizontal: 40,
+    paddingTop: 10,
+    paddingHorizontal: 34,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    gap: 4,
+    gap: 5,
+    minHeight: 48,
   },
   tabLabel: {
     fontSize: 11,
   },
   activeDot: {
-    width: 4,
+    width: 18,
     height: 4,
     borderRadius: 2,
-    marginTop: 2,
+    marginTop: 1,
   },
 });

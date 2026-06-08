@@ -12,18 +12,17 @@ export const resources = {
 export const supportedLanguages = ['en', 'zh'] as const;
 export type SupportedLanguage = (typeof supportedLanguages)[number];
 
-i18n
-  .use(initReactI18next)
-  .init({
-    resources,
-    fallbackLng: 'en',
-    supportedLngs: supportedLanguages,
-    interpolation: {
-      escapeValue: false,
-    },
-    react: {
-      useSuspense: false,
-    },
-  });
+i18n.use(initReactI18next).init({
+  resources,
+  fallbackLng: 'en',
+  supportedLngs: supportedLanguages,
+  compatibilityJSON: 'v3',
+  interpolation: {
+    escapeValue: false,
+  },
+  react: {
+    useSuspense: false,
+  },
+});
 
 export default i18n;
