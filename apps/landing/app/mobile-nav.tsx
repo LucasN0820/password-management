@@ -1,65 +1,86 @@
-"use client";
+'use client';
 
-import { useState } from "react";
+import { useState } from 'react';
 
 const navItems = [
-  { href: "#features", label: "Features" },
-  { href: "#how-it-works", label: "How It Works" },
-  { href: "#testimonials", label: "Testimonials" },
-  { href: "#pricing", label: "Pricing" },
+  { href: '#product', label: '产品' },
+  { href: '#security', label: '安全' },
+  { href: '#plans', label: '价格' },
+  { href: '#teams', label: '企业' },
 ];
+
+function MenuIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      aria-hidden='true'
+      className='h-5 w-5'
+      fill='none'
+      stroke='currentColor'
+      strokeLinecap='round'
+      strokeLinejoin='round'
+      strokeWidth='1.8'
+      viewBox='0 0 24 24'
+    >
+      {open ? (
+        <path d='m6 6 12 12M18 6 6 18' />
+      ) : (
+        <path d='M5 7h14M5 12h14M5 17h14' />
+      )}
+    </svg>
+  );
+}
 
 export function MobileNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <>
+    <div className='md:hidden'>
       <button
-        type="button"
-        className="md:hidden p-2 rounded-lg hover:bg-accent transition-colors"
+        aria-controls='mobile-menu'
         aria-expanded={isMenuOpen}
-        aria-controls="mobile-menu"
-        aria-label={isMenuOpen ? "Close menu" : "Open menu"}
-        onClick={() => setIsMenuOpen((open) => !open)}
+        aria-label={isMenuOpen ? '关闭菜单' : '打开菜单'}
+        className='flex h-10 w-10 items-center justify-center rounded-md border border-line bg-white text-ink'
+        onClick={() => setIsMenuOpen(open => !open)}
+        type='button'
       >
-        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          {isMenuOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          )}
-        </svg>
+        <MenuIcon open={isMenuOpen} />
       </button>
 
       {isMenuOpen && (
-        <div id="mobile-menu" className="md:hidden bg-background border-t border-border">
-          <div className="px-4 py-4 space-y-3">
-            {navItems.map((item) => (
+        <div
+          className='absolute left-0 right-0 top-[72px] border-b border-line bg-background px-5 py-5 shadow-soft'
+          id='mobile-menu'
+        >
+          <div className='grid gap-1'>
+            {navItems.map(item => (
               <a
-                key={item.href}
+                className='rounded-md px-2 py-3 text-sm font-semibold text-muted transition-colors hover:bg-white hover:text-ink'
                 href={item.href}
-                className="block px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                key={item.href}
+                onClick={() => setIsMenuOpen(false)}
               >
                 {item.label}
               </a>
             ))}
-            <div className="pt-3 border-t border-border space-y-2">
-              <button
-                type="button"
-                className="w-full px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors text-left"
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                className="w-full px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:opacity-90 transition-opacity"
-              >
-                Get Started
-              </button>
-            </div>
+          </div>
+          <div className='mt-4 grid gap-2 border-t border-line pt-4'>
+            <a
+              className='rounded-md border border-line bg-white px-4 py-3 text-center text-sm font-semibold text-ink'
+              href='#plans'
+              onClick={() => setIsMenuOpen(false)}
+            >
+              了解价格
+            </a>
+            <a
+              className='rounded-md bg-ink px-4 py-3 text-center text-sm font-semibold text-white'
+              href='#product'
+              onClick={() => setIsMenuOpen(false)}
+            >
+              免费开始
+            </a>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

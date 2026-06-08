@@ -1,16 +1,23 @@
-import type { Metadata } from "next";
-import { Nunito } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Noto_Sans_SC, Noto_Serif_SC } from 'next/font/google';
+import './globals.css';
 
-const nunito = Nunito({
-  variable: "--font-nunito",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+const body = Noto_Sans_SC({
+  subsets: ['latin'],
+  variable: '--font-body',
+  weight: ['400', '500', '600', '700'],
+});
+
+const display = Noto_Serif_SC({
+  subsets: ['latin'],
+  variable: '--font-display',
+  weight: ['400', '500', '600', '700'],
 });
 
 export const metadata: Metadata = {
-  title: "SecureVault - Your Password Manager",
-  description: "A beautiful, secure, and easy-to-use password manager for all your devices. Keep your passwords safe with military-grade encryption.",
+  title: 'Vault - 极简密码管理器',
+  description:
+    'Vault 以本地优先和主密码保护的方式，帮助你管理、生成和整理所有数字凭据。',
 };
 
 export default function RootLayout({
@@ -19,8 +26,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
-      <body className={`${nunito.variable} font-sans antialiased min-h-screen`}>
+    <html lang='zh-CN'>
+      <body
+        className={`${body.variable} ${display.variable} min-h-screen font-sans antialiased`}
+      >
         {children}
       </body>
     </html>
