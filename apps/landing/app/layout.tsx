@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Sans, Source_Serif_4 } from 'next/font/google';
 import './globals.css';
+import { Analytics } from '@vercel/analytics/next';
 
 const body = DM_Sans({
   subsets: ['latin'],
@@ -31,6 +32,7 @@ export default function RootLayout({
         className={`${body.variable} ${display.variable} min-h-screen font-sans antialiased`}
       >
         {children}
+        <Analytics />
       </body>
     </html>
   );
