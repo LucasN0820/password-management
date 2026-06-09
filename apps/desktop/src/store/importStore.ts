@@ -1,57 +1,68 @@
-import { create } from 'zustand'
+import { create } from 'zustand';
 import type {
   ImportCandidateDraft,
   ImportFileDescriptor,
   ImportWorkflowResult,
-} from '../../electron/preload'
+} from '../../electron/preload';
 
 export interface EditableImportCandidate extends ImportCandidateDraft {
-  selected: boolean
+  selected: boolean;
 }
 
-type ImportStage = 'idle' | 'processing' | 'review'
+type ImportStage = 'idle' | 'processing' | 'review';
 
 interface ImportState {
-  stage: ImportStage
-  files: ImportFileDescriptor[]
-  candidates: EditableImportCandidate[]
-  warnings: string[]
-  fileResults: ImportWorkflowResult['files']
-  error: string | null
-  selectFiles: () => Promise<void>
-  runImport: () => Promise<boolean>
+  stage: ImportStage;
+  files: ImportFileDescriptor[];
+  selectedModelId: string | null;
+  candidates: EditableImportCandidate[];
+  warnings: string[];
+  fileResults: ImportWorkflowResult['files'];
+  error: string | null;
+  selectFiles: () => Promise<void>;
+  setSelectedModelId: (modelId: string | null) => void;
+  runImport: () => Promise<boolean>;
   updateCandidate: (
     id: string,
-    patch: Partial<Pick<EditableImportCandidate, 'title' | 'username' | 'password' | 'url' | 'notes' | 'selected'>>,
-  ) => void
-  removeCandidate: (id: string) => void
-  saveCandidates: () => Promise<number>
-  reset: () => void
+    patch: Partial<
+      Pick<
+        EditableImportCandidate,
+        'title' | 'username' | 'password' | 'url' | 'notes' | 'selected'
+      >
+    >
+  ) => void;
+  removeCandidate: (id: string) => void;
+  saveCandidates: () => Promise<number>;
+  reset: () => void;
 }
 
 const initialState = {
   stage: 'idle' as ImportStage,
   files: [] as ImportFileDescriptor[],
+  selectedModelId: null as string | null,
   candidates: [] as EditableImportCandidate[],
   warnings: [] as string[],
   fileResults: [] as ImportWorkflowResult['files'],
   error: null as string | null,
-}
+};
 
 export const useImportStore = create<ImportState>((set, get) => ({
   ...initialState,
   selectFiles: async () => {
-    const files = await window.electronAPI.selectImportFiles()
+    const files = await window.electronAPI.selectImportFiles();
     set({
       files,
       error: files.length ? null : get().error,
-    })
+    });
+  },
+  setSelectedModelId: modelId => {
+    set({ selectedModelId: modelId });
   },
   runImport: async () => {
-    const files = get().files
+    const files = get().files;
     if (!files.length) {
-      set({ error: 'Select at least one file before starting import.' })
-      return false
+      set({ error: 'Select at least one file before starting import.' });
+      return false;
     }
 
     set({
@@ -60,10 +71,13 @@ export const useImportStore = create<ImportState>((set, get) => ({
       warnings: [],
       candidates: [],
       fileResults: [],
-    })
+    });
 
     try {
-      const result = await window.electronAPI.runImportWorkflow(files)
+      const selectedModelId = get().selectedModelId;
+      const result = await window.electronAPI.runImportWorkflow(files, {
+        modelId: selectedModelId ?? undefined,
+      });
       set({
         stage: 'review',
         warnings: result.warnings,
@@ -72,33 +86,33 @@ export const useImportStore = create<ImportState>((set, get) => ({
           ...candidate,
           selected: true,
         })),
-      })
-      return true
+      });
+      return true;
     } catch (error) {
       set({
         stage: 'idle',
         error: error instanceof Error ? error.message : 'Import failed',
-      })
-      return false
+      });
+      return false;
     }
   },
   updateCandidate: (id, patch) => {
     set(state => ({
       candidates: state.candidates.map(candidate =>
-        candidate.id === id ? { ...candidate, ...patch } : candidate,
+        candidate.id === id ? { ...candidate, ...patch } : candidate
       ),
-    }))
+    }));
   },
   removeCandidate: id => {
     set(state => ({
       candidates: state.candidates.filter(candidate => candidate.id !== id),
-    }))
+    }));
   },
   saveCandidates: async () => {
-    const candidates = get().candidates.filter(candidate => candidate.selected)
+    const candidates = get().candidates.filter(candidate => candidate.selected);
     if (!candidates.length) {
-      set({ error: 'Select at least one credential to save.' })
-      return 0
+      set({ error: 'Select at least one credential to save.' });
+      return 0;
     }
 
     const result = await window.electronAPI.saveImportedPasswords(
@@ -108,16 +122,16 @@ export const useImportStore = create<ImportState>((set, get) => ({
         password: candidate.password.trim(),
         url: candidate.url?.trim() || null,
         notes: candidate.notes?.trim() || null,
-      })),
-    )
+      }))
+    );
 
-    set(initialState)
-    return result.saved
+    set(initialState);
+    return result.saved;
   },
   reset: () => {
     if (get().stage === 'processing') {
-      window.electronAPI.cancelImportWorkflow()
+      window.electronAPI.cancelImportWorkflow();
     }
-    set(initialState)
+    set(initialState);
   },
-}))
+}));

@@ -2,13 +2,16 @@ import {
   Bot,
   CheckCircle2,
   FileText,
+  HardDrive,
   Loader2,
+  Plus,
   Save,
   Sparkles,
   Trash2,
   Upload,
   XCircle,
 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
 import {
   Button,
@@ -19,10 +22,16 @@ import {
   CardTitle,
   Input,
   Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
   toast,
 } from '@repo/ui';
 import { useImportStore } from '@/store/importStore';
 import { usePasswordStore } from '@/store/passwordStore';
+import type { LocalModelLibraryStatus } from '../../../electron/preload';
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -39,18 +48,42 @@ export default function OnboardPage() {
     warnings,
     fileResults,
     error,
+    selectedModelId,
     selectFiles,
+    setSelectedModelId,
     runImport,
     updateCandidate,
     removeCandidate,
     saveCandidates,
     reset,
   } = useImportStore();
+  const [modelLibrary, setModelLibrary] =
+    useState<LocalModelLibraryStatus | null>(null);
+  const [isChoosingModel, setIsChoosingModel] = useState(false);
   const loadPasswords = usePasswordStore(state => state.loadPasswords);
 
   const selectedCount = candidates.filter(
     candidate => candidate.selected
   ).length;
+  const availableModels = useMemo(
+    () => modelLibrary?.models.filter(model => model.exists) ?? [],
+    [modelLibrary]
+  );
+  const activeModelId =
+    selectedModelId ?? modelLibrary?.defaultModelId ?? availableModels[0]?.id;
+  const activeModel = availableModels.find(model => model.id === activeModelId);
+
+  useEffect(() => {
+    window.electronAPI
+      .getLocalImportModelLibraryStatus()
+      .then(status => {
+        setModelLibrary(status);
+        if (!selectedModelId) {
+          setSelectedModelId(status.defaultModelId);
+        }
+      })
+      .catch(() => undefined);
+  }, [selectedModelId, setSelectedModelId]);
 
   const handleSelectFiles = async () => {
     await selectFiles();
@@ -64,6 +97,33 @@ export default function OnboardPage() {
       title: 'Extraction finished',
       description: 'Review the imported credentials before saving them.',
     });
+  };
+
+  const handleChooseGguf = async () => {
+    setIsChoosingModel(true);
+    try {
+      const status = await window.electronAPI.selectLocalImportModelFile();
+      setModelLibrary(status);
+      const defaultModel = status.models.find(model => model.isDefault);
+      if (defaultModel) {
+        setSelectedModelId(defaultModel.id);
+      }
+      toast({
+        title: 'Local GGUF added',
+        description: 'The selected model can be used for this import.',
+      });
+    } catch (chooseError) {
+      toast({
+        title: 'Unable to add model',
+        description:
+          chooseError instanceof Error
+            ? chooseError.message
+            : 'Unable to add the selected GGUF model.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsChoosingModel(false);
+    }
   };
 
   const handleSave = async () => {
@@ -152,6 +212,47 @@ export default function OnboardPage() {
               <XCircle className='h-4 w-4' />
               Cancel
             </Button>
+          </div>
+
+          <div className='mt-5 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-4 py-3'>
+            <div className='flex min-w-[220px] items-center gap-2 text-sm font-semibold text-foreground'>
+              <HardDrive className='h-4 w-4 text-clay' />
+              Extraction model
+            </div>
+            <Select
+              value={activeModelId}
+              onValueChange={value => setSelectedModelId(value)}
+            >
+              <SelectTrigger className='w-[280px]'>
+                <SelectValue placeholder='Default local model' />
+              </SelectTrigger>
+              <SelectContent>
+                {availableModels.map(model => (
+                  <SelectItem key={model.id} value={model.id}>
+                    {model.displayName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              onClick={handleChooseGguf}
+              size='sm'
+              type='button'
+              variant='outline'
+              disabled={isChoosingModel}
+            >
+              {isChoosingModel ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : (
+                <Plus className='h-4 w-4' />
+              )}
+              Choose GGUF
+            </Button>
+            <div className='min-w-[180px] text-sm text-muted-foreground'>
+              {activeModel
+                ? `${activeModel.source === 'custom-file' ? 'Custom' : 'Catalog'} · ${activeModel.fileName}`
+                : 'Default model downloads on first use'}
+            </div>
           </div>
 
           {error ? (

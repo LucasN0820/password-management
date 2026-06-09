@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { DM_Sans, Source_Serif_4 } from 'next/font/google';
 import './globals.css';
 import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const body = DM_Sans({
   subsets: ['latin'],
@@ -33,6 +34,7 @@ export default function RootLayout({
       >
         {children}
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

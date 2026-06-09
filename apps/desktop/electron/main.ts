@@ -6,6 +6,7 @@ import {
   ipcMain,
   nativeImage,
   screen,
+  shell,
 } from 'electron';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -26,8 +27,12 @@ import { getOrCreateDesktopVaultKey } from './vault-key';
 import { runLocalImportWorkflow } from './ai-import/local-import-workflow';
 import { stopLlamaServer } from './ai-import/llama-runtime';
 import {
-  ensureLocalModel,
   getLocalModelStatus,
+  getLocalModelLibraryStatus,
+  getLocalModelsDir,
+  prepareLocalModel,
+  registerLocalModelFile,
+  setDefaultLocalModel,
 } from './ai-import/model-cache';
 import type {
   ImportFileDescriptor,
@@ -69,7 +74,7 @@ function initDatabase() {
     passwordAdapter = createEncryptedAdapter(
       createDrizzleAdapter(db),
       async () => getOrCreateDesktopVaultKey(),
-      length => randomBytes(length),
+      length => randomBytes(length)
     );
 
     console.log('Database initialized at:', dbPath);
@@ -267,10 +272,49 @@ ipcMain.handle('get-local-import-model-status', async () => {
   return getLocalModelStatus(getLocalAiImportConfig());
 });
 
-ipcMain.handle('prepare-local-import-model', async () => {
+ipcMain.handle('get-local-import-model-library-status', async () => {
+  return getLocalModelLibraryStatus(getLocalAiImportConfig());
+});
+
+ipcMain.handle('prepare-local-import-model', async (_, modelId?: string) => {
   const config = getLocalAiImportConfig();
-  const path = await ensureLocalModel(config);
-  return getLocalModelStatus({ ...config, modelPath: path });
+  await prepareLocalModel(config, modelId);
+  return getLocalModelLibraryStatus(config);
+});
+
+ipcMain.handle('set-default-local-import-model', async (_, modelId: string) => {
+  await setDefaultLocalModel(modelId);
+  return getLocalModelLibraryStatus(getLocalAiImportConfig());
+});
+
+ipcMain.handle('open-local-import-model-folder', async () => {
+  const modelsDir = getLocalModelsDir();
+  mkdirSync(modelsDir, { recursive: true });
+  await shell.openPath(modelsDir);
+});
+
+ipcMain.handle('select-local-import-model-file', async () => {
+  const browserWindow =
+    BrowserWindow.getFocusedWindow() ?? mainWindow ?? undefined;
+  const options = {
+    properties: ['openFile'],
+    filters: [
+      {
+        name: 'GGUF models',
+        extensions: ['gguf'],
+      },
+    ],
+  } satisfies Electron.OpenDialogOptions;
+  const result = browserWindow
+    ? await dialog.showOpenDialog(browserWindow, options)
+    : await dialog.showOpenDialog(options);
+
+  if (result.canceled || !result.filePaths[0]) {
+    return getLocalModelLibraryStatus(getLocalAiImportConfig());
+  }
+
+  await registerLocalModelFile(result.filePaths[0]);
+  return getLocalModelLibraryStatus(getLocalAiImportConfig());
 });
 
 ipcMain.handle('select-import-files', async () => {
@@ -281,14 +325,7 @@ ipcMain.handle('select-import-files', async () => {
     filters: [
       {
         name: 'Supported files',
-        extensions: [
-          'csv',
-          'pdf',
-          'docx',
-          'md',
-          'markdown',
-          'txt',
-        ],
+        extensions: ['csv', 'pdf', 'docx', 'md', 'markdown', 'txt'],
       },
     ],
   } satisfies Electron.OpenDialogOptions;
@@ -318,7 +355,7 @@ let currentImportAbortController: AbortController | null = null;
 
 async function runRemoteImportWorkflow(
   files: ImportFileDescriptor[],
-  abortController: AbortController,
+  abortController: AbortController
 ) {
   const { url: serviceUrl, secret } = getServiceEnvConfig();
 
@@ -389,21 +426,28 @@ async function runRemoteImportWorkflow(
   throw new Error('Import was cancelled');
 }
 
-ipcMain.handle('run-import-workflow', async (_, files: ImportFileDescriptor[]) => {
-  const abortController = new AbortController();
-  currentImportAbortController = abortController;
-  currentImportJobId = null;
-
-  try {
-    const config = getLocalAiImportConfig();
-    return config.provider === 'remote-service'
-      ? await runRemoteImportWorkflow(files, abortController)
-      : await runLocalImportWorkflow(files, abortController.signal);
-  } finally {
+ipcMain.handle(
+  'run-import-workflow',
+  async (_, files: ImportFileDescriptor[], options?: { modelId?: string }) => {
+    const abortController = new AbortController();
+    currentImportAbortController = abortController;
     currentImportJobId = null;
-    currentImportAbortController = null;
+
+    try {
+      const config = getLocalAiImportConfig();
+      return config.provider === 'remote-service'
+        ? await runRemoteImportWorkflow(files, abortController)
+        : await runLocalImportWorkflow(
+            files,
+            abortController.signal,
+            options?.modelId
+          );
+    } finally {
+      currentImportJobId = null;
+      currentImportAbortController = null;
+    }
   }
-});
+);
 
 ipcMain.handle('cancel-import-workflow', async () => {
   const { url: serviceUrl, secret } = getServiceEnvConfig();
