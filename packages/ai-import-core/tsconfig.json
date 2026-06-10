@@ -1,5 +1,5 @@
 {
-  "extends": "@repo/ts-config/base.json",
+  "extends": "../../config/ts/base.json",
   "compilerOptions": {
     "module": "esnext",
     "target": "esnext",
