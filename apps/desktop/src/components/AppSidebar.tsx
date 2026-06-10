@@ -1,4 +1,4 @@
-import { Bot, Home, Key, Lock, Search, Settings, Shield } from 'lucide-react';
+import { Bot, Home, Key, Search, Settings, Shield } from 'lucide-react';
 import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useTranslation } from '@repo/i18n';
@@ -40,9 +40,12 @@ export function AppSidebar() {
             navigate('/');
           }}
         >
-          <span className='flex h-9 w-9 items-center justify-center rounded-lg bg-ink text-white'>
-            <Lock className='h-4 w-4' />
-          </span>
+          <img
+            alt=''
+            aria-hidden='true'
+            className='h-9 w-9 rounded-lg object-cover'
+            src='/icon-512.png'
+          />
           <span className='font-heading text-2xl font-semibold tracking-tight text-foreground'>
             {t('app.name')}
           </span>

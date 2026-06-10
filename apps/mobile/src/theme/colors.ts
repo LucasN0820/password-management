@@ -1,4 +1,4 @@
-// Claude-inspired color palette for PassVault mobile.
+// Claude-inspired color palette for Vault mobile.
 // Matches the landing and desktop design system with light/dark variants.
 
 const lightColors = {

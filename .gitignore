@@ -6,6 +6,7 @@ dist-electron
 dist
 .DS_Store
 Makefile
+assets
 
 # Electron Builder output
 release/

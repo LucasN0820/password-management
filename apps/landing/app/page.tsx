@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import type { ReactNode } from 'react';
 import { DesktopDownloads } from './desktop-downloads';
 import { MobileNav } from './mobile-nav';
@@ -322,9 +323,14 @@ function StarIcon() {
 function Logo() {
   return (
     <a className='flex shrink-0 items-center gap-2' href='#'>
-      <span className='flex h-7 w-7 items-center justify-center rounded-[7px] !bg-[#1a1916] !text-[#faf9f7]'>
-        <LockIcon size={16} />
-      </span>
+      <Image
+        alt=''
+        aria-hidden='true'
+        className='h-7 w-7 rounded-[7px]'
+        height={28}
+        src='/favicon.svg'
+        width={28}
+      />
       <span className='font-serif text-lg font-semibold text-charcoal'>
         Vault
       </span>

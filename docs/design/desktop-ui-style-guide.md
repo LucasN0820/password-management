@@ -6,17 +6,17 @@ Notion-inspired minimalism with hand-drawn warmth. Clean, spacious layouts with 
 
 ## Brand
 
-- **Name**: PassVault
-- **Logo**: `🔐` emoji + "PassVault" in Caveat font
+- **Name**: Vault
+- **Logo**: `🔐` emoji + "Vault" in Caveat font
 - **Language**: English (UI labels), with support for localized content
 
 ## Typography
 
-| Role | Font | Weight | Usage |
-|------|------|--------|-------|
-| Headings / Display | Caveat | Bold (700) | Page titles, section headers, card titles, modal titles |
-| Body / UI | Nunito | Regular (400), SemiBold (600) | Body text, labels, buttons, navigation |
-| Passwords / Code | JetBrains Mono | Regular (400), Medium (500) | Password display, keyboard shortcuts, monospace data |
+| Role               | Font           | Weight                        | Usage                                                   |
+| ------------------ | -------------- | ----------------------------- | ------------------------------------------------------- |
+| Headings / Display | Caveat         | Bold (700)                    | Page titles, section headers, card titles, modal titles |
+| Body / UI          | Nunito         | Regular (400), SemiBold (600) | Body text, labels, buttons, navigation                  |
+| Passwords / Code   | JetBrains Mono | Regular (400), Medium (500)   | Password display, keyboard shortcuts, monospace data    |
 
 **Scale**: Headings use large sizes (42px hero, 24px section, 20-22px card). Body stays at 13-15px. Captions and hints at 10-12px.
 
@@ -26,26 +26,26 @@ Fonts are loaded via Google Fonts `@import`. For offline resilience, bundle `.wo
 
 ### Core Colors (Notion-inspired)
 
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `--background` | `#FFFFFF` | Main background |
-| `--foreground` | `#37352F` | Primary text, primary buttons |
-| `--surface` | `#F7F6F3` | Cards, input backgrounds, stat card bg |
-| `--sidebar` | `#FBFBFA` | Sidebar background |
-| `--border` | `#E9E9E7` | Borders, dividers |
-| `--accent` | `#EFEFEF` | Hover states |
-| `--muted-foreground` | `#787774` | Secondary text |
-| `--text-tertiary` | `#C0BFB9` | Placeholder text, timestamps, hints |
+| Token                | Hex       | Usage                                  |
+| -------------------- | --------- | -------------------------------------- |
+| `--background`       | `#FFFFFF` | Main background                        |
+| `--foreground`       | `#37352F` | Primary text, primary buttons          |
+| `--surface`          | `#F7F6F3` | Cards, input backgrounds, stat card bg |
+| `--sidebar`          | `#FBFBFA` | Sidebar background                     |
+| `--border`           | `#E9E9E7` | Borders, dividers                      |
+| `--accent`           | `#EFEFEF` | Hover states                           |
+| `--muted-foreground` | `#787774` | Secondary text                         |
+| `--text-tertiary`    | `#C0BFB9` | Placeholder text, timestamps, hints    |
 
 ### Semantic Colors
 
-| Token | Hex | Usage |
-|-------|-----|-------|
-| `--accent-blue` | `#2EAADC` | Links, focus rings, active indicators |
-| `--accent-green` | `#0F7B6C` | Strong password indicator, success |
-| `--accent-red` | `#EB5757` | Destructive actions, weak password |
+| Token             | Hex       | Usage                                       |
+| ----------------- | --------- | ------------------------------------------- |
+| `--accent-blue`   | `#2EAADC` | Links, focus rings, active indicators       |
+| `--accent-green`  | `#0F7B6C` | Strong password indicator, success          |
+| `--accent-red`    | `#EB5757` | Destructive actions, weak password          |
 | `--accent-yellow` | `#F5C542` | Favorites (star icon fill), medium strength |
-| `--selected-bg` | `#E8F5FD` | Selected list item background |
+| `--selected-bg`   | `#E8F5FD` | Selected list item background               |
 
 ### Tinted Card Backgrounds (Stats)
 
@@ -113,6 +113,7 @@ Fonts are loaded via Google Fonts `@import`. For offline resilience, bundle `.wo
 ### Keyboard-First Design
 
 Keyboard shortcut hints appear throughout the UI:
+
 - Sidebar: `⌘⇧P Quick Search` badge
 - Home page: Quick actions show shortcut badges
 - Home page: Dedicated "Keyboard Shortcuts" section

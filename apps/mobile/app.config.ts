@@ -15,7 +15,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   splash: {
     image: './assets/images/splash-icon.png',
     resizeMode: 'contain',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#faf9f5',
   },
   ios: {
     supportsTablet: true,
@@ -24,11 +24,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   android: {
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
-      backgroundColor: '#ffffff',
+      backgroundColor: '#faf9f5',
     },
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     package: APP_PACKAGE,
+  },
+  web: {
+    favicon: './assets/images/favicon.png',
   },
   plugins: [
     'expo-router',

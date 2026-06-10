@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { DM_Sans, Source_Serif_4 } from 'next/font/google';
-import './globals.css';
 import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import './globals.css';
 
 const body = DM_Sans({
   subsets: ['latin'],
@@ -20,6 +20,15 @@ export const metadata: Metadata = {
   title: 'Vault - 极简密码管理器',
   description:
     'Vault 以本地优先和主密码保护的方式，帮助你管理、生成和整理所有数字凭据。',
+  manifest: '/site.webmanifest',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon-16x16.png', sizes: '16x16', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180' }],
+  },
 };
 
 export default function RootLayout({
