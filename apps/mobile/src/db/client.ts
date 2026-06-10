@@ -1,9 +1,9 @@
-import type { SQLiteDatabase } from 'expo-sqlite'
 import { drizzle } from 'drizzle-orm/expo-sqlite'
+import type { SQLiteDatabase } from 'expo-sqlite'
 import {
   migratePasswordDatabase,
-  schema,
   type PasswordDatabase,
+  schema,
 } from '@repo/db'
 
 export function createMobileDatabase(client: SQLiteDatabase) {

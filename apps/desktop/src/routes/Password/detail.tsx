@@ -35,7 +35,7 @@ export function PasswordDetail() {
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 1500);
+    setTimeout(() => { setCopiedField(null); }, 1500);
   };
 
   if (!selectedPassword) {

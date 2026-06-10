@@ -49,8 +49,8 @@ yarn-error.*
 *.tsbuildinfo
 
 # generated native folders
-ios
-android
+apps/mobile/ios
+apps/mobile/android
 
 .yarn/cache
 .yarn/install-state.gz

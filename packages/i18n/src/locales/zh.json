@@ -79,6 +79,43 @@
     "passwordCopied": "密码已复制",
     "usernameCopied": "用户名已复制"
   },
+  "aiImport": {
+    "title": "AI 导入",
+    "experimental": "实验功能",
+    "localPrivate": "完全本地、保护隐私",
+    "privacyDescription": "文件、提示词、模型输出和密码不会离开本设备。AI 可能漏提取或错配，请在保存前逐项核对。",
+    "modelTitle": "提取模型",
+    "modelHint": "模型仅从固定 Hugging Face 清单下载，并通过 SHA-256 校验。不支持 Expo Go。",
+    "download": "下载模型",
+    "downloaded": "已下载",
+    "removeModel": "删除模型",
+    "removeModelConfirm": "从本设备删除 {{name}}？",
+    "remove": "删除",
+    "cancel": "取消",
+    "filesTitle": "导入文件",
+    "filesHint": "仅支持 CSV、TXT 和 Markdown。最多 5 个文件，单个 5MB，总计 15MB。",
+    "selectFiles": "选择文件",
+    "startImport": "开始本地导入",
+    "finishing": "正在完成导入",
+    "reviewTitle": "核对候选项",
+    "reviewHint": "候选项不会自动保存。请编辑、取消选择或删除任何不准确的内容。",
+    "noCandidates": "未找到包含密码的候选项。",
+    "saveSelected": "保存已选项（{{count}}）",
+    "confidence": "模型置信度 {{value}}%",
+    "phase": {
+      "parsing": "正在读取文件",
+      "extracting": "正在提取账号密码",
+      "normalizing": "正在检查结果",
+      "completed": "导入完成"
+    },
+    "fields": {
+      "title": "标题",
+      "username": "用户名",
+      "password": "密码",
+      "url": "网址",
+      "notes": "备注"
+    }
+  },
   "tabs": {
     "myVault": "我的保险库",
     "generate": "生成"

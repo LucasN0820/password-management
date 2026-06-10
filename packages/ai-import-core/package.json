@@ -7,15 +7,17 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./*": {
+      "types": "./src/*.ts",
+      "default": "./src/*.ts"
     }
   },
   "scripts": {
+    "test": "vitest run",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
-    "@langchain/core": "^1.1.40",
-    "@langchain/langgraph": "^1.2.9",
-    "csv-parse": "^6.2.1",
     "mammoth": "^1.12.0",
     "pdf2json": "^4.0.3",
     "zod": "^4.3.6"
@@ -23,6 +25,7 @@
   "devDependencies": {
     "@repo/ts-config": "workspace:*",
     "@types/node": "^20.11.24",
-    "typescript": "^5.3.3"
+    "typescript": "^5.3.3",
+    "vitest": "^3.2.4"
   }
 }

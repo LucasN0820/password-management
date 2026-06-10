@@ -1,10 +1,10 @@
-import { View, Text, StyleSheet, useColorScheme, Pressable } from 'react-native';
-import { Password, usePasswordStore } from '@/store/passwordStore';
+import { Plus } from 'lucide-react-native';
+import { Pressable,StyleSheet, Text, useColorScheme, View } from 'react-native';
 import { PasswordItem } from '@/components/password-item';
-import { useStore } from './context';
+import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
-import { Plus } from 'lucide-react-native';
+import { useStore } from './context';
 
 interface Props {
   onLongPress?: (password: Password) => void;

@@ -1,16 +1,16 @@
+import * as ImagePicker from 'expo-image-picker';
+import { ImageIcon, X } from 'lucide-react-native';
 import { useFormContext } from 'react-hook-form';
-import { FormType } from './form';
 import {
-  View,
-  TouchableOpacity,
+  Alert,
   Image,
   StyleSheet,
-  Alert,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { Text } from '@/components/ui/text';
-import { ImageIcon, X } from 'lucide-react-native';
 import { useColor } from '@/hooks/useColor';
-import * as ImagePicker from 'expo-image-picker';
+import { FormType } from './form';
 
 const MAX_ICON_SIZE_MB = 1;
 
@@ -47,7 +47,7 @@ export function FieldIcon() {
 
       if (!result.canceled && result.assets[0]?.base64) {
         const asset = result.assets[0];
-        const base64 = asset.base64;
+        const {base64} = asset;
         if (!base64) return;
         const sizeInMB =
           (base64.length * 3) / 4 / 1024 / 1024;

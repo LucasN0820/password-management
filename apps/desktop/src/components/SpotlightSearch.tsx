@@ -1,8 +1,8 @@
 import { Globe, Lock, Search, Star } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { cn } from '@repo/ui/lib/utils';
 import type { Password } from '@repo/db';
 import { useTranslation } from '@repo/i18n';
+import { cn } from '@repo/ui/lib/utils';
 import { usePasswordStore } from '../store/passwordStore';
 
 export default function SpotlightSearch() {
@@ -55,33 +55,37 @@ export default function SpotlightSearch() {
   const handleSelect = useCallback((password: Password) => {
     navigator.clipboard
       .writeText(password.password)
-      .then(() => window.close())
+      .then(() => { window.close(); })
       .catch(console.error);
   }, []);
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       switch (e.key) {
-        case 'ArrowDown':
+        case 'ArrowDown': {
           e.preventDefault();
           if (results.length > 0)
-            setSelectedIndex(prev => (prev + 1) % results.length);
+            {setSelectedIndex(prev => (prev + 1) % results.length);}
           break;
-        case 'ArrowUp':
+        }
+        case 'ArrowUp': {
           e.preventDefault();
           if (results.length > 0)
-            setSelectedIndex(
+            {setSelectedIndex(
               prev => (prev - 1 + results.length) % results.length
-            );
+            );}
           break;
-        case 'Enter':
+        }
+        case 'Enter': {
           e.preventDefault();
           if (results.length > 0 && results[selectedIndex])
-            handleSelect(results[selectedIndex]);
+            {handleSelect(results[selectedIndex]);}
           break;
-        case 'Escape':
+        }
+        case 'Escape': {
           window.close();
           break;
+        }
       }
     },
     [results, selectedIndex, handleSelect]
@@ -90,10 +94,10 @@ export default function SpotlightSearch() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (['ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(e.key))
-        handleKeyDown(e);
+        {handleKeyDown(e);}
     };
     document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
+    return () => { document.removeEventListener('keydown', handler); };
   }, [handleKeyDown]);
 
   return (
@@ -109,7 +113,7 @@ export default function SpotlightSearch() {
             placeholder={t('spotlight.searchPlaceholder')}
             value={query}
             className='flex-1 bg-transparent text-lg text-foreground placeholder:text-text-tertiary outline-none'
-            onChange={e => setQuery(e.target.value)}
+            onChange={e => { setQuery(e.target.value); }}
           />
           <kbd className='shrink-0 rounded-md border border-border bg-surface px-2 py-1 font-mono text-[10px] text-muted-foreground'>
             Esc
@@ -130,8 +134,8 @@ export default function SpotlightSearch() {
               </div>
             ) : (
               <div className='space-y-0.5'>
-                {results.map((password, index) => (
-                  <div
+                {results.map((password, index) => 
+                  { return <div
                     key={password.id}
                     data-selected-index={index}
                     className={cn(
@@ -140,7 +144,7 @@ export default function SpotlightSearch() {
                         ? 'bg-selected-bg'
                         : 'hover:bg-accent'
                     )}
-                    onClick={() => handleSelect(password)}
+                    onClick={() => { handleSelect(password); }}
                   >
                     <div
                       className={cn(
@@ -176,8 +180,8 @@ export default function SpotlightSearch() {
                         ↵ Copy
                       </kbd>
                     )}
-                  </div>
-                ))}
+                  </div> }
+                )}
               </div>
             )}
           </div>

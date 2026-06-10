@@ -73,11 +73,11 @@ Runtime: llama.cpp / llama-server
 
 `ggml-org/gemma-4-26B-A4B-it-GGUF` 当前公开量化体积大致为：
 
-| Quant | Size | 用途 |
-| --- | ---: | --- |
-| `Q4_K_M` | 16.8 GB | 默认推荐，质量和体积折中 |
-| `Q8_0` | 26.9 GB | 高质量模式，硬件要求更高 |
-| `BF16` | 50.5 GB | 不建议普通 Desktop 默认使用 |
+| Quant    |    Size | 用途                        |
+| -------- | ------: | --------------------------- |
+| `Q4_K_M` | 16.8 GB | 默认推荐，质量和体积折中    |
+| `Q8_0`   | 26.9 GB | 高质量模式，硬件要求更高    |
+| `BF16`   | 50.5 GB | 不建议普通 Desktop 默认使用 |
 
 产品侧建议：
 
@@ -99,7 +99,7 @@ Runtime: llama.cpp / llama-server
 保持当前 UI 入口不变：
 
 ```ts
-window.electronAPI.selectImportFiles()
+window.electronAPI.selectImportFiles();
 ```
 
 当前 Desktop 端文件过滤继续支持：
@@ -115,10 +115,10 @@ window.electronAPI.selectImportFiles()
 
 ```ts
 interface ImportFileDescriptor {
-  path: string
-  name: string
-  size: number
-  extension: string
+  path: string;
+  name: string;
+  size: number;
+  extension: string;
 }
 ```
 
@@ -127,7 +127,7 @@ interface ImportFileDescriptor {
 旧调用：
 
 ```ts
-window.electronAPI.runImportWorkflow(files)
+window.electronAPI.runImportWorkflow(files);
 ```
 
 可以保留 API 名称，但实现改为本地 workflow。Electron main process 内部执行：
@@ -209,13 +209,13 @@ Electron 先探测空闲端口，再传入固定端口。
 
 ```ts
 interface LocalModelManifest {
-  id: 'gemma-4-26B-A4B-it'
-  repo: 'ggml-org/gemma-4-26B-A4B-it-GGUF'
-  quant: 'Q4_K_M'
-  fileName: 'gemma-4-26B-A4B-it-Q4_K_M.gguf'
-  sizeBytes: number
-  sha256: string
-  downloadedAt: string
+  id: 'gemma-4-26B-A4B-it';
+  repo: 'ggml-org/gemma-4-26B-A4B-it-GGUF';
+  quant: 'Q4_K_M';
+  fileName: 'gemma-4-26B-A4B-it-Q4_K_M.gguf';
+  sizeBytes: number;
+  sha256: string;
+  downloadedAt: string;
 }
 ```
 
@@ -251,7 +251,7 @@ const response = await fetch(`${baseUrl}/v1/chat/completions`, {
       type: 'json_object',
     },
   }),
-})
+});
 ```
 
 如果当前 llama.cpp 版本支持 schema-constrained JSON，应优先使用 JSON schema。
@@ -320,12 +320,12 @@ CSV 快捷路径继续保留：
 
 ```ts
 interface LocalImportJob {
-  id: string
-  status: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled'
-  files: ImportFileDescriptor[]
-  abortController: AbortController
-  result?: ImportWorkflowResult
-  error?: { code: string; message: string }
+  id: string;
+  status: 'queued' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  files: ImportFileDescriptor[];
+  abortController: AbortController;
+  result?: ImportWorkflowResult;
+  error?: { code: string; message: string };
 }
 ```
 
@@ -451,6 +451,397 @@ AI_IMPORT_KEEP_SERVER_ALIVE_MS=300000
 - 对比本地 Gemma 与旧 DeepSeek 输出质量。
 - 记录非敏感性能指标：文件数、耗时、candidate 数、失败原因类型。
 
+## Mobile llama.cpp 接入方案
+
+Mobile 端同样需要满足文件内容、prompt、模型输出和密码候选项不离开用户设备的
+安全目标，但不能直接复制 Desktop 的 `llama-server` sidecar 方案。iOS 和 Android
+不适合由 App 启动长期运行的本地 HTTP 子进程，因此 Mobile 应将 `llama.cpp`
+作为原生库嵌入 App，并通过 React Native native module 直接调用。
+
+### Mobile 目标架构
+
+```mermaid
+flowchart LR
+  UI["Mobile AI Import UI"]
+  Picker["Expo Document Picker"]
+  Parser["Mobile File Parser"]
+  Core["ai-import-core\nworkflow + prompt + schema"]
+  Runtime["llama.rn\nembedded llama.cpp"]
+  Model["Mobile GGUF Model\napp document directory"]
+  Review["Review Candidates"]
+  DB["Encrypted SQLite"]
+
+  UI --> Picker
+  Picker --> Parser
+  Parser --> Core
+  Core --> Runtime
+  Runtime --> Model
+  Core --> Review
+  Review --> DB
+```
+
+与 Desktop 的主要区别：
+
+| 能力           | Desktop                     | Mobile                                 |
+| -------------- | --------------------------- | -------------------------------------- |
+| llama.cpp 接入 | 启动 `llama-server` 子进程  | 原生库嵌入 App                         |
+| 调用方式       | 本地 OpenAI-compatible HTTP | React Native native module             |
+| 模型目录       | 4B 到 26B GGUF              | 0.6B 到 1.7B GGUF                      |
+| GPU backend    | Metal / CUDA / Vulkan       | iOS Metal；Android GPU 或 CPU fallback |
+| 文件读取       | Node `fs`                   | Expo FileSystem / native parser        |
+| 取消           | Abort HTTP + 停止 sidecar   | 停止 completion + 释放 native context  |
+
+### Runtime 选型
+
+第一阶段建议使用 `llama.rn`，不自行维护 Swift、Kotlin、JNI 和 llama.cpp C++
+桥接：
+
+- iOS 和 Android 直接嵌入 llama.cpp。
+- 支持加载本地 GGUF、completion、token streaming、停止生成和释放 context。
+- 支持 JSON Schema / grammar constrained output，可降低无效 JSON 比例。
+- 提供 Expo config plugin，可纳入当前 Expo prebuild 和 EAS Build 流程。
+- 当前 Mobile App 已启用 React Native New Architecture，可使用 development build
+  验证原生模块。
+
+由于 `llama.rn` 包含自定义原生代码：
+
+- 不能使用 Expo Go 验证该功能。
+- 本地开发使用 `expo run:ios`、`expo run:android` 或自定义 development build。
+- CI / 发布使用 EAS Build。
+- 必须在安装依赖或修改 config plugin 后重新运行 prebuild / native build。
+
+如果 `llama.rn` 在目标设备矩阵中存在无法解决的稳定性、架构或发布问题，再新建
+独立 Expo Native Module 包装锁定版本的 llama.cpp。第一版不建议直接选择该维护
+成本更高的路径。
+
+### `ai-import-core` 跨平台重构
+
+当前 `packages/ai-import-core` 不能直接运行在 React Native/Hermes：
+
+- `parser.ts` 直接依赖 Node `fs`、`path`、`crypto`、`Buffer`。
+- PDF 和 DOCX 解析依赖 `pdf2json`、`mammoth` 等 Node-oriented package。
+- `normalize.ts` 使用 Node `crypto.createHash()`。
+- `workflow.ts` 直接 import Node parser，并使用 LangGraph 执行简单顺序工作流。
+
+目标是让 core 只保留平台无关逻辑，将文件读取、文件解析、ID 和 fingerprint
+实现注入 workflow：
+
+```ts
+interface ImportWorkflowDependencies {
+  parseFile: (file: ImportFileDescriptor) => Promise<ParsedImportFile>;
+  extractCandidates: ImportExtractor;
+  createId: () => string;
+  createFingerprint: (candidate: ImportCandidateDraft) => Promise<string>;
+}
+
+runImportWorkflow(files, dependencies);
+```
+
+建议目录：
+
+```text
+packages/ai-import-core/
+  types.ts
+  workflow.ts
+  prompt.ts
+  schema.ts
+  excerpts.ts
+  csv.ts
+  normalize.ts
+
+apps/desktop/electron/ai-import/
+  desktop-file-parser.ts
+  desktop-llama-extractor.ts
+
+apps/mobile/src/features/ai-import/
+  mobile-file-parser.ts
+  mobile-llama-extractor.ts
+  model-manager.ts
+  import-store.ts
+```
+
+core 重构原则：
+
+- Prompt、Zod schema、JSON fallback、candidate mapping 和 excerpt scoring 在两个平台
+  间复用。
+- CSV 表头识别和确定性 candidate 生成在 core 中复用。
+- Desktop 与 Mobile 只实现不同的文件读取和模型调用 adapter。
+- `randomUUID` 由 Desktop Node crypto 或 Mobile `expo-crypto` 注入。
+- candidate 去重不必依赖 cryptographic hash；可以使用稳定字段组合 key，或注入平台
+  fingerprint 实现。
+- 当前 workflow 只有 parse、extract、normalize 三个顺序步骤，可以改成普通
+  TypeScript orchestration，避免 Mobile bundle 引入不必要的 LangGraph runtime。
+
+### Mobile 模型目录
+
+Mobile 不复用 Desktop 的 Gemma 4 26B、gpt-oss 20B 或默认 Qwen3 4B 模型目录。
+这些模型的磁盘和运行内存要求不适合作为普通手机默认配置。
+
+建议建立独立 allowlist：
+
+| 模型                | 建议角色          | 适用设备                  |
+| ------------------- | ----------------- | ------------------------- |
+| Qwen3 0.6B Q4_0     | 快速 / 低内存模式 | 低端 Android、较旧 iPhone |
+| Gemma 3 1B QAT Q4_0 | 平衡模式候选      | 普通中高端设备            |
+| Qwen3 1.7B Q4_0     | 高质量默认候选    | 8GB RAM 或以上设备        |
+
+最终默认模型不能只按通用 benchmark 决定，应使用本文后续定义的密码提取评测集
+进行真机质量和性能比较。初始 POC 可以优先验证 Qwen3 1.7B，并以 Gemma 3 1B、
+Qwen3 0.6B 作为资源降级选项。
+
+Phase 0-2 实现固定使用以下 allowlist。Mobile 选择 `Q4_0` 而不是 `Q4_K_M`，以兼容
+当前 `llama.rn` Android OpenCL backend：
+
+| 角色   | Hugging Face artifact                                         |          Size | SHA-256                                                            |
+| ------ | ------------------------------------------------------------- | ------------: | ------------------------------------------------------------------ |
+| 默认   | `bartowski/Qwen_Qwen3-1.7B-GGUF/Qwen_Qwen3-1.7B-Q4_0.gguf`    | 1,231,813,024 | `c470091d31c4ada174ee5c2547daa020e930593cbca5ca8ca385ce8ff59a2fdf` |
+| 平衡   | `ggml-org/gemma-3-1b-it-qat-GGUF/gemma-3-1b-it-qat-Q4_0.gguf` |   720,425,600 | `ef60e4e91a738c99ae9976b050657dfe68a4007a0ccca121b55ec0c413dccd58` |
+| 低内存 | `bartowski/Qwen_Qwen3-0.6B-GGUF/Qwen_Qwen3-0.6B-Q4_0.gguf`    |   469,671,328 | `4b78d8e3c61976cebb78ef5affe19d0eca75b1b47ec66f613a5a3245484758d5` |
+
+建议初始推理参数：
+
+```ts
+interface MobileModelRuntimeConfig {
+  contextSize: 2048;
+  batchSize: 256;
+  gpuLayers: number;
+  temperature: 0;
+  maxTokens: 1200;
+}
+```
+
+参数需要按设备动态调整：
+
+- 可用内存不足时降低 context、batch 或切换更小模型。
+- 一次只加载一个 model context。
+- 默认串行处理文件和 excerpts，避免同时生成导致 OOM。
+- 导入完成后短暂保留 context；App 进入后台、收到内存警告、用户取消或发生异常时
+  立即停止 completion 并释放 context。
+
+### 模型下载和缓存
+
+Mobile 模型不打进安装包，避免显著增加 App Store / Play Store 下载体积。
+
+模型管理要求：
+
+- GGUF 保存到 App document directory 下的 `models/`，而不是易被系统清理的 cache。
+- 只允许下载 Mobile catalog 中固定 repo、fileName 和 hash 的 artifact。
+- 使用 `.partial` 文件，成功校验后再原子重命名。
+- 支持进度、速度、预计剩余时间、取消、失败重试和删除。
+- SHA-256 必须流式计算，不能把 1GB 级 GGUF 整体读入 JS 内存。
+- manifest 记录 model id、path、size、hash、下载时间和最后使用时间。
+- 删除当前已加载模型前，先停止 generation 并释放 native context。
+
+Expo FileSystem 负责下载和文件生命周期；如果当前 Expo API 无法流式计算大文件
+hash，则由轻量 Expo Native Module 提供 native streaming SHA-256，而不是在 JS 中
+读取完整文件。
+
+### Mobile 文件解析策略
+
+第一阶段只完成风险最低、最容易验证的文本闭环：
+
+- CSV：优先确定性列映射，不调用模型。
+- TXT / Markdown：通过 Expo FileSystem 读取 UTF-8 文本。
+- 限制单文件大小、文件数量和本次导入的总文本量。
+- 文件选择使用 Expo Document Picker，并复制到 App 可读的临时目录。
+- 解析完成、取消或失败后删除临时副本。
+
+第二阶段再增加：
+
+- PDF：使用 iOS / Android 原生文本提取 adapter。
+- DOCX：使用跨平台 ZIP/XML parser 或 native parser，不能直接复用 Node `mammoth`。
+- 图片和扫描 PDF：先使用 Apple Vision / Google ML Kit OCR，再把纯文本交给本地模型。
+
+第一版不建议运行 Mobile multimodal GGUF。OCR 与文本小模型分工可以降低模型体积、
+内存峰值和平台差异。
+
+### Mobile extractor
+
+Mobile extractor 与 Desktop 使用相同 prompt 和 credential schema，但模型调用改为
+native completion：
+
+```ts
+async function extractWithMobileLlama(
+  context: LlamaContext,
+  file: ParsedTextFile,
+  signal?: AbortSignal
+) {
+  if (file.prefilledCandidates.length > 0) {
+    return file.prefilledCandidates;
+  }
+
+  const result = await context.completion({
+    messages: buildCredentialMessages(file),
+    temperature: 0,
+    n_predict: 1200,
+    response_format: {
+      type: 'json_schema',
+      json_schema: credentialJsonSchema,
+    },
+  });
+
+  return parseCredentialCandidates(result.text, file.file.name);
+}
+```
+
+要求：
+
+- 优先使用 JSON Schema 转 grammar 的 constrained generation。
+- 仍然保留纯 JSON、fenced JSON 和对象片段 fallback。
+- 所有输出必须经过 Zod 校验。
+- 没有明确 password 的 candidate 必须过滤。
+- `sourceExcerpt` 必须来自输入 evidence，不接受模型虚构内容。
+- 每次 generation 都可以被用户取消。
+
+### Mobile 产品流程
+
+1. 用户从 Mobile AI Import 页面选择文件。
+2. App 尝试 CSV 确定性解析。
+3. 查询默认 Mobile model 是否已下载且通过校验。
+4. 未准备时进入模型下载步骤。
+5. 加载 native llama context，并显示加载状态。
+6. 串行解析文件、选择相关 excerpts、提取 candidates。
+7. 显示文件进度和当前阶段，允许取消。
+8. 对 candidates 做 schema 校验、字段归一化和去重。
+9. 进入与 Desktop 一致的 review-first 页面。
+10. 用户确认后，通过 Mobile 已有 encrypted adapter 写入 SQLite。
+11. 清理临时文件，并根据内存状态释放 model context。
+
+Mobile 端不得自动保存模型输出。即使专项评测达到上线门槛，密码和账号配对仍需要
+用户确认。
+
+### 准确率策略
+
+目前没有公开的“从密码文件提取账号和密码”专项 benchmark。通用聊天、数学或代码
+benchmark 不能直接代表密码字段的 exact-match 能力，也不能据此声明具体准确率。
+
+模型能力预期只能作为 POC 排序：
+
+| 模型          | 初始质量预期   | 主要风险                             |
+| ------------- | -------------- | ------------------------------------ |
+| Qwen3 0.6B Q4 | 较低           | 跨行字段、复杂配对和无关文本容易失败 |
+| Gemma 3 1B Q4 | 中等           | 中文混合文本和复杂格式需要专项验证   |
+| Qwen3 1.7B Q4 | 三者中预期最好 | 内存、速度、发热和 Android 设备差异  |
+
+数据类型也会显著影响最终结果：
+
+- 规范 CSV 使用确定性 parser，目标应接近完全正确，不计入模型准确率。
+- 明确的 `username / password` 标签文本最适合小模型。
+- 多账号混排、跨行字段和自由格式笔记容易发生漏提取或账号密码错配。
+- PDF / DOCX 的最终结果同时受 parser 质量影响。
+- OCR 输入必须单独统计 OCR 字符错误，因为密码要求 exact match，单字符错误也属于
+  提取失败。
+
+### 专项评测集
+
+上线前建立至少 300 个脱敏或合成样本，并持续扩展：
+
+- 中文、英文和中英文混合。
+- CSV、TXT、Markdown；后续加入 PDF、DOCX 和 OCR。
+- 单账号、多账号、跨行字段、表格、自由格式笔记。
+- 无密码和只有用户名的负样本。
+- password 包含空格、引号、反斜杠、Unicode、换行、长字符串和特殊符号。
+- API key、OTP、恢复码、Wi-Fi 密码等容易混淆的字段。
+- 内容被截断、重复、字段顺序改变和存在大量无关文本的样本。
+
+核心指标：
+
+```text
+Password exact-match precision / recall / F1
+Record exact-match accuracy
+Username-password pairing accuracy
+Field-level precision / recall / F1
+False-positive record rate
+No-password hallucination rate
+JSON/schema valid rate
+Per-file latency
+Peak memory
+Cancellation latency
+Thermal and battery impact
+```
+
+推荐首版上线门槛：
+
+- Password exact-match recall >= 95%。
+- Username-password pairing accuracy >= 95%。
+- 无密码文档误报率 <= 1%。
+- JSON/schema valid rate >= 99.5%。
+- 不允许出现已知的 password 字符修改、自动纠错或补全行为。
+- 所有候选项必须经过 review，不能因为达到门槛就自动入库。
+
+评测结果必须按模型、quant、平台、设备等级和文件类型分桶，不能只报告一个整体
+平均数。例如 Qwen3 1.7B 在新款 iPhone 上可运行，不代表低内存 Android 也能达到
+同样质量和延迟。
+
+如果 Qwen3 1.7B 在专项数据集上仍无法达到门槛，优先顺序为：
+
+1. 改进 deterministic parser 和 evidence excerpt 选择。
+2. 修正 prompt、JSON schema 和 grammar。
+3. 增加规则校验，拒绝证据不足的 candidate。
+4. 对 1B 到 2B 模型做密码提取 LoRA / QLoRA 微调。
+5. 最后才考虑更大模型，因为移动端成本主要受内存和发热限制。
+
+### Mobile 实施阶段
+
+#### Mobile Phase 0: 真机 POC
+
+- 集成 `llama.rn` development build。
+- 在至少两代 iPhone、Pixel、Samsung 和一台低内存 Android 上验证。
+- 比较 Qwen3 0.6B、Gemma 3 1B、Qwen3 1.7B 的加载时间、token speed、峰值内存、
+  发热和取消行为。
+- 使用 50 到 100 个早期 fixture 测试字段 exact match。
+
+#### Mobile Phase 1: Core 跨平台化
+
+- 将 parser 从 core workflow 中解耦。
+- 将 prompt、schema、JSON parser、CSV parser、excerpt scoring 和 normalize 保留在 core。
+- 移除 core 对 Node `fs/path/crypto/Buffer` 的硬依赖。
+- 评估并移除 Mobile 不需要的 LangGraph runtime。
+
+#### Mobile Phase 2: 文本导入闭环
+
+- 接入 Document Picker、Mobile file parser 和 model manager。
+- 支持 CSV、TXT、MD。
+- 实现 model download、hash、manifest、删除和默认选择。
+- 实现 native completion、进度、取消和 review 页面。
+- 复用 encrypted SQLite 保存路径。
+
+Phase 0-2 的首版产品边界固定为：
+
+- iOS 与 Android 手机；保留平板可运行配置，但不做平板专项验收。
+- Vault 顶部独立入口，功能在达到专项评测门槛前标记为 Experimental。
+- CSV、TXT、MD / Markdown；最多 5 个文件、单文件 5MB、总计 15MB。
+- 模型以 `.partial` 下载到 document directory，完成流式 SHA-256 校验后原子改名。
+- 候选项必须进入可编辑 review，保存通过 encrypted adapter 的单事务批量写入。
+- Expo Go 不在支持范围内，开发与验收使用 development build / EAS Build。
+
+#### Mobile Phase 3: 稳定性和设备降级
+
+- 根据可用内存选择模型和 runtime 参数。
+- 增加后台切换、内存警告、OOM、下载中断和 context 加载失败恢复。
+- 增加设备不支持提示和小模型 fallback。
+- 完成 iOS / Android EAS Build 和商店发布验证。
+
+#### Mobile Phase 4: 文档和 OCR
+
+- 增加 PDF 和 DOCX native parser。
+- 增加 Apple Vision / ML Kit OCR。
+- 将 parser 错误、OCR 错误和模型错误分开统计。
+- 扩展专项评测集并重新确认上线门槛。
+
+### Mobile 验收标准
+
+- 断网状态下完成 CSV、TXT、MD 的选择、解析、模型提取、review 和加密保存。
+- 导入过程中不访问远端 LLM、远端 import service 或上传用户文件。
+- 不依赖 Expo Go，development build 和 EAS production build 均能加载 native runtime。
+- 模型下载支持进度、取消、失败重试、hash 校验和删除。
+- App 进入后台、取消导入或发生错误后不会遗留仍在生成的 native context。
+- 低内存设备能够降级到较小模型，无法运行时提供明确提示而不是崩溃。
+- CSV 确定性解析不会无必要地调用模型。
+- 模型输出通过 schema 校验并进入 review，不会自动写入数据库。
+- 专项评测达到定义的 password exact-match、配对准确率和误报率门槛。
+- 真机测试覆盖 iOS、Pixel、Samsung 和低内存 Android，不以模拟器结果替代真机。
+
 ## 已知限制
 
 - `Gemma-4-26B-A4B-it Q4_K_M` 模型体积大，首次下载成本高。
@@ -459,6 +850,9 @@ AI_IMPORT_KEEP_SERVER_ALIVE_MS=300000
 - 当前计划只迁移文本提取；图片 OCR / multimodal 导入后续单独设计。
 - 扫描型 PDF 仍然需要 OCR fallback，否则 parser 无法提取文字。
 - 本地模型仍可能误提取或漏提取，因此 review-first 不能取消。
+- Mobile 小模型的准确率、峰值内存、发热和耗电存在明显设备差异。
+- Android GPU backend 和驱动差异可能导致部分设备只能使用 CPU fallback。
+- Mobile PDF、DOCX 和 OCR 需要独立平台 parser，不能直接复用 Desktop Node parser。
 
 ## 验收标准
 
@@ -480,3 +874,19 @@ AI_IMPORT_KEEP_SERVER_ALIVE_MS=300000
   <https://github.com/ggml-org/llama.cpp>
 - llama.cpp server:
   <https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md>
+- llama.rn:
+  <https://github.com/mybigday/llama.rn>
+- Expo custom native code:
+  <https://docs.expo.dev/workflow/customizing/>
+- Expo FileSystem:
+  <https://docs.expo.dev/versions/latest/sdk/filesystem/>
+- Expo DocumentPicker:
+  <https://docs.expo.dev/versions/latest/sdk/document-picker/>
+- llama.cpp Android:
+  <https://github.com/ggml-org/llama.cpp/blob/master/docs/android.md>
+- Gemma 3 1B instruct GGUF:
+  <https://huggingface.co/ggml-org/gemma-3-1b-it-GGUF>
+- Qwen3 0.6B GGUF:
+  <https://huggingface.co/Qwen/Qwen3-0.6B-GGUF>
+- Qwen3 1.7B GGUF:
+  <https://huggingface.co/Qwen/Qwen3-1.7B-GGUF>

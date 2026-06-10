@@ -33,8 +33,8 @@ import { usePasswordStore } from '@/store/passwordStore';
 import type { LocalModelLibraryStatus } from '../../../electron/preload';
 
 function formatBytes(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024) {return `${bytes} B`;}
+  if (bytes < 1024 * 1024) {return `${(bytes / 1024).toFixed(1)} KB`;}
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
@@ -88,7 +88,7 @@ export default function OnboardPage() {
 
   const handleRunImport = async () => {
     const success = await runImport();
-    if (!success) return;
+    if (!success) {return;}
 
     toast({
       title: 'Extraction finished',
@@ -158,13 +158,13 @@ export default function OnboardPage() {
           </div>
 
           <div className='mt-8 flex flex-wrap gap-3'>
-            <Button onClick={handleSelectFiles} variant='outline' disabled={!availableModels.length}>
+            <Button variant='outline' disabled={availableModels.length === 0} onClick={handleSelectFiles}>
               <Upload className='h-4 w-4' />
               Choose Files
             </Button>
             <Button
+              disabled={files.length === 0 || stage === 'processing' || availableModels.length === 0 || !activeModelId}
               onClick={handleRunImport}
-              disabled={!files.length || stage === 'processing' || !availableModels.length || !activeModelId}
             >
               {stage === 'processing' ? (
                 <>
@@ -178,7 +178,7 @@ export default function OnboardPage() {
                 </>
               )}
             </Button>
-            <Button onClick={handleCancel} variant='ghost'>
+            <Button variant='ghost' onClick={handleCancel}>
               <XCircle className='h-4 w-4' />
               Cancel
             </Button>
@@ -191,19 +191,19 @@ export default function OnboardPage() {
             </div>
             <Select
               value={activeModelId}
-              onValueChange={value => setSelectedModelId(value)}
+              onValueChange={value => { setSelectedModelId(value); }}
             >
               <SelectTrigger className='w-[280px]'>
                 <SelectValue placeholder='Default local model' />
               </SelectTrigger>
               <SelectContent>
                 {
-                  availableModels.length ? (
-                    availableModels.map(model => (
-                      <SelectItem key={model.id} value={model.id}>
+                  availableModels.length > 0 ? (
+                    availableModels.map(model => 
+                      { return <SelectItem key={model.id} value={model.id}>
                         {model.displayName}
-                      </SelectItem>
-                    ))
+                      </SelectItem> }
+                    )
                   ) : (
                     <div className='text-sm text-muted-foreground p-2'>No local models available</div>
                   )
@@ -229,7 +229,7 @@ export default function OnboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-3 pt-6'>
-              {files.length ? (
+              {files.length > 0 ? (
                 files.map(file => {
                   const result = fileResults.find(
                     item => item.fileName === file.name
@@ -305,17 +305,17 @@ export default function OnboardPage() {
                     </div>
                   </div>
                 </div>
-              ) : candidates.length ? (
+              ) : candidates.length > 0 ? (
                 <>
-                  {warnings.length ? (
+                  {warnings.length > 0 ? (
                     <div className='rounded-lg border border-clay/25 bg-clay-soft px-4 py-3 text-sm text-clay-dark'>
                       {warnings.join(' · ')}
                     </div>
                   ) : null}
 
                   <div className='space-y-4'>
-                    {candidates.map(candidate => (
-                      <div
+                    {candidates.map(candidate => 
+                      { return <div
                         key={candidate.id}
                         className='rounded-lg border border-border bg-background p-5'
                       >
@@ -324,12 +324,12 @@ export default function OnboardPage() {
                             <input
                               checked={candidate.selected}
                               className='h-4 w-4 rounded border-border accent-[var(--clay)]'
-                              onChange={event =>
-                                updateCandidate(candidate.id, {
-                                  selected: event.target.checked,
-                                })
-                              }
                               type='checkbox'
+                              onChange={event =>
+                                { updateCandidate(candidate.id, {
+                                  selected: event.target.checked,
+                                }); }
+                              }
                             />
                             Save this credential
                           </label>
@@ -339,10 +339,10 @@ export default function OnboardPage() {
                               {Math.round(candidate.confidence * 100)}%
                             </span>
                             <Button
-                              onClick={() => removeCandidate(candidate.id)}
                               size='icon-xs'
                               type='button'
                               variant='ghost'
+                              onClick={() => { removeCandidate(candidate.id); }}
                             >
                               <Trash2 className='h-3.5 w-3.5' />
                             </Button>
@@ -356,12 +356,12 @@ export default function OnboardPage() {
                             </Label>
                             <Input
                               id={`${candidate.id}-title`}
-                              onChange={event =>
-                                updateCandidate(candidate.id, {
-                                  title: event.target.value,
-                                })
-                              }
                               value={candidate.title}
+                              onChange={event =>
+                                { updateCandidate(candidate.id, {
+                                  title: event.target.value,
+                                }); }
+                              }
                             />
                           </div>
                           <div className='space-y-2'>
@@ -370,13 +370,13 @@ export default function OnboardPage() {
                             </Label>
                             <Input
                               id={`${candidate.id}-url`}
-                              onChange={event =>
-                                updateCandidate(candidate.id, {
-                                  url: event.target.value,
-                                })
-                              }
                               placeholder='https://example.com'
                               value={candidate.url ?? ''}
+                              onChange={event =>
+                                { updateCandidate(candidate.id, {
+                                  url: event.target.value,
+                                }); }
+                              }
                             />
                           </div>
                           <div className='space-y-2'>
@@ -385,12 +385,12 @@ export default function OnboardPage() {
                             </Label>
                             <Input
                               id={`${candidate.id}-username`}
-                              onChange={event =>
-                                updateCandidate(candidate.id, {
-                                  username: event.target.value,
-                                })
-                              }
                               value={candidate.username}
+                              onChange={event =>
+                                { updateCandidate(candidate.id, {
+                                  username: event.target.value,
+                                }); }
+                              }
                             />
                           </div>
                           <div className='space-y-2'>
@@ -399,12 +399,12 @@ export default function OnboardPage() {
                             </Label>
                             <Input
                               id={`${candidate.id}-password`}
-                              onChange={event =>
-                                updateCandidate(candidate.id, {
-                                  password: event.target.value,
-                                })
-                              }
                               value={candidate.password}
+                              onChange={event =>
+                                { updateCandidate(candidate.id, {
+                                  password: event.target.value,
+                                }); }
+                              }
                             />
                           </div>
                           <div className='space-y-2 md:col-span-2'>
@@ -414,12 +414,12 @@ export default function OnboardPage() {
                             <textarea
                               className='min-h-[88px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50'
                               id={`${candidate.id}-notes`}
-                              onChange={event =>
-                                updateCandidate(candidate.id, {
-                                  notes: event.target.value,
-                                })
-                              }
                               value={candidate.notes ?? ''}
+                              onChange={event =>
+                                { updateCandidate(candidate.id, {
+                                  notes: event.target.value,
+                                }); }
+                              }
                             />
                           </div>
                         </div>
@@ -433,20 +433,20 @@ export default function OnboardPage() {
                               `Detected from ${candidate.sourceFile}`}
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      </div> }
+                    )}
                   </div>
 
                   <div className='flex flex-wrap justify-end gap-3 border-t border-border pt-4'>
                     <Button
-                      onClick={handleCancel}
                       type='button'
                       variant='ghost'
+                      onClick={handleCancel}
                     >
                       <XCircle className='h-4 w-4' />
                       Cancel
                     </Button>
-                    <Button onClick={handleSave} type='button'>
+                    <Button type='button' onClick={handleSave}>
                       <Save className='h-4 w-4' />
                       Save Selected
                     </Button>

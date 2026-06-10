@@ -1,21 +1,21 @@
-import { useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  ScrollView,
-  useColorScheme,
-  Switch,
-} from 'react-native';
-import { RefreshCw, Copy, Check, Save, Minus, Plus } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
+import { Check, Copy, Minus, Plus,RefreshCw, Save } from 'lucide-react-native';
+import { useCallback,useState } from 'react';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Switch,
+  Text,
+  useColorScheme,
+  View,
+} from 'react-native';
 import { useTranslation } from '@repo/i18n';
-import { Colors } from '@/theme/colors';
-import { fonts } from '@/theme/globals';
 import { CopyToast } from '@/components/copy-toast';
 import { ModalAddPassword } from '@/components/modal-add-password';
+import { Colors } from '@/theme/colors';
+import { fonts } from '@/theme/globals';
 
 function impact(style: Haptics.ImpactFeedbackStyle) {
   if (process.env.EXPO_OS === 'ios') {
@@ -57,10 +57,10 @@ export function GeneratorScreen() {
     const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
 
     let chars = '';
-    if (includeUppercase) chars += uppercase;
-    if (includeLowercase) chars += lowercase;
-    if (includeNumbers) chars += numbers;
-    if (includeSymbols) chars += symbols;
+    if (includeUppercase) chars = chars + uppercase;
+    if (includeLowercase) chars = chars + lowercase;
+    if (includeNumbers) chars = chars + numbers;
+    if (includeSymbols) chars = chars + symbols;
 
     if (chars === '') {
       setGeneratedPassword('');
@@ -69,7 +69,7 @@ export function GeneratorScreen() {
 
     let pw = '';
     for (let i = 0; i < length; i++) {
-      pw += chars.charAt(Math.floor(Math.random() * chars.length));
+      pw = pw + chars.charAt(Math.floor(Math.random() * chars.length));
     }
     setGeneratedPassword(pw);
     setCopied(false);
@@ -100,8 +100,8 @@ export function GeneratorScreen() {
     if (generatedPassword.length >= 16) score++;
     if (/[A-Z]/.test(generatedPassword)) score++;
     if (/[a-z]/.test(generatedPassword)) score++;
-    if (/[0-9]/.test(generatedPassword)) score++;
-    if (/[^A-Za-z0-9]/.test(generatedPassword)) score++;
+    if (/\d/.test(generatedPassword)) score++;
+    if (/[^A-Z0-9]/i.test(generatedPassword)) score++;
 
     if (score <= 2) return { label: 'Weak', color: c.accentRed, ratio: 0.25 };
     if (score <= 4)

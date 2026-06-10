@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import {
   DarkTheme,
   DefaultTheme,
@@ -5,13 +6,12 @@ import {
 } from '@react-navigation/native';
 import { useColorScheme } from '@/hooks/useColorTheme';
 import { Colors } from '@/theme/colors';
-import { ReactNode } from 'react';
 
-type Props = {
+interface Props {
   children: ReactNode;
-};
+}
 
-export const ThemeProvider = ({ children }: Props) => {
+export function ThemeProvider({ children }: Props) {
   const colorScheme = useColorScheme();
 
   // Create custom themes that use your Colors
@@ -48,4 +48,4 @@ export const ThemeProvider = ({ children }: Props) => {
       {children}
     </RNThemeProvider>
   );
-};
+}

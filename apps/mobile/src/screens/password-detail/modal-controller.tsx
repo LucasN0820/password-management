@@ -1,6 +1,6 @@
+import { useStore } from './context';
 import { ModalDeletePassword } from './modal-delete-password';
 import { ModalEditPassword } from './modal-edit-password';
-import { useStore } from './context';
 
 export function ModalController() {
   const modal = useStore(s => s.modal);

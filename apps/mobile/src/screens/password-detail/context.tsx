@@ -40,7 +40,7 @@ export function createStore(): UseBoundStore<StoreApi<State>> {
   );
 }
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+ 
 export const StoreContext = createContext<ReturnType<typeof createStore>>(
   undefined!
 );

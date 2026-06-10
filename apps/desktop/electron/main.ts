@@ -1,3 +1,8 @@
+import { randomBytes } from 'node:crypto';
+import { existsSync, mkdirSync, statSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   app,
   BrowserWindow,
@@ -8,38 +13,33 @@ import {
   screen,
   shell,
 } from 'electron';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import { existsSync, mkdirSync, statSync } from 'fs';
-import { readFile } from 'fs/promises';
 import { z } from 'zod';
-import { randomBytes } from 'crypto';
 import {
   createDrizzleAdapter,
   createEncryptedAdapter,
-  type PasswordDatabase,
   type DatabaseAdapter,
+  type PasswordDatabase,
   type PasswordInput,
 } from '@repo/db';
-import { createDesktopDatabase } from './db';
-import { getLocalAiImportConfig, getServiceEnvConfig } from './settings';
-import { getOrCreateDesktopVaultKey } from './vault-key';
-import { runLocalImportWorkflow } from './ai-import/local-import-workflow';
 import { stopLlamaServer } from './ai-import/llama-runtime';
+import { runLocalImportWorkflow } from './ai-import/local-import-workflow';
 import {
-  getLocalModelStatus,
   getLocalModelLibraryStatus,
   getLocalModelsDir,
+  getLocalModelStatus,
+  type LocalModelDownloadProgress,
   prepareLocalModel,
   removeLocalModel,
   setDefaultLocalModel,
-  type LocalModelDownloadProgress,
 } from './ai-import/model-cache';
+import { createDesktopDatabase } from './db';
 import type {
   ImportFileDescriptor,
   ImportPasswordInput,
   ImportWorkflowResult,
 } from './import/types';
+import { getLocalAiImportConfig, getServiceEnvConfig } from './settings';
+import { getOrCreateDesktopVaultKey } from './vault-key';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -249,51 +249,56 @@ app.on('will-quit', () => {
 
 // IPC Handlers
 ipcMain.handle('get-passwords', () => {
-  if (!passwordAdapter) return [];
+  if (!passwordAdapter) {return [];}
   return passwordAdapter.getPasswords();
 });
 
 ipcMain.handle('get-password-by-id', (_, id: number) => {
-  if (!passwordAdapter) return null;
+  if (!passwordAdapter) {return null;}
   return passwordAdapter.getPasswordById(id);
 });
 
 ipcMain.handle('add-password', (_, data: PasswordInput) => {
-  if (!passwordAdapter) return null;
+  if (!passwordAdapter) {return null;}
   return passwordAdapter.addPassword(data);
 });
 
+ipcMain.handle('add-passwords', (_, data: PasswordInput[]) => {
+  if (!passwordAdapter) {return null;}
+  return passwordAdapter.addPasswords(data);
+});
+
 ipcMain.handle('update-password', (_, id: number, data: PasswordInput) => {
-  if (!passwordAdapter) return null;
+  if (!passwordAdapter) {return null;}
   return passwordAdapter.updatePassword(id, data);
 });
 
 ipcMain.handle('delete-password', (_, id: number) => {
-  if (!passwordAdapter) return false;
+  if (!passwordAdapter) {return false;}
   return passwordAdapter.deletePassword(id);
 });
 
 ipcMain.handle('search-passwords', (_, query: string) => {
-  if (!passwordAdapter) return [];
+  if (!passwordAdapter) {return [];}
   return passwordAdapter.searchPasswords(query);
 });
 
 ipcMain.handle('get-categories', () => {
-  if (!passwordAdapter) return [];
+  if (!passwordAdapter) {return [];}
   return passwordAdapter.getCategories();
 });
 
-ipcMain.handle('get-local-import-model-status', async () => {
-  return getLocalModelStatus(getLocalAiImportConfig());
-});
+ipcMain.handle('get-local-import-model-status', async () => 
+  getLocalModelStatus(getLocalAiImportConfig())
+);
 
-ipcMain.handle('get-local-import-model-library-status', async () => {
-  return getLocalModelLibraryStatus(getLocalAiImportConfig());
-});
+ipcMain.handle('get-local-import-model-library-status', async () => 
+  getLocalModelLibraryStatus(getLocalAiImportConfig())
+);
 
-ipcMain.handle('get-local-import-model-download-progress', () => {
-  return currentModelDownloadProgress;
-});
+ipcMain.handle('get-local-import-model-download-progress', () => 
+  currentModelDownloadProgress
+);
 
 ipcMain.handle('prepare-local-import-model', async (_, modelId?: string) => {
   if (currentModelDownloadAbortController) {
@@ -463,9 +468,10 @@ async function runRemoteImportWorkflow(
   throw new Error('Import was cancelled');
 }
 
+interface InlineInterface { modelId?: string }
 ipcMain.handle(
   'run-import-workflow',
-  async (_, files: ImportFileDescriptor[], options?: { modelId?: string }) => {
+  async (_, files: ImportFileDescriptor[], options?: InlineInterface) => {
     const abortController = new AbortController();
     currentImportAbortController = abortController;
     currentImportJobId = null;
@@ -511,12 +517,10 @@ ipcMain.handle('cancel-import-workflow', async () => {
 ipcMain.handle(
   'save-imported-passwords',
   async (_, candidates: ImportPasswordInput[]) => {
-    if (!passwordAdapter) return { saved: 0 };
+    if (!passwordAdapter) {return { saved: 0 };}
     const parsedCandidates = importPasswordsSchema.parse(candidates);
-    let saved = 0;
-
-    for (const record of parsedCandidates) {
-      await passwordAdapter.addPassword({
+    await passwordAdapter.addPasswords(
+      parsedCandidates.map(record => { return {
         title: record.title,
         username: record.username,
         password: record.password,
@@ -525,10 +529,9 @@ ipcMain.handle(
         category: 'imported',
         isFavorite: false,
         icon: null,
-      });
-      saved += 1;
-    }
+      } })
+    );
 
-    return { saved };
+    return { saved: parsedCandidates.length };
   }
 );

@@ -1,24 +1,24 @@
-import { Password, usePasswordStore } from '@/store/passwordStore';
-import { View, Text, StyleSheet, Image, useColorScheme } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  interpolate,
-  runOnJS,
-} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import { Edit, Globe,Star, Trash2 } from 'lucide-react-native';
+import { useMemo, useRef } from 'react';
+import { Image, StyleSheet, Text, useColorScheme,View } from 'react-native';
 import {
   Gesture,
   GestureDetector,
   Pressable,
 } from 'react-native-gesture-handler';
-import { useMemo, useRef } from 'react';
+import Animated, {
+  interpolate,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import { useMutation } from '@tanstack/react-query';
-import { Edit, Trash2, Star, Globe } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
-import * as Haptics from 'expo-haptics';
 
 interface Props {
   password: Password;
@@ -81,7 +81,7 @@ export function PasswordItem({
     };
   });
 
-  const resetSwipe = (stiffness: number = 100) => {
+  const resetSwipe = (stiffness = 100) => {
     translateX.value = withSpring(0, { stiffness });
     lastOffset.current = 0;
   };

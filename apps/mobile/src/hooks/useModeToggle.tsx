@@ -1,6 +1,6 @@
-import { useColorScheme } from './useColorTheme';
 import { useState } from 'react';
 import { Appearance, ColorSchemeName } from 'react-native';
+import { useColorScheme } from './useColorTheme';
 
 type Mode = 'light' | 'dark' | 'system';
 
@@ -28,15 +28,18 @@ export function useModeToggle(): UseModeToggleReturn {
 
   const toggleMode = () => {
     switch (mode) {
-      case 'light':
+      case 'light': {
         setMode('dark');
         break;
-      case 'dark':
+      }
+      case 'dark': {
         setMode('system');
         break;
-      case 'system':
+      }
+      case 'system': {
         setMode('light');
         break;
+      }
     }
   };
 

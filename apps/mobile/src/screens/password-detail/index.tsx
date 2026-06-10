@@ -1,11 +1,11 @@
-import { usePasswordStore } from '@/store/passwordStore';
-import { useQuery } from '@tanstack/react-query';
 import { Redirect } from 'expo-router';
-import { LoadingSkeleton } from '@/components/loading-skeleton';
-import { Render } from './render';
 import { useMemo } from 'react';
-import { StoreContext, createStore } from './context';
+import { useQuery } from '@tanstack/react-query';
+import { LoadingSkeleton } from '@/components/loading-skeleton';
+import { usePasswordStore } from '@/store/passwordStore';
+import { createStore,StoreContext } from './context';
 import { ModalController } from './modal-controller';
+import { Render } from './render';
 
 export function PasswordDetailScreen({ id }: { id: number }) {
   const { findPassword } = usePasswordStore();

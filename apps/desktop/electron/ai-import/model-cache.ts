@@ -1,8 +1,8 @@
+import { createHash } from 'node:crypto';
+import { createWriteStream, existsSync } from 'node:fs';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { basename, join } from 'node:path';
 import { app } from 'electron';
-import { createHash } from 'crypto';
-import { createWriteStream, existsSync } from 'fs';
-import { mkdir, readFile, rename, rm, writeFile } from 'fs/promises';
-import { basename, join } from 'path';
 import type { LocalAiImportConfig } from '../settings';
 
 const DEFAULT_MODEL_ID = 'gemma-4-26b-a4b-it-q4-k-m';
@@ -176,8 +176,8 @@ function getCatalogEntry(modelId?: string) {
 function getCatalogEntryByFile(fileName: string, repo?: string) {
   return LOCAL_MODEL_CATALOG.find(
     entry =>
-      entry.fileName === fileName &&
-      (!repo || entry.repo.toLowerCase() === repo.toLowerCase())
+      { return entry.fileName === fileName &&
+      (!repo || entry.repo.toLowerCase() === repo.toLowerCase()) }
   );
 }
 
@@ -217,7 +217,7 @@ async function writeLibraryManifest(manifest: LocalModelLibraryManifest) {
 
 async function getLibraryManifest() {
   const manifest = await readLibraryManifest();
-  if (manifest.models.length) {
+  if (manifest.models.length > 0) {
     return manifest;
   }
 
@@ -291,7 +291,7 @@ function toStatus(
 function envModelItem(
   config: LocalAiImportConfig
 ): LocalModelLibraryItem | null {
-  if (!config.modelPath) return null;
+  if (!config.modelPath) {return null;}
 
   return {
     id: 'env-model-path',
@@ -352,9 +352,10 @@ export async function getLocalModelStatus(
   );
 }
 
+interface InlineInterface { makeDefault?: boolean }
 async function upsertModelItem(
   item: LocalModelLibraryItem,
-  options: { makeDefault?: boolean } = {}
+  options: InlineInterface = {}
 ) {
   const manifest = await getLibraryManifest();
   const deduped = manifest.models.filter(
@@ -402,7 +403,7 @@ async function downloadFile(
     error?: LocalModelDownloadProgress['error'],
     force = false
   ) => {
-    if (!onProgress) return;
+    if (!onProgress) {return;}
 
     const now = Date.now();
     if (!force && status === 'downloading' && now - lastProgressAt < 250) {
@@ -441,22 +442,22 @@ async function downloadFile(
       }
 
       const { done, value } = await reader.read();
-      if (done) break;
+      if (done) {break;}
 
       const buffer = Buffer.from(value);
-      sizeBytes += buffer.length;
+      sizeBytes = sizeBytes + buffer.length;
       hash.update(buffer);
       emitProgress('downloading');
       if (!writer.write(buffer)) {
         await new Promise<void>(resolve => {
-          writer.once('drain', () => resolve());
+          writer.once('drain', () => { resolve(); });
         });
       }
     }
 
     await new Promise<void>((resolve, reject) => {
       writer.once('error', reject);
-      writer.end(() => resolve());
+      writer.end(() => { resolve(); });
     });
 
     emitProgress('verifying', undefined, true);
@@ -505,8 +506,8 @@ export async function prepareLocalModel(
   const modelPath = getCatalogModelPath(entry);
   await mkdir(getModelsDir(), { recursive: true });
 
-  let sha256 = entry.sha256;
-  let sizeBytes = entry.sizeBytes;
+  let {sha256} = entry;
+  let {sizeBytes} = entry;
 
   if (!existsSync(modelPath)) {
     onProgress?.({
@@ -645,8 +646,8 @@ export async function resolveLocalModelPath(
   const entry =
     LOCAL_MODEL_CATALOG.find(
       item =>
-        item.repo === resolvedConfig.modelRepo &&
-        item.fileName === resolvedConfig.modelFile
+        { return item.repo === resolvedConfig.modelRepo &&
+        item.fileName === resolvedConfig.modelFile }
     ) ?? getCatalogEntry(DEFAULT_MODEL_ID);
   return getCatalogModelPath(entry);
 }
@@ -675,8 +676,8 @@ export async function ensureLocalModel(
   const entry =
     LOCAL_MODEL_CATALOG.find(
       item =>
-        item.repo === resolvedConfig.modelRepo &&
-        item.fileName === resolvedConfig.modelFile
+        { return item.repo === resolvedConfig.modelRepo &&
+        item.fileName === resolvedConfig.modelFile }
     ) ?? getCatalogEntry(modelId);
   const status = await prepareLocalModel(
     resolvedConfig,

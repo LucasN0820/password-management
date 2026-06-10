@@ -1,5 +1,5 @@
-import { AlertDialog, useAlertDialog } from '@/components/ui/alert-dialog';
 import { useCallback } from 'react';
+import { AlertDialog, useAlertDialog } from '@/components/ui/alert-dialog';
 
 interface Props {
   id: number;
@@ -26,7 +26,6 @@ export function ModalDeletePassword({ id, title, onClose }: Props) {
       title="删除密码"
       description={`确定要删除 "${title}" 吗？此操作无法撤销。`}
       confirmText="Delete"
-      cancelText="Cancel"
     />
   );
 }

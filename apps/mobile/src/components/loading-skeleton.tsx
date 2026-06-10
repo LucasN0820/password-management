@@ -1,6 +1,6 @@
+import { ViewStyle } from 'react-native';
 import { Skeleton } from '@/components/ui/skeleton';
 import { View } from '@/components/ui/view';
-import { ViewStyle } from 'react-native';
 
 export function LoadingSkeleton({ style }: { style?: ViewStyle }) {
   return (

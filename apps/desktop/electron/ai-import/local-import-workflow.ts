@@ -1,14 +1,16 @@
+import { randomUUID } from 'node:crypto';
 import { runImportWorkflow } from '@repo/ai-import-core';
-import { getLocalAiImportConfig } from '../settings';
+import { parseImportFile } from '@repo/ai-import-core/node';
 import type {
   ImportFileDescriptor,
   ImportWorkflowResult,
 } from '../import/types';
-import { createLocalLlamaExtractor } from './local-llama-provider';
+import { getLocalAiImportConfig } from '../settings';
 import { getLlamaServerBaseUrl, releaseLlamaServer } from './llama-runtime';
+import { createLocalLlamaExtractor } from './local-llama-provider';
 import {
-  resolveLocalModelConfig,
   type LocalModelDownloadProgressHandler,
+  resolveLocalModelConfig,
 } from './model-cache';
 
 export async function runLocalImportWorkflow(
@@ -31,7 +33,12 @@ export async function runLocalImportWorkflow(
   try {
     return await runImportWorkflow(
       files,
-      createLocalLlamaExtractor(baseUrl, config, signal)
+      {
+        parseFile: parseImportFile,
+        extractCandidates: createLocalLlamaExtractor(baseUrl, config, signal),
+        createId: randomUUID,
+      },
+      { signal }
     );
   } finally {
     releaseLlamaServer(config);

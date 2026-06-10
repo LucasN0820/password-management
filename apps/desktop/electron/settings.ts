@@ -1,7 +1,7 @@
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { app } from 'electron';
-import { existsSync, readFileSync } from 'fs';
-import { dirname, join, resolve } from 'path';
-import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -12,10 +12,10 @@ function parseEnvFile(filePath: string): Record<string, string> {
 
   for (const line of content.split(/\r?\n/)) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
+    if (!trimmed || trimmed.startsWith('#')) {continue;}
 
     const separatorIndex = trimmed.indexOf('=');
-    if (separatorIndex === -1) continue;
+    if (separatorIndex === -1) {continue;}
 
     const key = trimmed.slice(0, separatorIndex).trim();
     let value = trimmed.slice(separatorIndex + 1).trim();
@@ -72,20 +72,18 @@ function findWorkspaceRoot(startDir: string) {
 }
 
 function getCandidateWorkspaceRoots() {
-  return Array.from(
-    new Set([
+  return [...new Set([
       findWorkspaceRoot(process.cwd()),
       findWorkspaceRoot(app.getAppPath()),
       findWorkspaceRoot(__dirname),
-    ]),
-  );
+    ])];
 }
 
 function getRootEnvPaths() {
-  return getCandidateWorkspaceRoots().flatMap(root => [
+  return getCandidateWorkspaceRoots().flatMap(root => { return [
     join(root, '.env'),
     join(root, '.env.local'),
-  ]);
+  ] });
 }
 
 function getPackagedDesktopEnv() {
@@ -112,8 +110,8 @@ export function getServiceEnvConfig(): {
   }
 
   for (const filePath of getRootEnvPaths()) {
-    if (url && secret) break;
-    if (!existsSync(filePath)) continue;
+    if (url && secret) {break;}
+    if (!existsSync(filePath)) {continue;}
 
     const parsed = parseEnvFile(filePath);
     if (!url && parsed.AI_IMPORT_SERVICE_URL) {
@@ -145,7 +143,7 @@ function readMergedEnv() {
   const merged: Record<string, string> = {}
 
   for (const filePath of getRootEnvPaths()) {
-    if (!existsSync(filePath)) continue
+    if (!existsSync(filePath)) {continue}
     Object.assign(merged, parseEnvFile(filePath))
   }
 

@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { TabView, SceneMap } from 'react-native-tab-view';
-import { AllPassword } from "./password-all";
-import { FavoritePassword } from "./password-favorite";
 import { useWindowDimensions } from "react-native";
+import { SceneMap,TabView } from 'react-native-tab-view';
 import { TabBar } from "react-native-tab-view";
 import { useColor } from "@/hooks/useColor";
+import { AllPassword } from "./password-all";
+import { FavoritePassword } from "./password-favorite";
 
 const renderScene = SceneMap({
   all: AllPassword,
