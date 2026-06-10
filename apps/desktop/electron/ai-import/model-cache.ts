@@ -1,6 +1,6 @@
 import { app } from 'electron';
-import { createHash, randomUUID } from 'crypto';
-import { createWriteStream, existsSync, statSync } from 'fs';
+import { createHash } from 'crypto';
+import { createWriteStream, existsSync } from 'fs';
 import { mkdir, readFile, rename, rm, writeFile } from 'fs/promises';
 import { basename, join } from 'path';
 import type { LocalAiImportConfig } from '../settings';
@@ -9,17 +9,17 @@ const DEFAULT_MODEL_ID = 'gemma-4-26b-a4b-it-q4-k-m';
 const LEGACY_MODEL_MANIFEST_FILE = 'manifest.json';
 const MODEL_LIBRARY_FILE = 'model-library.json';
 
-export type LocalModelFamily = 'qwen' | 'gemma' | 'gpt-oss' | 'custom';
-export type LocalModelSource = 'catalog' | 'custom-file' | 'env-path';
+export type LocalModelFamily = 'qwen' | 'gemma' | 'gpt-oss' | 'env';
+export type LocalModelSource = 'catalog' | 'env-path';
 export type LocalModelLifecycle =
   | 'not-downloaded'
   | 'ready'
   | 'missing'
-  | 'custom-path';
+  | 'env-path';
 
 export interface LocalModelCatalogEntry {
   id: string;
-  family: Exclude<LocalModelFamily, 'custom'>;
+  family: Exclude<LocalModelFamily, 'env'>;
   displayName: string;
   repo: string;
   quant: string;
@@ -78,6 +78,31 @@ export interface LocalModelLibraryStatus {
   catalog: LocalModelCatalogEntry[];
   models: LocalModelStatus[];
 }
+
+export interface LocalModelDownloadProgress {
+  modelId: string;
+  displayName: string;
+  status:
+    | 'starting'
+    | 'downloading'
+    | 'verifying'
+    | 'completed'
+    | 'cancelled'
+    | 'failed';
+  downloadedBytes: number;
+  totalBytes?: number;
+  bytesPerSecond?: number;
+  estimatedSecondsRemaining?: number;
+  path: string;
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
+export type LocalModelDownloadProgressHandler = (
+  progress: LocalModelDownloadProgress
+) => void;
 
 export const LOCAL_MODEL_CATALOG: LocalModelCatalogEntry[] = [
   {
@@ -174,7 +199,7 @@ async function readLibraryManifest() {
     return {
       version: 1,
       defaultModelId: parsed.defaultModelId || DEFAULT_MODEL_ID,
-      models: parsed.models ?? [],
+      models: (parsed.models ?? []).filter(model => model.source === 'catalog'),
     } satisfies LocalModelLibraryManifest;
   } catch {
     return {
@@ -202,13 +227,16 @@ async function getLibraryManifest() {
   }
 
   const catalogEntry = getCatalogEntryByFile(legacy.fileName, legacy.repo);
+  if (!catalogEntry) {
+    return manifest;
+  }
+
   const item: LocalModelLibraryItem = {
-    id: catalogEntry?.id ?? randomUUID(),
-    family: catalogEntry?.family ?? 'custom',
-    displayName:
-      catalogEntry?.displayName ?? basename(legacy.fileName, '.gguf'),
+    id: catalogEntry.id,
+    family: catalogEntry.family,
+    displayName: catalogEntry.displayName,
     path: legacy.path,
-    source: catalogEntry ? 'catalog' : 'custom-file',
+    source: 'catalog',
     repo: legacy.repo,
     quant: legacy.quant,
     fileName: legacy.fileName,
@@ -252,7 +280,7 @@ function toStatus(
     lifecycle:
       item.source === 'env-path'
         ? exists
-          ? 'custom-path'
+          ? 'env-path'
           : 'missing'
         : exists
           ? 'ready'
@@ -267,7 +295,7 @@ function envModelItem(
 
   return {
     id: 'env-model-path',
-    family: 'custom',
+    family: 'env',
     displayName: basename(config.modelPath, '.gguf') || 'Environment model',
     path: config.modelPath,
     source: 'env-path',
@@ -342,10 +370,12 @@ async function upsertModelItem(
 }
 
 async function downloadFile(
+  entry: LocalModelCatalogEntry,
   url: string,
   destinationPath: string,
   expectedSha256?: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  onProgress?: LocalModelDownloadProgressHandler
 ) {
   const partialPath = `${destinationPath}.partial`;
   const response = await fetch(url, { signal });
@@ -359,9 +389,52 @@ async function downloadFile(
   const hash = createHash('sha256');
   const writer = createWriteStream(partialPath);
   const reader = response.body.getReader();
+  const totalBytesHeader = response.headers.get('content-length');
+  const totalBytes = totalBytesHeader
+    ? Number.parseInt(totalBytesHeader, 10)
+    : undefined;
+  const startedAt = Date.now();
+  let lastProgressAt = 0;
   let sizeBytes = 0;
 
+  const emitProgress = (
+    status: LocalModelDownloadProgress['status'],
+    error?: LocalModelDownloadProgress['error'],
+    force = false
+  ) => {
+    if (!onProgress) return;
+
+    const now = Date.now();
+    if (!force && status === 'downloading' && now - lastProgressAt < 250) {
+      return;
+    }
+    lastProgressAt = now;
+
+    const elapsedSeconds = Math.max((now - startedAt) / 1000, 0.1);
+    const bytesPerSecond = sizeBytes / elapsedSeconds;
+    const remainingBytes =
+      totalBytes && totalBytes > sizeBytes ? totalBytes - sizeBytes : 0;
+    const estimatedSecondsRemaining =
+      remainingBytes && bytesPerSecond
+        ? remainingBytes / bytesPerSecond
+        : undefined;
+
+    onProgress({
+      modelId: entry.id,
+      displayName: entry.displayName,
+      status,
+      downloadedBytes: sizeBytes,
+      totalBytes,
+      bytesPerSecond,
+      estimatedSecondsRemaining,
+      path: destinationPath,
+      error,
+    });
+  };
+
   try {
+    emitProgress('downloading', undefined, true);
+
     while (true) {
       if (signal?.aborted) {
         throw new Error('Local model download was cancelled');
@@ -373,6 +446,7 @@ async function downloadFile(
       const buffer = Buffer.from(value);
       sizeBytes += buffer.length;
       hash.update(buffer);
+      emitProgress('downloading');
       if (!writer.write(buffer)) {
         await new Promise<void>(resolve => {
           writer.once('drain', () => resolve());
@@ -384,6 +458,8 @@ async function downloadFile(
       writer.once('error', reject);
       writer.end(() => resolve());
     });
+
+    emitProgress('verifying', undefined, true);
 
     const sha256 = hash.digest('hex');
 
@@ -398,10 +474,23 @@ async function downloadFile(
 
     await rename(partialPath, destinationPath);
 
+    emitProgress('completed', undefined, true);
+
     return { sha256, sizeBytes };
   } catch (error) {
     writer.destroy();
     await rm(partialPath, { force: true }).catch(() => undefined);
+    emitProgress(
+      signal?.aborted ? 'cancelled' : 'failed',
+      {
+        code: signal?.aborted ? 'download_cancelled' : 'download_failed',
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Local model download failed',
+      },
+      true
+    );
     throw error;
   }
 }
@@ -409,7 +498,8 @@ async function downloadFile(
 export async function prepareLocalModel(
   _config: LocalAiImportConfig,
   modelId?: string,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  onProgress?: LocalModelDownloadProgressHandler
 ) {
   const entry = getCatalogEntry(modelId);
   const modelPath = getCatalogModelPath(entry);
@@ -419,14 +509,34 @@ export async function prepareLocalModel(
   let sizeBytes = entry.sizeBytes;
 
   if (!existsSync(modelPath)) {
+    onProgress?.({
+      modelId: entry.id,
+      displayName: entry.displayName,
+      status: 'starting',
+      downloadedBytes: 0,
+      totalBytes: entry.sizeBytes,
+      path: modelPath,
+    });
+
     const downloaded = await downloadFile(
+      entry,
       buildHuggingFaceDownloadUrl(entry),
       modelPath,
       entry.sha256,
-      signal
+      signal,
+      onProgress
     );
     sha256 = downloaded.sha256;
     sizeBytes = downloaded.sizeBytes;
+  } else {
+    onProgress?.({
+      modelId: entry.id,
+      displayName: entry.displayName,
+      status: 'completed',
+      downloadedBytes: sizeBytes ?? 0,
+      totalBytes: sizeBytes,
+      path: modelPath,
+    });
   }
 
   const item: LocalModelLibraryItem = {
@@ -448,25 +558,33 @@ export async function prepareLocalModel(
   return upsertModelItem(item, { makeDefault: true });
 }
 
-export async function registerLocalModelFile(filePath: string) {
-  const stats = statSync(filePath);
-  const fileName = basename(filePath);
-  const catalogEntry = getCatalogEntryByFile(fileName);
-  const item: LocalModelLibraryItem = {
-    id: catalogEntry?.id ?? `custom-${randomUUID()}`,
-    family: catalogEntry?.family ?? 'custom',
-    displayName: catalogEntry?.displayName ?? basename(fileName, '.gguf'),
-    path: filePath,
-    source: catalogEntry ? 'catalog' : 'custom-file',
-    repo: catalogEntry?.repo,
-    quant: catalogEntry?.quant,
-    fileName,
-    sizeBytes: stats.size,
-    verified: false,
-    addedAt: new Date().toISOString(),
+export async function removeLocalModel(modelId: string) {
+  const manifest = await getLibraryManifest();
+  const model = manifest.models.find(item => item.id === modelId);
+
+  if (!model) {
+    throw new Error(`Local model is not downloaded: ${modelId}`);
+  }
+
+  if (model.source !== 'catalog') {
+    throw new Error('Only downloaded catalog models can be removed.');
+  }
+
+  await rm(model.path, { force: true }).catch(() => undefined);
+  await rm(`${model.path}.partial`, { force: true }).catch(() => undefined);
+
+  const models = manifest.models.filter(item => item.id !== modelId);
+  const nextManifest = {
+    ...manifest,
+    defaultModelId:
+      manifest.defaultModelId === modelId
+        ? (models[0]?.id ?? DEFAULT_MODEL_ID)
+        : manifest.defaultModelId,
+    models,
   };
 
-  return upsertModelItem(item, { makeDefault: true });
+  await writeLibraryManifest(nextManifest);
+  return getLocalModelLibraryStatus({} as LocalAiImportConfig);
 }
 
 export async function setDefaultLocalModel(modelId: string) {
@@ -498,20 +616,9 @@ export async function resolveLocalModelConfig(
 
   const manifest = await getLibraryManifest();
   const selectedId = modelId ?? manifest.defaultModelId ?? DEFAULT_MODEL_ID;
-  const customItem = manifest.models.find(model => model.id === selectedId);
-  if (customItem?.source === 'custom-file') {
-    return {
-      ...config,
-      modelRepo: customItem.repo ?? config.modelRepo,
-      modelQuant: customItem.quant ?? config.modelQuant,
-      modelFile: customItem.fileName,
-      modelPath: customItem.path,
-    };
-  }
 
   const entry =
     LOCAL_MODEL_CATALOG.find(item => item.id === selectedId) ??
-    LOCAL_MODEL_CATALOG.find(item => item.id === customItem?.id) ??
     getCatalogEntry(DEFAULT_MODEL_ID);
 
   return {
@@ -547,7 +654,8 @@ export async function resolveLocalModelPath(
 export async function ensureLocalModel(
   config: LocalAiImportConfig,
   signal?: AbortSignal,
-  modelId?: string
+  modelId?: string,
+  onProgress?: LocalModelDownloadProgressHandler
 ) {
   const resolvedConfig = await resolveLocalModelConfig(config, modelId);
 
@@ -570,7 +678,12 @@ export async function ensureLocalModel(
         item.repo === resolvedConfig.modelRepo &&
         item.fileName === resolvedConfig.modelFile
     ) ?? getCatalogEntry(modelId);
-  const status = await prepareLocalModel(resolvedConfig, entry.id, signal);
+  const status = await prepareLocalModel(
+    resolvedConfig,
+    entry.id,
+    signal,
+    onProgress
+  );
   return status.path;
 }
 

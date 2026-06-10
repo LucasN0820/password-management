@@ -6,18 +6,27 @@ import type {
 } from '../import/types';
 import { createLocalLlamaExtractor } from './local-llama-provider';
 import { getLlamaServerBaseUrl, releaseLlamaServer } from './llama-runtime';
-import { resolveLocalModelConfig } from './model-cache';
+import {
+  resolveLocalModelConfig,
+  type LocalModelDownloadProgressHandler,
+} from './model-cache';
 
 export async function runLocalImportWorkflow(
   files: ImportFileDescriptor[],
   signal?: AbortSignal,
-  modelId?: string
+  modelId?: string,
+  onModelDownloadProgress?: LocalModelDownloadProgressHandler
 ): Promise<ImportWorkflowResult> {
   const config = await resolveLocalModelConfig(
     getLocalAiImportConfig(),
     modelId
   );
-  const baseUrl = await getLlamaServerBaseUrl(config, signal, modelId);
+  const baseUrl = await getLlamaServerBaseUrl(
+    config,
+    signal,
+    modelId,
+    onModelDownloadProgress
+  );
 
   try {
     return await runImportWorkflow(

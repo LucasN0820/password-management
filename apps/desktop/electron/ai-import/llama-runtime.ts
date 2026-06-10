@@ -4,7 +4,10 @@ import { chmodSync, existsSync, statSync } from 'fs';
 import { join } from 'path';
 import { createServer } from 'net';
 import type { LocalAiImportConfig } from '../settings';
-import { ensureLocalModel } from './model-cache';
+import {
+  ensureLocalModel,
+  type LocalModelDownloadProgressHandler,
+} from './model-cache';
 
 interface RunningServer {
   baseUrl: string;
@@ -173,9 +176,15 @@ async function waitForServer(
 export async function getLlamaServerBaseUrl(
   config: LocalAiImportConfig,
   signal?: AbortSignal,
-  modelId?: string
+  modelId?: string,
+  onModelDownloadProgress?: LocalModelDownloadProgressHandler
 ) {
-  const modelPath = await ensureLocalModel(config, signal, modelId);
+  const modelPath = await ensureLocalModel(
+    config,
+    signal,
+    modelId,
+    onModelDownloadProgress
+  );
 
   if (runningServer) {
     if (runningServer.modelPath !== modelPath) {

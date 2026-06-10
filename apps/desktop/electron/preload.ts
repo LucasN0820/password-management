@@ -6,8 +6,11 @@ import type {
   ImportPasswordInput,
   ImportWorkflowResult,
 } from './import/types';
-import type { LocalModelStatus } from './ai-import/model-cache';
-import type { LocalModelLibraryStatus } from './ai-import/model-cache';
+import type {
+  LocalModelDownloadProgress,
+  LocalModelLibraryStatus,
+  LocalModelStatus,
+} from './ai-import/model-cache';
 
 contextBridge.exposeInMainWorld('electronAPI', {
   getPasswords: (): Promise<Password[]> => ipcRenderer.invoke('get-passwords'),
@@ -30,12 +33,32 @@ contextBridge.exposeInMainWorld('electronAPI', {
     modelId?: string
   ): Promise<LocalModelLibraryStatus> =>
     ipcRenderer.invoke('prepare-local-import-model', modelId),
+  cancelLocalImportModelDownload: (): Promise<LocalModelLibraryStatus> =>
+    ipcRenderer.invoke('cancel-local-import-model-download'),
+  getLocalImportModelDownloadProgress:
+    (): Promise<LocalModelDownloadProgress | null> =>
+      ipcRenderer.invoke('get-local-import-model-download-progress'),
+  removeLocalImportModel: (modelId: string): Promise<LocalModelLibraryStatus> =>
+    ipcRenderer.invoke('remove-local-import-model', modelId),
+  onLocalImportModelDownloadProgress: (
+    callback: (progress: LocalModelDownloadProgress) => void
+  ) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      progress: LocalModelDownloadProgress
+    ) => callback(progress);
+    ipcRenderer.on('local-import-model-download-progress', listener);
+    return () => {
+      ipcRenderer.removeListener(
+        'local-import-model-download-progress',
+        listener
+      );
+    };
+  },
   setDefaultLocalImportModel: (
     modelId: string
   ): Promise<LocalModelLibraryStatus> =>
     ipcRenderer.invoke('set-default-local-import-model', modelId),
-  selectLocalImportModelFile: (): Promise<LocalModelLibraryStatus> =>
-    ipcRenderer.invoke('select-local-import-model-file'),
   openLocalImportModelFolder: (): Promise<void> =>
     ipcRenderer.invoke('open-local-import-model-folder'),
   selectImportFiles: (): Promise<ImportFileDescriptor[]> =>
@@ -73,10 +96,17 @@ declare global {
       prepareLocalImportModel: (
         modelId?: string
       ) => Promise<LocalModelLibraryStatus>;
+      cancelLocalImportModelDownload: () => Promise<LocalModelLibraryStatus>;
+      getLocalImportModelDownloadProgress: () => Promise<LocalModelDownloadProgress | null>;
+      removeLocalImportModel: (
+        modelId: string
+      ) => Promise<LocalModelLibraryStatus>;
+      onLocalImportModelDownloadProgress: (
+        callback: (progress: LocalModelDownloadProgress) => void
+      ) => () => void;
       setDefaultLocalImportModel: (
         modelId: string
       ) => Promise<LocalModelLibraryStatus>;
-      selectLocalImportModelFile: () => Promise<LocalModelLibraryStatus>;
       openLocalImportModelFolder: () => Promise<void>;
       selectImportFiles: () => Promise<ImportFileDescriptor[]>;
       runImportWorkflow: (
@@ -98,5 +128,8 @@ export type {
   ImportPasswordInput,
   ImportWorkflowResult,
 };
-export type { LocalModelStatus };
-export type { LocalModelLibraryStatus };
+export type {
+  LocalModelDownloadProgress,
+  LocalModelLibraryStatus,
+  LocalModelStatus,
+};

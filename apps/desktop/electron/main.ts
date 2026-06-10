@@ -31,8 +31,9 @@ import {
   getLocalModelLibraryStatus,
   getLocalModelsDir,
   prepareLocalModel,
-  registerLocalModelFile,
+  removeLocalModel,
   setDefaultLocalModel,
+  type LocalModelDownloadProgress,
 } from './ai-import/model-cache';
 import type {
   ImportFileDescriptor,
@@ -50,6 +51,9 @@ let searchWindow: BrowserWindow | null;
 let sqlite: ReturnType<typeof createDesktopDatabase>['client'] | null;
 let db: PasswordDatabase | null;
 let passwordAdapter: DatabaseAdapter | null;
+let currentModelDownloadAbortController: AbortController | null = null;
+let currentModelDownloadId: string | null = null;
+let currentModelDownloadProgress: LocalModelDownloadProgress | null = null;
 
 const userDataPath = app.getPath('userData');
 const dbPath = join(userDataPath, 'passwords.db');
@@ -61,6 +65,17 @@ const importPasswordSchema = z.object({
   notes: z.string().nullable(),
 });
 const importPasswordsSchema = z.array(importPasswordSchema);
+
+function sendModelDownloadProgress(progress: LocalModelDownloadProgress) {
+  currentModelDownloadProgress = ['completed', 'cancelled', 'failed'].includes(
+    progress.status
+  )
+    ? null
+    : progress;
+  BrowserWindow.getAllWindows().forEach(window => {
+    window.webContents.send('local-import-model-download-progress', progress);
+  });
+}
 
 function initDatabase() {
   try {
@@ -276,9 +291,40 @@ ipcMain.handle('get-local-import-model-library-status', async () => {
   return getLocalModelLibraryStatus(getLocalAiImportConfig());
 });
 
+ipcMain.handle('get-local-import-model-download-progress', () => {
+  return currentModelDownloadProgress;
+});
+
 ipcMain.handle('prepare-local-import-model', async (_, modelId?: string) => {
+  if (currentModelDownloadAbortController) {
+    throw new Error(
+      `A model download is already running: ${currentModelDownloadId}`
+    );
+  }
+
   const config = getLocalAiImportConfig();
-  await prepareLocalModel(config, modelId);
+  const abortController = new AbortController();
+  currentModelDownloadAbortController = abortController;
+  currentModelDownloadId = modelId ?? null;
+
+  try {
+    await prepareLocalModel(
+      config,
+      modelId,
+      abortController.signal,
+      sendModelDownloadProgress
+    );
+  } catch (error) {
+    // Cancellation is a user action, not a failure worth propagating.
+    if (!abortController.signal.aborted) {
+      throw error;
+    }
+  } finally {
+    currentModelDownloadAbortController = null;
+    currentModelDownloadId = null;
+    currentModelDownloadProgress = null;
+  }
+
   return getLocalModelLibraryStatus(config);
 });
 
@@ -287,34 +333,25 @@ ipcMain.handle('set-default-local-import-model', async (_, modelId: string) => {
   return getLocalModelLibraryStatus(getLocalAiImportConfig());
 });
 
+ipcMain.handle('cancel-local-import-model-download', async () => {
+  currentModelDownloadAbortController?.abort();
+  return getLocalModelLibraryStatus(getLocalAiImportConfig());
+});
+
+ipcMain.handle('remove-local-import-model', async (_, modelId: string) => {
+  if (currentModelDownloadId === modelId) {
+    throw new Error('Cancel the active download before removing this model.');
+  }
+
+  stopLlamaServer();
+  await removeLocalModel(modelId);
+  return getLocalModelLibraryStatus(getLocalAiImportConfig());
+});
+
 ipcMain.handle('open-local-import-model-folder', async () => {
   const modelsDir = getLocalModelsDir();
   mkdirSync(modelsDir, { recursive: true });
   await shell.openPath(modelsDir);
-});
-
-ipcMain.handle('select-local-import-model-file', async () => {
-  const browserWindow =
-    BrowserWindow.getFocusedWindow() ?? mainWindow ?? undefined;
-  const options = {
-    properties: ['openFile'],
-    filters: [
-      {
-        name: 'GGUF models',
-        extensions: ['gguf'],
-      },
-    ],
-  } satisfies Electron.OpenDialogOptions;
-  const result = browserWindow
-    ? await dialog.showOpenDialog(browserWindow, options)
-    : await dialog.showOpenDialog(options);
-
-  if (result.canceled || !result.filePaths[0]) {
-    return getLocalModelLibraryStatus(getLocalAiImportConfig());
-  }
-
-  await registerLocalModelFile(result.filePaths[0]);
-  return getLocalModelLibraryStatus(getLocalAiImportConfig());
 });
 
 ipcMain.handle('select-import-files', async () => {
@@ -440,7 +477,8 @@ ipcMain.handle(
         : await runLocalImportWorkflow(
             files,
             abortController.signal,
-            options?.modelId
+            options?.modelId,
+            sendModelDownloadProgress
           );
     } finally {
       currentImportJobId = null;

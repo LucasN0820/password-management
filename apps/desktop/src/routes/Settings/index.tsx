@@ -1,15 +1,12 @@
 import {
-  Bot,
-  CheckCircle2,
   Download,
   FolderOpen,
-  HardDrive,
-  KeyRound,
   Loader2,
-  Plus,
   ShieldCheck,
+  Trash2,
+  X,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState, type KeyboardEvent } from 'react';
 import {
   Button,
   Card,
@@ -17,34 +14,35 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  Checkbox,
   toast,
 } from '@repo/ui';
 import type {
+  LocalModelDownloadProgress,
   LocalModelLibraryStatus,
-  LocalModelStatus,
 } from '../../../electron/preload';
 
 function formatBytes(bytes?: number) {
-  if (!bytes) return 'Unknown size';
+  if (bytes === undefined) return 'Unknown size';
   if (bytes < 1024 * 1024 * 1024) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
-function modelStatusLabel(model?: LocalModelStatus) {
-  if (!model) return 'Not downloaded';
-  if (!model.exists) return 'Missing file';
-  if (model.source === 'custom-file') return 'Custom GGUF';
-  if (model.source === 'env-path') return 'Environment override';
-  return 'Ready';
+function formatDuration(seconds?: number) {
+  if (!seconds || !Number.isFinite(seconds)) return null;
+  if (seconds < 60) return `${Math.ceil(seconds)}s remaining`;
+  const minutes = Math.ceil(seconds / 60);
+  return `${minutes}m remaining`;
 }
 
 export default function SettingsPage() {
   const [libraryStatus, setLibraryStatus] =
     useState<LocalModelLibraryStatus | null>(null);
   const [busyModelId, setBusyModelId] = useState<string | null>(null);
-  const [isChoosingModel, setIsChoosingModel] = useState(false);
+  const [downloadProgress, setDownloadProgress] =
+    useState<LocalModelDownloadProgress | null>(null);
 
   const refreshLibrary = async () => {
     const status = await window.electronAPI.getLocalImportModelLibraryStatus();
@@ -53,13 +51,31 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
-    refreshLibrary().catch(() => undefined);
-  }, []);
+    const unsubscribe = window.electronAPI.onLocalImportModelDownloadProgress(
+      progress => {
+        setDownloadProgress(progress);
+        if (progress.status === 'completed') {
+          refreshLibrary().catch(() => undefined);
+        }
+      }
+    );
 
-  const defaultModel = useMemo(
-    () => libraryStatus?.models.find(model => model.isDefault),
-    [libraryStatus]
-  );
+    Promise.all([
+      window.electronAPI.getLocalImportModelLibraryStatus(),
+      window.electronAPI.getLocalImportModelDownloadProgress(),
+    ])
+      .then(([status, activeProgress]) => {
+        // Restore in-flight download state before first paint of the
+        // library so remounting mid-download doesn't flash the idle UI.
+        if (activeProgress) {
+          setDownloadProgress(current => current ?? activeProgress);
+        }
+        setLibraryStatus(status);
+      })
+      .catch(() => undefined);
+
+    return unsubscribe;
+  }, []);
 
   const handlePrepareModel = async (modelId: string) => {
     setBusyModelId(modelId);
@@ -67,17 +83,58 @@ export default function SettingsPage() {
       const status = await window.electronAPI.prepareLocalImportModel(modelId);
       setLibraryStatus(status);
       const model = status.models.find(item => item.id === modelId);
+      if (model?.exists) {
+        toast({
+          title: 'Local model ready',
+          description: `${model.displayName} is ready for AI Import.`,
+        });
+      } else {
+        toast({
+          title: 'Download cancelled',
+          description: 'The model download was cancelled.',
+        });
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Unable to prepare the local AI model.';
       toast({
-        title: 'Local model ready',
-        description: `${model?.displayName ?? 'Model'} is ready for AI Import.`,
+        title: 'Model setup failed',
+        description: message,
+        variant: 'destructive',
+      });
+    } finally {
+      setBusyModelId(null);
+      setDownloadProgress(null);
+    }
+  };
+
+  const handleCancelDownload = async () => {
+    try {
+      const status = await window.electronAPI.cancelLocalImportModelDownload();
+      setLibraryStatus(status);
+    } finally {
+      setDownloadProgress(null);
+    }
+  };
+
+  const handleRemoveModel = async (modelId: string) => {
+    setBusyModelId(modelId);
+    try {
+      const status = await window.electronAPI.removeLocalImportModel(modelId);
+      setLibraryStatus(status);
+      toast({
+        title: 'Model removed',
+        description: 'The downloaded model file was removed from this device.',
       });
     } catch (error) {
       toast({
-        title: 'Model setup failed',
+        title: 'Unable to remove model',
         description:
           error instanceof Error
             ? error.message
-            : 'Unable to prepare the local AI model.',
+            : 'The local model could not be removed.',
         variant: 'destructive',
       });
     } finally {
@@ -109,31 +166,21 @@ export default function SettingsPage() {
     }
   };
 
-  const handleChooseGguf = async () => {
-    setIsChoosingModel(true);
-    try {
-      const status = await window.electronAPI.selectLocalImportModelFile();
-      setLibraryStatus(status);
-      toast({
-        title: 'Local GGUF added',
-        description: 'The selected model is available for AI Import.',
-      });
-    } catch (error) {
-      toast({
-        title: 'Unable to add model',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Unable to add the selected GGUF model.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsChoosingModel(false);
-    }
-  };
-
   const handleOpenModelFolder = async () => {
     await window.electronAPI.openLocalImportModelFolder();
+  };
+
+  const handleModelCardKeyDown = (
+    event: KeyboardEvent<HTMLDivElement>,
+    modelId: string,
+    canSelect: boolean
+  ) => {
+    if (!canSelect || (event.key !== 'Enter' && event.key !== ' ')) {
+      return;
+    }
+
+    event.preventDefault();
+    void handleSetDefault(modelId);
   };
 
   return (
@@ -148,69 +195,30 @@ export default function SettingsPage() {
             Settings
           </h1>
           <p className='mt-3 max-w-2xl text-base text-muted-foreground'>
-            Manage local GGUF models used by private AI Import.
+            Download and choose one supported local GGUF model for private AI
+            Import.
           </p>
         </section>
 
         <Card className='rounded-lg border-border bg-card'>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <Bot className='h-5 w-5 text-clay' />
-              Local AI Import
-            </CardTitle>
-            <CardDescription>
-              Choose a downloaded model or add an existing GGUF file. The import
-              workflow keeps files and extracted credentials on this device.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-4'>
-            <div className='grid gap-4 md:grid-cols-[1.2fr_0.8fr]'>
-              <div className='rounded-lg border border-border bg-surface px-4 py-4'>
-                <div className='mb-2 flex items-center gap-2 text-sm font-semibold text-foreground'>
-                  <HardDrive className='h-4 w-4 text-clay' />
-                  Default Import Model
-                </div>
-                <div className='text-lg font-semibold text-foreground'>
-                  {defaultModel?.displayName ?? 'Gemma 4 26B A4B Q4_K_M'}
-                </div>
-                <div className='mt-2 text-sm text-muted-foreground'>
-                  {defaultModel
-                    ? `${modelStatusLabel(defaultModel)} · ${formatBytes(
-                        defaultModel.sizeBytes
-                      )}`
-                    : 'Download or choose a GGUF model to get started.'}
-                </div>
-                {defaultModel?.path ? (
-                  <div className='mt-3 break-all font-mono text-xs text-muted-foreground'>
-                    {defaultModel.path}
-                  </div>
-                ) : null}
-              </div>
-
-              <div className='flex flex-col justify-center gap-3 rounded-lg border border-border bg-surface px-4 py-4'>
-                <Button onClick={handleChooseGguf} disabled={isChoosingModel}>
-                  {isChoosingModel ? (
-                    <Loader2 className='h-4 w-4 animate-spin' />
-                  ) : (
-                    <Plus className='h-4 w-4' />
-                  )}
-                  Choose GGUF
-                </Button>
-                <Button onClick={handleOpenModelFolder} variant='outline'>
-                  <FolderOpen className='h-4 w-4' />
-                  Open Model Folder
-                </Button>
-              </div>
+          <CardHeader className='flex flex-row items-start justify-between gap-4'>
+            <div>
+              <CardTitle>Model Library</CardTitle>
+              <CardDescription className='mt-1'>
+                Download supported catalog models or switch the default
+                extractor.
+              </CardDescription>
             </div>
-          </CardContent>
-        </Card>
-
-        <Card className='rounded-lg border-border bg-card'>
-          <CardHeader>
-            <CardTitle>Model Library</CardTitle>
-            <CardDescription>
-              Download supported catalog models or switch the default extractor.
-            </CardDescription>
+            <Button
+              onClick={() => {
+                void handleOpenModelFolder();
+              }}
+              size='sm'
+              variant='outline'
+            >
+              <FolderOpen className='h-4 w-4' />
+              Open Folder
+            </Button>
           </CardHeader>
           <CardContent className='space-y-4'>
             <div className='grid gap-4 lg:grid-cols-3'>
@@ -220,11 +228,54 @@ export default function SettingsPage() {
                 );
                 const isBusy = busyModelId === catalogModel.id;
                 const isReady = Boolean(installedModel?.exists);
+                const activeProgress =
+                  downloadProgress?.modelId === catalogModel.id
+                    ? downloadProgress
+                    : null;
+                const isDownloading = Boolean(
+                  activeProgress &&
+                  ['starting', 'downloading', 'verifying'].includes(
+                    activeProgress.status
+                  )
+                );
+                const totalBytes =
+                  activeProgress?.totalBytes ?? catalogModel.sizeBytes;
+                const progressPercent = totalBytes
+                  ? Math.min(
+                      100,
+                      ((activeProgress?.downloadedBytes ?? 0) / totalBytes) *
+                        100
+                    )
+                  : 0;
+                const remaining = formatDuration(
+                  activeProgress?.estimatedSecondsRemaining
+                );
 
                 return (
                   <div
                     key={catalogModel.id}
-                    className='flex min-h-[236px] flex-col justify-between rounded-lg border border-border bg-background p-4'
+                    aria-checked={installedModel?.isDefault ?? false}
+                    className={`flex min-h-[236px] flex-col justify-between rounded-lg border bg-background p-4 transition-colors ${
+                      installedModel?.isDefault
+                        ? 'border-clay ring-1 ring-clay/25'
+                        : isReady
+                          ? 'cursor-pointer border-border hover:border-clay/60 hover:bg-accent/30'
+                          : 'border-border'
+                    }`}
+                    onClick={() => {
+                      if (isReady && !installedModel?.isDefault && !isBusy) {
+                        void handleSetDefault(catalogModel.id);
+                      }
+                    }}
+                    onKeyDown={event => {
+                      handleModelCardKeyDown(
+                        event,
+                        catalogModel.id,
+                        isReady && !installedModel?.isDefault && !isBusy
+                      );
+                    }}
+                    role={isReady ? 'checkbox' : undefined}
+                    tabIndex={isReady ? 0 : undefined}
                   >
                     <div>
                       <div className='mb-3 flex items-start justify-between gap-3'>
@@ -236,8 +287,13 @@ export default function SettingsPage() {
                             {catalogModel.family} · {catalogModel.quant}
                           </div>
                         </div>
-                        {installedModel?.isDefault ? (
-                          <CheckCircle2 className='h-4 w-4 text-clay' />
+                        {isReady ? (
+                          <Checkbox
+                            aria-hidden
+                            checked={installedModel?.isDefault ?? false}
+                            className='pointer-events-none mt-0.5'
+                            tabIndex={-1}
+                          />
                         ) : null}
                       </div>
                       <p className='text-sm leading-6 text-muted-foreground'>
@@ -249,24 +305,72 @@ export default function SettingsPage() {
                           ? ` · ${catalogModel.minMemoryGb}GB+ memory`
                           : ''}
                       </div>
+                      <div className='mt-4 min-h-12'>
+                        {isDownloading ? (
+                          <div className='space-y-2'>
+                            <div className='h-1.5 overflow-hidden rounded-full bg-muted'>
+                              <div
+                                className='h-full rounded-full bg-clay transition-[width] duration-200'
+                                style={{ width: `${progressPercent}%` }}
+                              />
+                            </div>
+                            <div className='flex justify-between gap-2 text-xs text-muted-foreground'>
+                              <span>
+                                {activeProgress?.status === 'verifying'
+                                  ? 'Verifying download'
+                                  : `${Math.round(progressPercent)}% · ${formatBytes(
+                                      activeProgress?.downloadedBytes
+                                    )}`}
+                              </span>
+                              <span>
+                                {remaining ??
+                                  (activeProgress?.bytesPerSecond
+                                    ? `${formatBytes(
+                                        activeProgress.bytesPerSecond
+                                      )}/s`
+                                    : 'Starting')}
+                              </span>
+                            </div>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
 
                     <div className='mt-4 flex flex-wrap gap-2'>
-                      {isReady ? (
+                      {isDownloading ? (
                         <Button
-                          disabled={isBusy || installedModel?.isDefault}
-                          onClick={() => handleSetDefault(catalogModel.id)}
+                          onClick={() => {
+                            void handleCancelDownload();
+                          }}
                           size='sm'
-                          variant={
-                            installedModel?.isDefault ? 'outline' : 'default'
-                          }
+                          variant='outline'
                         >
-                          {installedModel?.isDefault ? 'Default' : 'Use'}
+                          <X className='h-4 w-4' />
+                          Cancel
+                        </Button>
+                      ) : isReady ? (
+                        <Button
+                          disabled={isBusy}
+                          onClick={event => {
+                            event.stopPropagation();
+                            void handleRemoveModel(catalogModel.id);
+                          }}
+                          size='icon'
+                          title={`Remove ${catalogModel.displayName}`}
+                          variant='ghost'
+                        >
+                          {isBusy ? (
+                            <Loader2 className='h-4 w-4 animate-spin' />
+                          ) : (
+                            <Trash2 className='h-4 w-4' />
+                          )}
                         </Button>
                       ) : (
                         <Button
-                          disabled={isBusy}
-                          onClick={() => handlePrepareModel(catalogModel.id)}
+                          disabled={isBusy || Boolean(downloadProgress)}
+                          onClick={() => {
+                            void handlePrepareModel(catalogModel.id);
+                          }}
                           size='sm'
                         >
                           {isBusy ? (
@@ -281,77 +385,6 @@ export default function SettingsPage() {
                   </div>
                 );
               })}
-            </div>
-
-            <div className='rounded-lg border border-border bg-surface px-4 py-4'>
-              <div className='mb-3 text-sm font-semibold text-foreground'>
-                Added Models
-              </div>
-              {libraryStatus?.models.length ? (
-                <div className='space-y-3'>
-                  {libraryStatus.models.map(model => (
-                    <div
-                      className='flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-background px-3 py-3'
-                      key={model.id}
-                    >
-                      <div className='min-w-0'>
-                        <div className='text-sm font-medium text-foreground'>
-                          {model.displayName}
-                        </div>
-                        <div className='mt-1 break-all text-xs text-muted-foreground'>
-                          {modelStatusLabel(model)} · {model.fileName}
-                        </div>
-                      </div>
-                      <Button
-                        disabled={model.isDefault || busyModelId === model.id}
-                        onClick={() => handleSetDefault(model.id)}
-                        size='sm'
-                        variant={model.isDefault ? 'outline' : 'default'}
-                      >
-                        {model.isDefault ? 'Default' : 'Use'}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className='text-sm text-muted-foreground'>
-                  No local models added yet.
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className='rounded-lg border-border bg-card'>
-          <CardHeader>
-            <CardTitle className='flex items-center gap-2'>
-              <KeyRound className='h-5 w-5 text-clay' />
-              Advanced
-            </CardTitle>
-            <CardDescription>
-              Environment variables remain available for development and
-              enterprise overrides.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='rounded-lg border border-border bg-surface px-4 py-4'>
-              <ul className='space-y-2 text-sm text-muted-foreground'>
-                <li>
-                  <code>AI_IMPORT_PROVIDER</code> - Defaults to local-llama
-                </li>
-                <li>
-                  <code>AI_IMPORT_MODEL_PATH</code> - Local GGUF model path
-                  override
-                </li>
-                <li>
-                  <code>AI_IMPORT_LLAMA_SERVER_PATH</code> - Local llama-server
-                  binary path override
-                </li>
-                <li>
-                  <code>AI_IMPORT_CONTEXT_SIZE</code> - Context window for local
-                  extraction
-                </li>
-              </ul>
             </div>
           </CardContent>
         </Card>

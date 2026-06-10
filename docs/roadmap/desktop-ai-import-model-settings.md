@@ -1,8 +1,8 @@
 # Desktop AI Import Model Settings Roadmap
 
 本文档定义 Desktop App 中 `AI Import` 本地模型下载、加载、运行状态和设置页的
-后续优化方案。目标是把当前偏工程占位的 `Local AI Import` 设置页，升级成普通
-用户也能理解、控制和恢复的本地模型管理体验。
+后续优化方案。目标是把当前偏工程占位的模型设置页，升级成普通用户也能理解、
+控制和恢复的本地模型管理体验。
 
 ## 背景
 
@@ -28,25 +28,21 @@
 - 用户能控制大模型下载：开始、取消、重试、删除、重新校验。
 - 用户能从内置模型目录中选择并下载 GGUF 模型，目前支持 `Qwen`、`Gemma`、
   `gpt-oss` 三类模型。
-- 用户能导入已有本地 GGUF 文件，并在 AI Import 时选择该模型进行提取。
 - 首次使用 AI Import 时，能在导入流程里完成模型准备，而不是被动报错。
 - AI Import 开始前允许用户从已下载模型中选择本次使用的 extractor model。
 - 用户能验证本机 runtime 是否真的可用，而不只是模型文件存在。
-- 普通用户看到的是模型管理；高级配置仍可折叠展示。
+- Settings 只展示普通用户需要的模型管理能力，不展示环境变量配置卡片。
 - 所有敏感文件内容、prompt、候选密码仍不离开本机。
 
 ## 目标信息架构
 
-设置页建议拆成三个区域：
+设置页不再保留独立的 `Local AI Import` 或 `Advanced` 卡片：
 
-1. `Local Model`
-   管理 GGUF 模型目录、下载进度、缓存路径、校验状态和当前默认模型。
-2. `Model Library`
-   展示可下载模型和已下载模型，支持下载、选择、删除、导入本地 GGUF。
-3. `Runtime`
+1. `Model Library`
+   展示 `Qwen`、`Gemma`、`gpt-oss` 三个可下载模型，并在同一区域管理模型目录、
+   下载进度、默认选择、取消下载和删除。
+2. `Runtime`
    管理 `llama-server` binary、运行状态、监听地址和测试能力。
-4. `Advanced`
-   折叠展示环境变量覆盖项和 legacy provider 信息。
 
 ## 模型目录和选择策略
 
@@ -61,22 +57,22 @@
 建议维护一个 allowlist catalog，而不是允许任意 URL 下载：
 
 ```ts
-type LocalModelFamily = 'qwen' | 'gemma' | 'gpt-oss'
+type LocalModelFamily = 'qwen' | 'gemma' | 'gpt-oss';
 
 interface LocalModelCatalogEntry {
-  id: string
-  family: LocalModelFamily
-  displayName: string
-  repo: string
-  quant: string
-  fileName: string
-  sizeBytes?: number
-  sha256?: string
-  downloadUrl?: string
-  recommended: boolean
-  minMemoryGb?: number
-  contextSize: number
-  maxTokens: number
+  id: string;
+  family: LocalModelFamily;
+  displayName: string;
+  repo: string;
+  quant: string;
+  fileName: string;
+  sizeBytes?: number;
+  sha256?: string;
+  downloadUrl?: string;
+  recommended: boolean;
+  minMemoryGb?: number;
+  contextSize: number;
+  maxTokens: number;
 }
 ```
 
@@ -85,38 +81,40 @@ interface LocalModelCatalogEntry {
 - `Gemma` 可以继续作为默认推荐模型。
 - `Qwen`、`Gemma`、`gpt-oss` 都以模型卡片展示名称、quant、大小、硬件提示和状态。
 - 每个模型卡片支持 `Download`、`Use for AI Import`、`Remove`。
+- 已下载模型使用 checkbox 选中态，点击整张模型卡片即可切换默认模型，不再显示
+  独立的 `Use` 按钮。
 - 已下载模型进入本地模型库，不要求用户重复下载。
 - 用户选择的默认模型写入 app-local settings；环境变量仍可覆盖。
-- 用户也可以选择已有 `.gguf` 文件导入本地模型库，并给它一个显示名称和模型族。
+- UI 不提供任意本地 GGUF 选择入口，普通用户只能在 `Qwen`、`Gemma`、`gpt-oss`
+  三个 allowlist 模型中选择。
 
 本地模型库建议结构：
 
 ```ts
 interface LocalModelLibraryItem {
-  id: string
-  family: LocalModelFamily | 'custom'
-  displayName: string
-  path: string
-  source: 'catalog' | 'custom-file'
-  repo?: string
-  quant?: string
-  fileName: string
-  sizeBytes?: number
-  sha256?: string
-  verified: boolean
-  downloadedAt?: string
-  addedAt: string
-  lastUsedAt?: string
+  id: string;
+  family: LocalModelFamily;
+  displayName: string;
+  path: string;
+  source: 'catalog';
+  repo?: string;
+  quant?: string;
+  fileName: string;
+  sizeBytes?: number;
+  sha256?: string;
+  verified: boolean;
+  downloadedAt?: string;
+  addedAt: string;
+  lastUsedAt?: string;
 }
 ```
 
 导入时模型选择：
 
 - `OnboardPage` 的 AI Import 启动区域显示当前选择的本地模型。
-- 如果已有多个 downloaded / custom 模型，`Start AI Import` 旁边提供模型选择菜单。
+- 如果已有多个 downloaded catalog 模型，`Start AI Import` 旁边提供模型选择菜单。
 - 用户可以选择本次导入使用的模型，但不必改变全局默认模型。
 - 如果所选模型尚未下载，则先进入下载引导，下载完成后继续导入。
-- 如果所选模型是 custom GGUF，则跳过下载，但仍需要检查文件存在并可读。
 
 ## 模型状态设计
 
@@ -124,13 +122,13 @@ interface LocalModelLibraryItem {
 
 ```ts
 interface LocalModelStatus {
-  path: string
-  exists: boolean
-  repo: string
-  quant: string
-  fileName: string
-  sha256?: string
-  downloadedAt?: string
+  path: string;
+  exists: boolean;
+  repo: string;
+  quant: string;
+  fileName: string;
+  sha256?: string;
+  downloadedAt?: string;
 }
 ```
 
@@ -144,31 +142,31 @@ type LocalModelLifecycle =
   | 'ready'
   | 'failed'
   | 'outdated'
-  | 'custom-path'
+  | 'env-path';
 
 interface LocalModelStatus {
-  id: string
-  family: LocalModelFamily | 'custom'
-  displayName: string
-  lifecycle: LocalModelLifecycle
-  path: string
-  exists: boolean
-  repo: string
-  quant: string
-  fileName: string
-  sizeBytes?: number
-  sha256?: string
-  expectedSha256?: string
-  verified: boolean
-  downloadedAt?: string
-  source: 'cache' | 'catalog' | 'custom-path' | 'custom-file'
-  isDefault: boolean
-  isSelectedForImport: boolean
+  id: string;
+  family: LocalModelFamily;
+  displayName: string;
+  lifecycle: LocalModelLifecycle;
+  path: string;
+  exists: boolean;
+  repo: string;
+  quant: string;
+  fileName: string;
+  sizeBytes?: number;
+  sha256?: string;
+  expectedSha256?: string;
+  verified: boolean;
+  downloadedAt?: string;
+  source: 'cache' | 'catalog' | 'env-path';
+  isDefault: boolean;
+  isSelectedForImport: boolean;
   error?: {
-    code: string
-    message: string
-    recoverable: boolean
-  }
+    code: string;
+    message: string;
+    recoverable: boolean;
+  };
 }
 ```
 
@@ -180,16 +178,16 @@ interface LocalModelStatus {
 - `ready`: 模型文件存在并通过校验，或无 expected hash 但 manifest 可用。
 - `failed`: 下载、写入、校验或文件读取失败。
 - `outdated`: manifest 与当前配置的 repo / quant / fileName 不匹配。
-- `custom-path`: 使用 `AI_IMPORT_MODEL_PATH` 或用户手动选择的 GGUF 文件。
+- `env-path`: 使用 `AI_IMPORT_MODEL_PATH` 的开发/企业覆盖项。
 
 多模型状态建议由单个状态升级为列表：
 
 ```ts
 interface LocalModelLibraryStatus {
-  defaultModelId?: string
-  selectedImportModelId?: string
-  catalog: LocalModelCatalogEntry[]
-  models: LocalModelStatus[]
+  defaultModelId?: string;
+  selectedImportModelId?: string;
+  catalog: LocalModelCatalogEntry[];
+  models: LocalModelStatus[];
 }
 ```
 
@@ -199,32 +197,42 @@ interface LocalModelLibraryStatus {
 
 ```ts
 interface LocalModelDownloadProgress {
-  status: 'starting' | 'downloading' | 'verifying' | 'completed' | 'failed' | 'cancelled'
-  downloadedBytes: number
-  totalBytes?: number
-  bytesPerSecond?: number
-  estimatedSecondsRemaining?: number
-  path: string
-  error?: { code: string; message: string }
+  modelId: string;
+  displayName: string;
+  status:
+    | 'starting'
+    | 'downloading'
+    | 'verifying'
+    | 'completed'
+    | 'failed'
+    | 'cancelled';
+  downloadedBytes: number;
+  totalBytes?: number;
+  bytesPerSecond?: number;
+  estimatedSecondsRemaining?: number;
+  path: string;
+  error?: { code: string; message: string };
 }
 ```
 
 Renderer API 建议：
 
 ```ts
-window.electronAPI.prepareLocalImportModel(modelId)
-window.electronAPI.cancelLocalImportModelDownload()
-window.electronAPI.onLocalModelDownloadProgress(callback)
+window.electronAPI.prepareLocalImportModel(modelId);
+window.electronAPI.cancelLocalImportModelDownload();
+window.electronAPI.removeLocalImportModel(modelId);
+window.electronAPI.onLocalImportModelDownloadProgress(callback);
 ```
 
 UI 行为：
 
-- 模型卡片的 `Download` 或 `Prepare Local Model` 点击后变成进度条。
+- 模型卡片的 `Download` 点击后原位变成进度条。
 - 显示 `downloaded / total`、百分比、速度、预计剩余时间。
 - 下载中显示 `Cancel`。
 - 失败后显示 `Retry`。
 - 校验失败时显示 `Remove partial file and retry`。
 - 取消后删除 `.partial` 文件。
+- 已完成下载的模型显示 `Use` / `Default` 和 `Remove` 操作。
 
 实现重点：
 
@@ -233,7 +241,7 @@ UI 行为：
 - `Content-Length` 存在时展示总大小；不存在时展示已下载和速度。
 - 下载和校验共用同一个 `AbortController`。
 - 不记录 URL 中可能带 token 的完整下载地址到日志。
-- 下载来源必须来自 catalog allowlist，除非用户明确选择的是本地 GGUF 文件。
+- 下载来源必须来自 catalog allowlist。
 
 ## 首次导入引导
 
@@ -248,19 +256,17 @@ AI Import 使用的模型。
    - 默认使用 Settings 里选择的默认模型。
    - 可从已下载模型中切换。
    - 可选择 `Download another model`，从 `Qwen`、`Gemma`、`gpt-oss` 中下载。
-   - 可选择 `Choose local GGUF file`，使用已有本地模型文件。
 3. 点击 `Start AI Import`。
 4. main process 返回 `MODEL_NOT_READY` 类型错误，或 renderer 预先查询状态。
 5. Onboard 页面展示模型准备面板：
    - 模型名称和 quant。
-   - 模型族：`Qwen`、`Gemma`、`gpt-oss` 或 custom。
+   - 模型族：`Qwen`、`Gemma`、`gpt-oss`。
    - 预计下载大小。
    - 保存路径。
    - 本地隐私说明。
    - `Download and continue`。
-   - `Choose local GGUF file`。
    - 可选：`Use legacy remote provider`，仅在显式启用时展示。
-6. 下载完成或本地 GGUF 校验通过后，自动继续当前导入。
+6. 下载完成后，自动继续当前导入。
 
 这样用户不会因为缺模型而中断导入上下文。
 
@@ -272,8 +278,6 @@ AI Import 使用的模型。
   打开 `app.getPath('userData')/models`。
 - `Download Catalog Model`
   从内置 catalog 中选择 `Qwen`、`Gemma`、`gpt-oss` 的 GGUF artifact 下载到本地。
-- `Choose Existing GGUF`
-  选择已有本地 `.gguf` 文件，加入本地模型库，并允许 AI Import 使用。
 - `Set as Default`
   设置默认 AI Import 模型。
 - `Use for Next Import`
@@ -290,10 +294,8 @@ AI Import 使用的模型。
 注意：
 
 - 删除模型前需要确认，因为文件体积大、重新下载成本高。
-- 自定义 GGUF 文件不应默认写入 manifest 的官方下载 metadata。
-- 自定义 GGUF 文件应保存为 `custom-file` source，不允许伪装成 catalog 模型。
 - `Change Quant` 后应把状态变成 `outdated` 或 `not-downloaded`，提示重新下载。
-- 同一模型族可以存在多个 quant 或多个文件，但同一路径不应重复加入模型库。
+- 同一模型族可以存在多个 allowlist quant 或多个 allowlist 文件，但同一路径不应重复加入模型库。
 
 ## Runtime 状态和测试
 
@@ -303,15 +305,15 @@ AI Import 使用的模型。
 
 ```ts
 interface LocalRuntimeStatus {
-  serverPath: string
-  serverExists: boolean
-  running: boolean
-  baseUrl?: string
-  platform: NodeJS.Platform
-  arch: string
-  lastStartedAt?: string
-  lastStartupMs?: number
-  error?: { code: string; message: string }
+  serverPath: string;
+  serverExists: boolean;
+  running: boolean;
+  baseUrl?: string;
+  platform: NodeJS.Platform;
+  arch: string;
+  lastStartedAt?: string;
+  lastStartupMs?: number;
+  error?: { code: string; message: string };
 }
 ```
 
@@ -348,20 +350,20 @@ type LocalModelErrorCode =
   | 'SERVER_BINARY_NOT_FOUND'
   | 'SERVER_START_TIMEOUT'
   | 'SERVER_HEALTHCHECK_FAILED'
-  | 'MODEL_COMPLETION_FAILED'
+  | 'MODEL_COMPLETION_FAILED';
 ```
 
 UI 文案示例：
 
-- `MODEL_NOT_FOUND`: 需要先下载本地模型，或选择已有 GGUF 文件。
+- `MODEL_NOT_FOUND`: 需要先下载所选 catalog 模型。
 - `CHECKSUM_MISMATCH`: 下载文件校验失败，请删除并重新下载。
 - `DISK_SPACE_LOW`: 目标磁盘空间不足，请释放空间或选择其他路径。
 - `SERVER_BINARY_NOT_FOUND`: 应用缺少 llama.cpp runtime，或需要设置自定义 binary。
 - `SERVER_START_TIMEOUT`: 本机启动本地模型超时，可稍后重试或切换更小模型。
 
-## 高级设置
+## 环境变量覆盖
 
-环境变量仍然保留，但应折叠到 Advanced 区域：
+环境变量仍然保留给开发和企业分发使用，但不在 Settings 页面展示：
 
 ```env
 AI_IMPORT_PROVIDER=local-llama
@@ -386,7 +388,7 @@ AI_IMPORT_KEEP_SERVER_ALIVE_MS=300000
 
 - 扩展 `LocalModelStatus`。
 - 新增 model catalog 和 model library 概念。
-- 设置页拆分为 `Local Model`、`Model Library`、`Runtime`、`Advanced`。
+- 设置页以 `Model Library` 为主要模型管理区域，不展示 `Advanced` 配置卡片。
 - 展示 repo、quant、fileName、path、size、downloadedAt、SHA-256。
 - 增加 `Copy Path` 和 `Open Model Folder`。
 
@@ -394,7 +396,6 @@ AI_IMPORT_KEEP_SERVER_ALIVE_MS=300000
 
 - 内置 `Qwen`、`Gemma`、`gpt-oss` catalog allowlist。
 - 支持从模型卡片下载指定 GGUF artifact。
-- 支持选择已有本地 `.gguf` 文件并加入模型库。
 - 支持设置默认模型和下一次导入使用的模型。
 
 ### Phase 3: 下载进度、取消和重试
@@ -410,18 +411,15 @@ AI_IMPORT_KEEP_SERVER_ALIVE_MS=300000
 - Onboard 开始导入前检查模型状态。
 - Onboard 支持选择已下载模型作为本次 extractor。
 - Onboard 支持选择 catalog 模型并下载后继续导入。
-- Onboard 支持选择本地 GGUF 文件并直接用于导入。
 - 模型缺失时展示内联准备面板或 modal。
 - 下载完成后自动继续当前 import。
 - 保留 review-first 流程。
 
 ### Phase 5: 模型管理
 
-- 新增选择已有 GGUF 文件。
 - 新增删除模型。
 - 新增重新校验 SHA-256。
 - 新增 quant allowlist 和切换逻辑。
-- 对 custom path 和 managed cache 做不同 UI 标识。
 
 ### Phase 6: Runtime 测试和诊断
 
@@ -434,16 +432,15 @@ AI_IMPORT_KEEP_SERVER_ALIVE_MS=300000
 
 - 模型未下载时，Settings 和 Onboard 都能明确引导用户准备模型。
 - Settings 可以从 `Qwen`、`Gemma`、`gpt-oss` 中选择并下载 GGUF 模型。
-- 用户可以选择已有本地 GGUF 文件，并在 AI Import 时使用该模型。
 - AI Import 开始前可以从已下载模型中选择本次使用的 extractor model。
 - 未下载的 catalog 模型会先下载，下载完成后继续当前导入。
 - 下载 16GB 级模型时有进度、速度、取消和重试。
 - 下载取消或失败不会留下被误认为 ready 的 partial 文件。
 - SHA-256 校验失败时不会启动本地模型。
-- 用户可以打开模型目录、复制路径、删除模型、选择已有 GGUF。
+- 用户可以打开模型目录、复制路径、删除 catalog 模型。
 - `llama-server` 缺失、启动超时、healthcheck 失败都有可恢复提示。
 - Runtime 测试不发送任何用户文件、prompt、密码候选项到远端。
-- 高级环境变量仍可用于开发和打包覆盖，但不再是普通用户的主要入口。
+- 环境变量仍可用于开发和打包覆盖，但不在 Settings 页面展示。
 
 ## 与现有 AI Import Roadmap 的关系
 
