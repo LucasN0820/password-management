@@ -25,18 +25,30 @@ function parseVaultKey(vaultKey: string) {
   return key
 }
 
-function parseEncryptedSecret(value: string): EncryptedSecretEnvelope {
-  const parsed = JSON.parse(value) as Partial<EncryptedSecretEnvelope>
+function parseEncryptedSecret(value: string): EncryptedSecretEnvelope | null {
+  let parsed: Partial<EncryptedSecretEnvelope>
+  try {
+    parsed = JSON.parse(value) as Partial<EncryptedSecretEnvelope>
+  } catch {
+    return null
+  }
+
   if (
+    parsed === null ||
+    typeof parsed !== 'object' ||
     parsed.v !== ENCRYPTION_VERSION ||
     parsed.alg !== ALGORITHM ||
     typeof parsed.nonce !== 'string' ||
     typeof parsed.data !== 'string'
   ) {
-    throw new Error('Invalid encrypted secret payload')
+    return null
   }
 
   return parsed as EncryptedSecretEnvelope
+}
+
+export function isEncryptedSecret(value: string) {
+  return parseEncryptedSecret(value) !== null
 }
 
 export function createVaultKey(randomBytes: RandomBytesProvider = length => crypto.getRandomValues(new Uint8Array(length))) {
@@ -66,6 +78,10 @@ export async function encryptSecret(
 
 export function decryptSecret(value: string, vaultKey: string) {
   const envelope = parseEncryptedSecret(value)
+  if (!envelope) {
+    // Legacy record stored before encryption was introduced.
+    return value
+  }
   const cipher = gcm(parseVaultKey(vaultKey), hexToBytes(envelope.nonce))
   const plaintext = cipher.decrypt(hexToBytes(envelope.data))
   return bytesToUtf8(plaintext)
@@ -91,6 +107,18 @@ function decryptPassword(password: Password, vaultKey: string): Password {
   }
 }
 
+function isLegacyPlaintextPassword(stored: Password) {
+  return (
+    !isEncryptedSecret(stored.password) ||
+    (Boolean(stored.notes) && !isEncryptedSecret(stored.notes as string))
+  )
+}
+
+function toPasswordInput(password: Password): PasswordInput {
+  const { id: _id, created_at: _c, updated_at: _u, ...input } = password
+  return input
+}
+
 export function createEncryptedAdapter(
   baseAdapter: DatabaseAdapter,
   getVaultKey: VaultKeyProvider,
@@ -100,7 +128,28 @@ export function createEncryptedAdapter(
     getPasswords: async () => {
       const vaultKey = await getVaultKey()
       const passwords = await baseAdapter.getPasswords()
-      return passwords.map(password => decryptPassword(password, vaultKey))
+      const decrypted = passwords.map(password =>
+        decryptPassword(password, vaultKey),
+      )
+
+      // Re-encrypt legacy rows that were stored as plaintext before
+      // encryption was introduced.
+      await Promise.all(
+        passwords.flatMap((stored, index) => {
+          if (!isLegacyPlaintextPassword(stored)) return []
+          const plain = decrypted[index]
+          if (!plain) return []
+          return [
+            encryptPasswordInput(
+              toPasswordInput(plain),
+              vaultKey,
+              randomBytes,
+            ).then(input => baseAdapter.updatePassword(stored.id, input)),
+          ]
+        }),
+      )
+
+      return decrypted
     },
     getPasswordById: async id => {
       const vaultKey = await getVaultKey()

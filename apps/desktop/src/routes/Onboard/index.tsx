@@ -69,7 +69,6 @@ export default function OnboardPage() {
   );
   const activeModelId =
     selectedModelId ?? modelLibrary?.defaultModelId ?? availableModels[0]?.id;
-  const activeModel = availableModels.find(model => model.id === activeModelId);
 
   useEffect(() => {
     window.electronAPI
@@ -159,13 +158,13 @@ export default function OnboardPage() {
           </div>
 
           <div className='mt-8 flex flex-wrap gap-3'>
-            <Button onClick={handleSelectFiles} variant='outline'>
+            <Button onClick={handleSelectFiles} variant='outline' disabled={!availableModels.length}>
               <Upload className='h-4 w-4' />
               Choose Files
             </Button>
             <Button
               onClick={handleRunImport}
-              disabled={!files.length || stage === 'processing'}
+              disabled={!files.length || stage === 'processing' || !availableModels.length || !activeModelId}
             >
               {stage === 'processing' ? (
                 <>
