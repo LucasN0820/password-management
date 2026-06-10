@@ -1,10 +1,7 @@
 import { Tabs } from 'expo-router';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { KeyRound, Wand2 } from 'lucide-react-native';
-import {
-  SafeAreaView,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'react-native';
 import { useTranslation } from '@repo/i18n';
 import { Colors } from '@/theme/colors';
@@ -89,8 +86,10 @@ function VaultTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <View style={[styles.safeArea, { paddingTop: insets.top }]}>
       <Tabs
         tabBar={props => <VaultTabBar {...props} />}
         screenOptions={{ headerShown: false }}
@@ -98,7 +97,7 @@ export default function TabLayout() {
         <Tabs.Screen name="index" />
         <Tabs.Screen name="generator" />
       </Tabs>
-    </SafeAreaView>
+    </View>
   );
 }
 

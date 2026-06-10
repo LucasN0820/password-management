@@ -1,21 +1,30 @@
-import { like, desc, eq, ne, or, sql } from 'drizzle-orm'
-import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core'
-import { passwords, schema } from './schema'
-import type { DatabaseAdapter, Password, PasswordInput, PasswordRow } from './types'
-import { passwordMigrations } from './migrations.generated'
+import { like, desc, eq, ne, or, sql } from 'drizzle-orm';
+import type { BaseSQLiteDatabase } from 'drizzle-orm/sqlite-core';
+import { passwords, schema } from './schema';
+import type {
+  DatabaseAdapter,
+  Password,
+  PasswordInput,
+  PasswordRow,
+} from './types';
+import { passwordMigrations } from './migrations.generated';
 
-export type PasswordDatabase = BaseSQLiteDatabase<'sync', unknown, typeof schema>
+export type PasswordDatabase = BaseSQLiteDatabase<
+  'sync',
+  unknown,
+  typeof schema
+>;
 
 interface MigrationEntry {
-  idx: number
-  when: number
-  tag: string
-  breakpoints: boolean
-  version?: string
+  idx: number;
+  when: number;
+  tag: string;
+  breakpoints: boolean;
+  version?: string;
 }
 
 function normalizeNullable(value: string | null | undefined) {
-  return value ? value : null
+  return value ? value : null;
 }
 
 function toPassword(row: PasswordRow): Password {
@@ -23,11 +32,11 @@ function toPassword(row: PasswordRow): Password {
     ...row,
     username: row.username ?? '',
     isFavorite: row.favorite,
-  }
+  };
 }
 
 function toPasswordRowInput(data: PasswordInput) {
-  const { isFavorite, ...rest } = data
+  const { isFavorite, ...rest } = data;
 
   return {
     ...rest,
@@ -36,54 +45,54 @@ function toPasswordRowInput(data: PasswordInput) {
     notes: normalizeNullable(data.notes),
     icon: normalizeNullable(data.icon),
     favorite: isFavorite,
-  }
+  };
 }
 
 function getInsertId(result: unknown) {
   if (!result || typeof result !== 'object') {
-    return null
+    return null;
   }
 
   if ('lastInsertRowid' in result) {
-    const id = result.lastInsertRowid
-    return typeof id === 'bigint' ? Number(id) : Number(id)
+    const id = result.lastInsertRowid;
+    return typeof id === 'bigint' ? Number(id) : Number(id);
   }
 
   if ('lastInsertRowId' in result) {
-    return Number(result.lastInsertRowId)
+    return Number(result.lastInsertRowId);
   }
 
-  return null
+  return null;
 }
 
 function getMigrationKey(entry: MigrationEntry) {
-  return `m${entry.idx.toString().padStart(4, '0')}` as keyof typeof passwordMigrations.migrations
+  return `m${entry.idx.toString().padStart(4, '0')}` as keyof typeof passwordMigrations.migrations;
 }
 
 function hasTable(db: PasswordDatabase, name: string) {
   const result = db.get<{ name: string }>(
     sql`SELECT name FROM sqlite_master WHERE type = 'table' AND name = ${name}`
-  )
+  );
 
-  return Boolean(result)
+  return Boolean(result);
 }
 
 function getTableColumns(db: PasswordDatabase, tableName: string) {
   return db.all<{ name: string }>(
     sql.raw(`PRAGMA table_info("${tableName.replaceAll('"', '""')}")`)
-  )
+  );
 }
 
 function getAppliedMigrationCount(db: PasswordDatabase) {
   if (!hasTable(db, '__drizzle_migrations')) {
-    return 0
+    return 0;
   }
 
   const rows = db.all<{ created_at: number }>(
     sql`SELECT created_at FROM "__drizzle_migrations" ORDER BY created_at ASC`
-  )
+  );
 
-  return rows.length
+  return rows.length;
 }
 
 function ensureDrizzleMigrationsTable(db: PasswordDatabase) {
@@ -93,55 +102,55 @@ function ensureDrizzleMigrationsTable(db: PasswordDatabase) {
       "hash" text NOT NULL,
       "created_at" numeric
     )
-  `)
+  `);
 }
 
 function markMigrationApplied(db: PasswordDatabase, entry: MigrationEntry) {
-  ensureDrizzleMigrationsTable(db)
+  ensureDrizzleMigrationsTable(db);
   db.run(
     sql`INSERT INTO "__drizzle_migrations" ("hash", "created_at") VALUES(${entry.tag}, ${entry.when})`
-  )
+  );
 }
 
 function repairLegacyPasswordsTable(db: PasswordDatabase) {
-  const columns = getTableColumns(db, 'passwords')
-  const hasIconColumn = columns.some(column => column.name === 'icon')
+  const columns = getTableColumns(db, 'passwords');
+  const hasIconColumn = columns.some(column => column.name === 'icon');
 
   if (!hasIconColumn) {
-    db.run(sql`ALTER TABLE passwords ADD COLUMN icon text`)
+    db.run(sql`ALTER TABLE passwords ADD COLUMN icon text`);
   }
 }
 
 function bootstrapLegacyMigrations(db: PasswordDatabase) {
-  const hasPasswordsTable = hasTable(db, 'passwords')
-  const appliedMigrationCount = getAppliedMigrationCount(db)
+  const hasPasswordsTable = hasTable(db, 'passwords');
+  const appliedMigrationCount = getAppliedMigrationCount(db);
 
   if (!hasPasswordsTable || appliedMigrationCount > 0) {
-    return
+    return;
   }
 
-  repairLegacyPasswordsTable(db)
+  repairLegacyPasswordsTable(db);
 
   const baselineMigration = passwordMigrations.journal.entries.find(
     entry => entry.idx === 0
-  )
+  );
 
   if (!baselineMigration) {
-    throw new Error('Missing baseline migration metadata')
+    throw new Error('Missing baseline migration metadata');
   }
 
-  markMigrationApplied(db, baselineMigration)
+  markMigrationApplied(db, baselineMigration);
 }
 
 export function migratePasswordDatabase(db: PasswordDatabase) {
-  ensureDrizzleMigrationsTable(db)
-  bootstrapLegacyMigrations(db)
+  ensureDrizzleMigrationsTable(db);
+  bootstrapLegacyMigrations(db);
 
   const migrations = passwordMigrations.journal.entries.map(entry => {
-    const sql = passwordMigrations.migrations[getMigrationKey(entry)]
+    const sql = passwordMigrations.migrations[getMigrationKey(entry)];
 
     if (!sql) {
-      throw new Error(`Missing migration SQL for ${entry.tag}`)
+      throw new Error(`Missing migration SQL for ${entry.tag}`);
     }
 
     return {
@@ -149,12 +158,12 @@ export function migratePasswordDatabase(db: PasswordDatabase) {
       bps: entry.breakpoints,
       folderMillis: entry.when,
       hash: '',
-    }
-  })
+    };
+  });
 
   // Drizzle does not expose a stable bundled-SQL migration API for this setup,
   // so this intentionally uses the current internal dialect/session contract.
-  ;(db as any).dialect.migrate(migrations, (db as any).session)
+  (db as any).dialect.migrate(migrations, (db as any).session);
 }
 
 export function getPasswords(db: PasswordDatabase): Password[] {
@@ -163,33 +172,41 @@ export function getPasswords(db: PasswordDatabase): Password[] {
     .from(passwords)
     .orderBy(desc(passwords.updated_at))
     .all()
-    .map(toPassword)
+    .map(toPassword);
 }
 
 export function getPasswordById(
   db: PasswordDatabase,
   id: number
 ): Password | null {
-  const row = db.select().from(passwords).where(eq(passwords.id, id)).get()
+  const row = db.select().from(passwords).where(eq(passwords.id, id)).get();
 
-  return row ? toPassword(row) : null
+  return row ? toPassword(row) : null;
 }
 
 export function addPassword(db: PasswordDatabase, data: PasswordInput) {
-  const result = db.insert(passwords).values(toPasswordRowInput(data)).run()
-  const id = getInsertId(result)
+  const result = db.insert(passwords).values(toPasswordRowInput(data)).run();
+  const id = getInsertId(result);
 
   if (id === null) {
-    throw new Error('Failed to read inserted password id')
+    throw new Error('Failed to read inserted password id');
   }
 
-  const password = getPasswordById(db, id)
+  const password = getPasswordById(db, id);
 
   if (!password) {
-    throw new Error(`Failed to load inserted password ${id}`)
+    throw new Error(`Failed to load inserted password ${id}`);
   }
 
-  return password
+  return password;
+}
+
+export function addPasswords(db: PasswordDatabase, data: PasswordInput[]) {
+  if (!data.length) return;
+
+  db.transaction(tx => {
+    tx.insert(passwords).values(data.map(toPasswordRowInput)).run();
+  });
 }
 
 export function updatePassword(
@@ -197,31 +214,30 @@ export function updatePassword(
   id: number,
   data: PasswordInput
 ) {
-  db
-    .update(passwords)
+  db.update(passwords)
     .set({
       ...toPasswordRowInput(data),
       updated_at: sql`CURRENT_TIMESTAMP`,
     })
     .where(eq(passwords.id, id))
-    .run()
+    .run();
 
-  return getPasswordById(db, id)
+  return getPasswordById(db, id);
 }
 
 export function deletePassword(db: PasswordDatabase, id: number) {
-  const result = db.delete(passwords).where(eq(passwords.id, id)).run()
+  const result = db.delete(passwords).where(eq(passwords.id, id)).run();
 
   return typeof result === 'object' && result !== null && 'changes' in result
     ? Number(result.changes) > 0
-    : false
+    : false;
 }
 
 export function searchPasswords(
   db: PasswordDatabase,
   query: string
 ): Password[] {
-  const searchTerm = `%${query}%`
+  const searchTerm = `%${query}%`;
 
   return db
     .select()
@@ -236,7 +252,7 @@ export function searchPasswords(
     )
     .orderBy(desc(passwords.favorite), desc(passwords.updated_at))
     .all()
-    .map(toPassword)
+    .map(toPassword);
 }
 
 export function getCategories(db: PasswordDatabase) {
@@ -246,9 +262,9 @@ export function getCategories(db: PasswordDatabase) {
     .where(ne(passwords.category, 'all'))
     .orderBy(passwords.category)
     .all()
-    .map(row => row.category)
+    .map(row => row.category);
 
-  return ['all', 'favorites', ...categories]
+  return ['all', 'favorites', ...categories];
 }
 
 export function createDrizzleAdapter(db: PasswordDatabase): DatabaseAdapter {
@@ -256,13 +272,16 @@ export function createDrizzleAdapter(db: PasswordDatabase): DatabaseAdapter {
     getPasswords: async () => getPasswords(db),
     getPasswordById: async id => getPasswordById(db, id),
     addPassword: async data => {
-      addPassword(db, data)
+      addPassword(db, data);
+    },
+    addPasswords: async data => {
+      addPasswords(db, data);
     },
     updatePassword: async (id, data) => {
-      updatePassword(db, id, data)
+      updatePassword(db, id, data);
     },
     deletePassword: async id => deletePassword(db, id),
     searchPasswords: async query => searchPasswords(db, query),
     getCategories: async () => getCategories(db),
-  }
+  };
 }

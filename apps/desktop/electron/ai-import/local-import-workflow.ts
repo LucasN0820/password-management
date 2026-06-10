@@ -1,4 +1,6 @@
+import { randomUUID } from 'crypto';
 import { runImportWorkflow } from '@repo/ai-import-core';
+import { parseImportFile } from '@repo/ai-import-core/node';
 import { getLocalAiImportConfig } from '../settings';
 import type {
   ImportFileDescriptor,
@@ -31,7 +33,12 @@ export async function runLocalImportWorkflow(
   try {
     return await runImportWorkflow(
       files,
-      createLocalLlamaExtractor(baseUrl, config, signal)
+      {
+        parseFile: parseImportFile,
+        extractCandidates: createLocalLlamaExtractor(baseUrl, config, signal),
+        createId: randomUUID,
+      },
+      { signal }
     );
   } finally {
     releaseLlamaServer(config);

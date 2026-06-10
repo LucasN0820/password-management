@@ -1,8 +1,7 @@
-import { createHash } from 'crypto'
-import type { ImportCandidateDraft } from './types.js'
+import type { ImportCandidateDraft } from './types';
 
 export function normalizeCandidates(candidates: ImportCandidateDraft[]) {
-  const dedupeMap = new Map<string, ImportCandidateDraft>()
+  const dedupeMap = new Map<string, ImportCandidateDraft>();
 
   for (const candidate of candidates) {
     const fingerprint = [
@@ -10,16 +9,16 @@ export function normalizeCandidates(candidates: ImportCandidateDraft[]) {
       candidate.username.trim().toLowerCase(),
       candidate.password.trim(),
       candidate.url?.trim().toLowerCase() ?? '',
-    ].join('\x00')
-    const key = createHash('sha256').update(fingerprint).digest('hex')
+    ].join('\x00');
+    const key = fingerprint;
 
-    const existing = dedupeMap.get(key)
+    const existing = dedupeMap.get(key);
     if (!existing || existing.confidence < candidate.confidence) {
-      dedupeMap.set(key, candidate)
+      dedupeMap.set(key, candidate);
     }
   }
 
   return Array.from(dedupeMap.values()).sort(
-    (left, right) => right.confidence - left.confidence,
-  )
+    (left, right) => right.confidence - left.confidence
+  );
 }

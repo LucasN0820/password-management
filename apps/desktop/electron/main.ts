@@ -263,6 +263,11 @@ ipcMain.handle('add-password', (_, data: PasswordInput) => {
   return passwordAdapter.addPassword(data);
 });
 
+ipcMain.handle('add-passwords', (_, data: PasswordInput[]) => {
+  if (!passwordAdapter) return null;
+  return passwordAdapter.addPasswords(data);
+});
+
 ipcMain.handle('update-password', (_, id: number, data: PasswordInput) => {
   if (!passwordAdapter) return null;
   return passwordAdapter.updatePassword(id, data);
@@ -513,10 +518,8 @@ ipcMain.handle(
   async (_, candidates: ImportPasswordInput[]) => {
     if (!passwordAdapter) return { saved: 0 };
     const parsedCandidates = importPasswordsSchema.parse(candidates);
-    let saved = 0;
-
-    for (const record of parsedCandidates) {
-      await passwordAdapter.addPassword({
+    await passwordAdapter.addPasswords(
+      parsedCandidates.map(record => ({
         title: record.title,
         username: record.username,
         password: record.password,
@@ -525,10 +528,9 @@ ipcMain.handle(
         category: 'imported',
         isFavorite: false,
         icon: null,
-      });
-      saved += 1;
-    }
+      }))
+    );
 
-    return { saved };
+    return { saved: parsedCandidates.length };
   }
 );

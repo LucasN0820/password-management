@@ -52,6 +52,26 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     'expo-font',
     'expo-secure-store',
     'expo-web-browser',
+    [
+      'llama.rn',
+      {
+        enableEntitlements: true,
+        entitlementsProfile: ['development', 'preview', 'production'],
+        forceCxx20: true,
+        enableOpenCLAndHexagon: true,
+      },
+    ],
+    [
+      'expo-build-properties',
+      {
+        ios: {
+          deploymentTarget: '15.1',
+        },
+        android: {
+          minSdkVersion: 24,
+        },
+      },
+    ],
   ],
   experiments: {
     typedRoutes: true,

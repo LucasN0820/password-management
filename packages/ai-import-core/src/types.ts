@@ -1,79 +1,114 @@
 export interface ImportFileDescriptor {
-  path: string
-  name: string
-  size: number
-  extension: string
+  path: string;
+  name: string;
+  size: number;
+  extension: string;
 }
 
 export interface ImportCandidateDraft {
-  id: string
-  sourceFile: string
-  title: string
-  username: string
-  password: string
-  url: string | null
-  notes: string | null
-  confidence: number
-  sourceExcerpt: string
+  id: string;
+  sourceFile: string;
+  title: string;
+  username: string;
+  password: string;
+  url: string | null;
+  notes: string | null;
+  confidence: number;
+  sourceExcerpt: string;
 }
 
 export interface ImportFileResult {
-  fileName: string
-  extension: string
-  status: 'processed' | 'failed'
-  candidateCount: number
-  warning?: string
+  fileName: string;
+  extension: string;
+  status: 'processed' | 'failed';
+  candidateCount: number;
+  warning?: string;
 }
 
 export interface ImportWorkflowResult {
-  files: ImportFileResult[]
-  candidates: ImportCandidateDraft[]
-  warnings: string[]
+  files: ImportFileResult[];
+  candidates: ImportCandidateDraft[];
+  warnings: string[];
 }
 
 export interface ImportPasswordInput {
-  title: string
-  username: string
-  password: string
-  url: string | null
-  notes: string | null
+  title: string;
+  username: string;
+  password: string;
+  url: string | null;
+  notes: string | null;
 }
 
 export interface ParsedTextFile {
-  kind: 'text'
-  file: ImportFileDescriptor
-  text: string
-  excerpts: string[]
-  prefilledCandidates: ImportCandidateDraft[]
+  kind: 'text';
+  file: ImportFileDescriptor;
+  text: string;
+  excerpts: string[];
+  prefilledCandidates: ImportCandidateDraft[];
 }
 
 export interface ParsedImageFile {
-  kind: 'image'
-  file: ImportFileDescriptor
-  mimeType: string
-  base64: string
+  kind: 'image';
+  file: ImportFileDescriptor;
+  mimeType: string;
+  base64: string;
 }
 
-export type ParsedImportFile = ParsedTextFile | ParsedImageFile
+export type ParsedImportFile = ParsedTextFile | ParsedImageFile;
 
 export type JobStatus =
   | 'queued'
   | 'processing'
   | 'completed'
   | 'failed'
-  | 'cancelled'
+  | 'cancelled';
 
 export interface ImportJob {
-  id: string
-  status: JobStatus
-  createdAt: string
-  completedAt?: string
-  files: ImportFileDescriptor[]
-  result?: ImportWorkflowResult
-  error?: { code: string; message: string }
-  cancellationRequested: boolean
+  id: string;
+  status: JobStatus;
+  createdAt: string;
+  completedAt?: string;
+  files: ImportFileDescriptor[];
+  result?: ImportWorkflowResult;
+  error?: { code: string; message: string };
+  cancellationRequested: boolean;
 }
 
 export type ImportExtractor = (
   file: ParsedImportFile,
-) => Promise<ImportCandidateDraft[]>
+  context: ImportWorkflowContext
+) => Promise<ImportCandidateDraft[]>;
+
+export type ImportFileParser = (
+  file: ImportFileDescriptor,
+  context: ImportWorkflowContext
+) => Promise<ParsedImportFile>;
+
+export type ImportProgressPhase =
+  | 'parsing'
+  | 'extracting'
+  | 'normalizing'
+  | 'completed';
+
+export interface ImportProgress {
+  phase: ImportProgressPhase;
+  completedFiles: number;
+  totalFiles: number;
+  fileName?: string;
+}
+
+export interface ImportWorkflowContext {
+  createId: () => string;
+  signal?: AbortSignal;
+}
+
+export interface ImportWorkflowDependencies {
+  parseFile: ImportFileParser;
+  extractCandidates: ImportExtractor;
+  createId: () => string;
+}
+
+export interface ImportWorkflowOptions {
+  signal?: AbortSignal;
+  onProgress?: (progress: ImportProgress) => void;
+}

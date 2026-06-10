@@ -11,7 +11,7 @@ import {
   useColorScheme,
   RefreshControl,
 } from 'react-native';
-import { Search, Plus } from 'lucide-react-native';
+import { Search, Plus, FileUp } from 'lucide-react-native';
 import { useTranslation } from '@repo/i18n';
 import { ModalController } from './modal-controller';
 import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
@@ -21,6 +21,7 @@ import { fonts } from '@/theme/globals';
 import { PasswordItem } from '@/components/password-item';
 import * as Haptics from 'expo-haptics';
 import * as Clipboard from 'expo-clipboard';
+import { useRouter, type Href } from 'expo-router';
 import { Copy, ClipboardCopy, Edit, Star, Trash2 } from 'lucide-react-native';
 
 type Tab = 'all' | 'favorites';
@@ -39,6 +40,7 @@ function notify(type: Haptics.NotificationFeedbackType) {
 
 export function Render() {
   const { t } = useTranslation();
+  const router = useRouter();
   const [searchVisible, setSearchVisible] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>('all');
   const [refreshing, setRefreshing] = useState(false);
@@ -215,6 +217,20 @@ export function Render() {
             {t('passwords.myVault')}
           </Text>
           <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => {
+                impact(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/ai-import' as Href);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t('aiImport.title')}
+              style={[
+                styles.headerIcon,
+                { backgroundColor: c.surface, borderColor: c.border },
+              ]}
+            >
+              <FileUp size={18} color={c.mutedForeground} />
+            </Pressable>
             <Pressable
               onPress={() => {
                 impact(Haptics.ImpactFeedbackStyle.Light);

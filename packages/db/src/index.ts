@@ -4,33 +4,31 @@ export type {
   PasswordRow,
   PasswordRowInput,
   DatabaseAdapter,
-} from './types'
+} from './types';
 
-export {
-  passwords,
-  schema,
-} from './schema'
+export { passwords, schema } from './schema';
 
-export type { PasswordDatabase } from './database'
+export type { PasswordDatabase } from './database';
 export {
   migratePasswordDatabase,
   getPasswords,
   getPasswordById,
   addPassword,
+  addPasswords,
   updatePassword,
   deletePassword,
   searchPasswords,
   getCategories,
   createDrizzleAdapter,
-} from './database'
+} from './database';
 
-export type { PasswordState } from './store'
-export { createPasswordStore } from './store'
+export type { PasswordState } from './store';
+export { createPasswordStore } from './store';
 
-export type { RandomBytesProvider, VaultKeyProvider } from './encryption'
+export type { RandomBytesProvider, VaultKeyProvider } from './encryption';
 export {
   createEncryptedAdapter,
   createVaultKey,
   decryptSecret,
   encryptSecret,
-} from './encryption'
+} from './encryption';

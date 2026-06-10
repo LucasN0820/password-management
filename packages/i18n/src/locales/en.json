@@ -79,6 +79,43 @@
     "passwordCopied": "Password copied",
     "usernameCopied": "Username copied"
   },
+  "aiImport": {
+    "title": "AI Import",
+    "experimental": "Experimental",
+    "localPrivate": "Private, on-device import",
+    "privacyDescription": "Files, prompts, model output, and passwords stay on this device. AI suggestions may miss or mismatch records, so review every field before saving.",
+    "modelTitle": "Extraction model",
+    "modelHint": "Models are downloaded from a fixed Hugging Face allowlist and verified with SHA-256. Expo Go is not supported.",
+    "download": "Download model",
+    "downloaded": "Downloaded",
+    "removeModel": "Remove model",
+    "removeModelConfirm": "Remove {{name}} from this device?",
+    "remove": "Remove",
+    "cancel": "Cancel",
+    "filesTitle": "Import files",
+    "filesHint": "CSV, TXT, and Markdown only. Up to 5 files, 5MB each, 15MB total.",
+    "selectFiles": "Select files",
+    "startImport": "Start local import",
+    "finishing": "Finishing import",
+    "reviewTitle": "Review candidates",
+    "reviewHint": "Nothing is saved automatically. Edit, deselect, or remove anything that is not exact.",
+    "noCandidates": "No password candidates were found.",
+    "saveSelected": "Save selected ({{count}})",
+    "confidence": "Model confidence {{value}}%",
+    "phase": {
+      "parsing": "Reading files",
+      "extracting": "Extracting credentials",
+      "normalizing": "Checking results",
+      "completed": "Import complete"
+    },
+    "fields": {
+      "title": "Title",
+      "username": "Username",
+      "password": "Password",
+      "url": "URL",
+      "notes": "Notes"
+    }
+  },
   "tabs": {
     "myVault": "My Vault",
     "generate": "Generate"

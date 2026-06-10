@@ -18,6 +18,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.invoke('get-password-by-id', id),
   addPassword: (data: PasswordInput): Promise<void> =>
     ipcRenderer.invoke('add-password', data),
+  addPasswords: (data: PasswordInput[]): Promise<void> =>
+    ipcRenderer.invoke('add-passwords', data),
   updatePassword: (id: number, data: PasswordInput): Promise<void> =>
     ipcRenderer.invoke('update-password', id, data),
   deletePassword: (id: number): Promise<boolean> =>
@@ -87,6 +89,7 @@ declare global {
       getPasswords: () => Promise<Password[]>;
       getPasswordById: (id: number) => Promise<Password | null>;
       addPassword: (data: PasswordInput) => Promise<void>;
+      addPasswords: (data: PasswordInput[]) => Promise<void>;
       updatePassword: (id: number, data: PasswordInput) => Promise<void>;
       deletePassword: (id: number) => Promise<boolean>;
       searchPasswords: (query: string) => Promise<Password[]>;
