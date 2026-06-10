@@ -1,7 +1,7 @@
-import { useFormContext } from "react-hook-form";
-import { FormType } from "./form";
-import { InputField } from "../form/input-field";
 import { LinkIcon } from "lucide-react-native";
+import { useFormContext } from "react-hook-form";
+import { InputField } from "../form/input-field";
+import { FormType } from "./form";
 
 export function FieldUrl() {
   const { control } = useFormContext<FormType>()

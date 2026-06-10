@@ -1,7 +1,7 @@
 import { Outlet } from 'react-router';
-import { AppSidebar } from './components/AppSidebar';
 import { SidebarProvider } from '@repo/ui/primitives/sidebar';
 import { Toaster } from '@repo/ui/primitives/toaster';
+import { AppSidebar } from './components/AppSidebar';
 
 function App() {
   return (

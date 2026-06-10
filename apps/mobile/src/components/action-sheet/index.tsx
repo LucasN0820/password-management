@@ -1,23 +1,23 @@
+import * as Haptics from 'expo-haptics';
+import type { LucideIcon } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  Pressable,
   Modal,
+  Pressable,
   StyleSheet,
+  Text,
   useColorScheme,
+  View,
 } from 'react-native';
 import Animated, {
-  useSharedValue,
+  runOnJS,
   useAnimatedStyle,
+  useSharedValue,
   withSpring,
   withTiming,
-  runOnJS,
 } from 'react-native-reanimated';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
-import * as Haptics from 'expo-haptics';
-import type { LucideIcon } from 'lucide-react-native';
 
 export interface ActionSheetOption {
   label: string;

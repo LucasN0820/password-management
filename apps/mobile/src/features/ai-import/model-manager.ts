@@ -68,8 +68,7 @@ export async function getMobileModelStatuses(): Promise<MobileModelStatus[]> {
     MOBILE_MODEL_CATALOG.map(async model => {
       const entry = manifest.models[model.id];
       const downloaded = Boolean(
-        entry &&
-        entry.sha256 === model.sha256 &&
+        entry?.sha256 === model.sha256 &&
         (await hasValidModelFile(model.id, entry.path))
       );
       return {

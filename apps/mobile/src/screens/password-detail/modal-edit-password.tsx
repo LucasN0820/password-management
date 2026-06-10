@@ -1,5 +1,5 @@
 import { ModalEditPassword as ModalEditPasswordComponent } from '@/components/modal-edit-password';
-import { useStore, ModalDataEditPassword } from './context';
+import { ModalDataEditPassword,useStore } from './context';
 
 export function ModalEditPassword({ modal }: { modal: ModalDataEditPassword }) {
   const setModal = useStore(s => s.setModal);

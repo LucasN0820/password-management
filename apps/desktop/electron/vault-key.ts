@@ -1,7 +1,7 @@
+import { randomBytes } from 'node:crypto'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import { app, safeStorage } from 'electron'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
-import { dirname, join } from 'path'
-import { randomBytes } from 'crypto'
 
 const vaultKeyFileName = 'vault-key.json'
 

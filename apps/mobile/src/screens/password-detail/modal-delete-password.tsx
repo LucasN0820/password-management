@@ -1,8 +1,8 @@
-import { DeleteDialog } from '@/components/delete-dialog';
-import { usePasswordStore } from '@/store/passwordStore';
-import { useStore, ModalDataDeletePassword } from './context';
 import { useRouter } from 'expo-router';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { DeleteDialog } from '@/components/delete-dialog';
+import { usePasswordStore } from '@/store/passwordStore';
+import { ModalDataDeletePassword,useStore } from './context';
 
 export function ModalDeletePassword({
   modal,

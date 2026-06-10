@@ -1,8 +1,8 @@
+import { type ChildProcess,spawn } from 'node:child_process';
+import { chmodSync, existsSync, statSync } from 'node:fs';
+import { createServer } from 'node:net';
+import { join } from 'node:path';
 import { app } from 'electron';
-import { spawn, type ChildProcess } from 'child_process';
-import { chmodSync, existsSync, statSync } from 'fs';
-import { join } from 'path';
-import { createServer } from 'net';
 import type { LocalAiImportConfig } from '../settings';
 import {
   ensureLocalModel,
@@ -88,7 +88,7 @@ function resolveServerPath(config: LocalAiImportConfig) {
 
   if (process.platform !== 'win32') {
     try {
-      const mode = statSync(serverPath).mode;
+      const {mode} = statSync(serverPath);
       if ((mode & 0o111) === 0) {
         chmodSync(serverPath, mode | 0o755);
       }
@@ -271,7 +271,7 @@ export async function getLlamaServerBaseUrl(
 }
 
 export function releaseLlamaServer(config: LocalAiImportConfig) {
-  if (!runningServer) return;
+  if (!runningServer) {return;}
 
   if (runningServer.keepAliveTimer) {
     clearTimeout(runningServer.keepAliveTimer);
@@ -283,7 +283,7 @@ export function releaseLlamaServer(config: LocalAiImportConfig) {
 }
 
 export function stopLlamaServer() {
-  if (!runningServer) return;
+  if (!runningServer) {return;}
 
   const server = runningServer;
   runningServer = null;

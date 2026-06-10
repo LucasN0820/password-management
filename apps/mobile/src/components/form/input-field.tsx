@@ -1,8 +1,8 @@
 import { ComponentProps, JSX } from "react";
-import { FieldValues, Path, UseFormReturn } from "react-hook-form";
-import { InputProps, Input } from "@/components/ui/input";
-import { Controller } from "react-hook-form";
 import { ComponentType } from "react";
+import { FieldValues, Path, UseFormReturn } from "react-hook-form";
+import { Controller } from "react-hook-form";
+import { Input,InputProps } from "@/components/ui/input";
 
 interface Props<T extends FieldValues> extends ComponentProps<typeof Input> {
   control: UseFormReturn<T>["control"]

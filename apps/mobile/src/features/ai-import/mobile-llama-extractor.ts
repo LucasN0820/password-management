@@ -1,8 +1,8 @@
 
 import { parseCredentialCandidates } from '@repo/ai-import-core/credentials';
-import type { ImportExtractor } from '@repo/ai-import-core/types';
 import { credentialJsonSchema } from '@repo/ai-import-core/credentials';
 import { buildCredentialMessages } from '@repo/ai-import-core/prompt';
+import type { ImportExtractor } from '@repo/ai-import-core/types';
 import { getMobileLlamaContext } from './mobile-llama-runtime';
 import { markMobileModelUsed } from './model-manager';
 import type { MobileModelId } from './types';

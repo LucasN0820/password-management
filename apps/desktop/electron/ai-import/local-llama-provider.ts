@@ -1,12 +1,12 @@
 import { z } from 'zod';
 import {
   buildCredentialMessages,
-  parseCredentialCandidates,
   type ImportCandidateDraft,
   type ImportWorkflowContext,
-  ParsedImageFile,
-  ParsedImportFile,
-  ParsedTextFile,
+  parseCredentialCandidates,
+  type ParsedImageFile,
+  type ParsedImportFile,
+  type ParsedTextFile,
 } from '@repo/ai-import-core';
 import type { LocalAiImportConfig } from '../settings';
 
@@ -111,7 +111,7 @@ export function createLocalLlamaExtractor(
   signal?: AbortSignal
 ) {
   return async (file: ParsedImportFile, context: ImportWorkflowContext) =>
-    file.kind === 'image'
+    { return file.kind === 'image'
       ? extractCredentialsFromImageFile(file)
-      : extractCredentialsFromTextFile(file, baseUrl, config, context, signal);
+      : extractCredentialsFromTextFile(file, baseUrl, config, context, signal) };
 }

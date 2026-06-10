@@ -1,3 +1,14 @@
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import {
+  CheckCircle2,
+  Download,
+  FileText,
+  Play,
+  ShieldCheck,
+  Trash2,
+  X,
+} from 'lucide-react-native';
 import { useCallback, useEffect } from 'react';
 import {
   ActivityIndicator,
@@ -9,29 +20,18 @@ import {
   Switch,
   Text,
   TextInput,
-  View,
   useColorScheme,
+  View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import * as Haptics from 'expo-haptics';
-import {
-  CheckCircle2,
-  Download,
-  FileText,
-  Play,
-  ShieldCheck,
-  Trash2,
-  X,
-} from 'lucide-react-native';
 import { useTranslation } from '@repo/i18n';
-import { usePasswordStore } from '@/store/passwordStore';
-import { Colors } from '@/theme/colors';
-import { fonts } from '@/theme/globals';
 import { useMobileImportStore } from '@/features/ai-import/import-store';
 import type {
   EditableImportCandidate,
   MobileModelStatus,
 } from '@/features/ai-import/types';
+import { usePasswordStore } from '@/store/passwordStore';
+import { Colors } from '@/theme/colors';
+import { fonts } from '@/theme/globals';
 
 function formatBytes(bytes: number) {
   if (bytes >= 1024 ** 3) return `${(bytes / 1024 ** 3).toFixed(1)} GB`;

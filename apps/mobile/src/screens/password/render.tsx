@@ -1,28 +1,28 @@
-import { useState, useCallback } from 'react';
-import { useStore } from './context';
-import { Password, usePasswordStore } from '@/store/passwordStore';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
+import { type Href,useRouter } from 'expo-router';
+import { FileUp,Plus, Search } from 'lucide-react-native';
+import { ClipboardCopy, Copy, Edit, Star, Trash2 } from 'lucide-react-native';
+import { useCallback,useState } from 'react';
 import {
   FlatList,
-  View,
-  Text,
   Pressable,
-  TextInput,
-  StyleSheet,
-  useColorScheme,
   RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  useColorScheme,
+  View,
 } from 'react-native';
-import { Search, Plus, FileUp } from 'lucide-react-native';
 import { useTranslation } from '@repo/i18n';
-import { ModalController } from './modal-controller';
 import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
 import { CopyToast } from '@/components/copy-toast';
+import { PasswordItem } from '@/components/password-item';
+import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
-import { PasswordItem } from '@/components/password-item';
-import * as Haptics from 'expo-haptics';
-import * as Clipboard from 'expo-clipboard';
-import { useRouter, type Href } from 'expo-router';
-import { Copy, ClipboardCopy, Edit, Star, Trash2 } from 'lucide-react-native';
+import { useStore } from './context';
+import { ModalController } from './modal-controller';
 
 type Tab = 'all' | 'favorites';
 

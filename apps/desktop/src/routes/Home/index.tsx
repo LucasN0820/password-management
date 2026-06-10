@@ -24,10 +24,10 @@ function computeTimeAgo(
   const date = new Date(dateStr).getTime();
   const diff = now - date;
   const hours = Math.floor(diff / 3600000);
-  if (hours < 1) return t('time.justNow');
-  if (hours < 24) return t('time.hoursAgo', { hours });
+  if (hours < 1) {return t('time.justNow');}
+  if (hours < 24) {return t('time.hoursAgo', { hours });}
   const days = Math.floor(hours / 24);
-  if (days < 7) return t('time.daysAgo', { days });
+  if (days < 7) {return t('time.daysAgo', { days });}
   return t('time.weeksAgo', { weeks: Math.floor(days / 7) });
 }
 
@@ -154,8 +154,8 @@ export function HomePage() {
                 label: 'Settings',
                 action: () => navigate('/settings'),
               },
-            ].map(action => (
-              <button
+            ].map(action => 
+              { return <button
                 key={action.label}
                 className='flex cursor-pointer items-center gap-3 rounded-md border border-border bg-card px-4 py-3 transition-colors duration-150 hover:border-foreground/30 hover:bg-white'
                 onClick={action.action}
@@ -169,8 +169,8 @@ export function HomePage() {
                     {action.shortcut}
                   </kbd>
                 )}
-              </button>
-            ))}
+              </button> }
+            )}
           </div>
         </motion.div>
 
@@ -186,8 +186,8 @@ export function HomePage() {
             </h2>
             <div className='space-y-1 border-y border-border py-2'>
               {recentPasswords.length > 0 ? (
-                recentPasswords.map((password, i) => (
-                  <div
+                recentPasswords.map((password, i) => 
+                  { return <div
                     key={password.id}
                     className={`flex cursor-pointer items-center gap-3 rounded-md px-3 py-3 transition-colors duration-150 hover:bg-surface ${i === 0 ? 'bg-surface' : ''}`}
                     onClick={() => navigate('/password')}
@@ -219,8 +219,8 @@ export function HomePage() {
                     <span className='text-xs text-text-tertiary shrink-0'>
                       {timeAgoMap.get(password.id)}
                     </span>
-                  </div>
-                ))
+                  </div> }
+                )
               ) : (
                 <div className='flex flex-col items-center py-12 text-muted-foreground'>
                   <Key className='h-10 w-10 opacity-30 mb-3' />
@@ -249,8 +249,8 @@ export function HomePage() {
                 { keys: 'Esc', desc: t('shortcuts.closeOverlay') },
                 { keys: '↑ ↓', desc: t('shortcuts.navigateList') },
                 { keys: '↵', desc: t('shortcuts.selectCopy') },
-              ].map(sc => (
-                <div
+              ].map(sc => 
+                { return <div
                   key={sc.desc}
                   className='flex items-center justify-between gap-4'
                 >
@@ -260,8 +260,8 @@ export function HomePage() {
                   <span className='text-sm text-muted-foreground'>
                     {sc.desc}
                   </span>
-                </div>
-              ))}
+                </div> }
+              )}
             </div>
           </div>
         </motion.div>

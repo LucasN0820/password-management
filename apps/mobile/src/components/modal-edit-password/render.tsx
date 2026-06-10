@@ -1,26 +1,26 @@
+import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
-  Modal,
-  View,
-  Pressable,
-  Text,
-  StyleSheet,
   KeyboardAvoidingView,
+  Modal,
+  Pressable,
   ScrollView,
+  StyleSheet,
+  Text,
   useColorScheme,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useMutation } from '@tanstack/react-query';
 import {
+  FormType,
   PasswordForm,
   PasswordFormRef,
-  FormType,
 } from '@/components/password-form';
-import { useMutation } from '@tanstack/react-query';
 import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
-import * as Haptics from 'expo-haptics';
 
 export function Render({
   initialValue,

@@ -1,6 +1,6 @@
 import { ReactNode, useEffect, useState } from "react";
-import { usePasswordStore } from "@/store/passwordStore";
 import { Skeleton } from "@/components/ui/skeleton";
+import { usePasswordStore } from "@/store/passwordStore";
 
 export function Monitor({ children }: { children: ReactNode }) {
   const { loadCategories, loadPasswords } = usePasswordStore()

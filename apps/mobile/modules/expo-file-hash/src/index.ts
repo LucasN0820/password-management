@@ -1,7 +1,7 @@
 import { requireNativeModule } from 'expo';
 
 interface ExpoFileHashModule {
-  sha256(uri: string): Promise<string>;
+  sha256: (uri: string) => Promise<string>;
 }
 
 let fileHash: ExpoFileHashModule | null = null;

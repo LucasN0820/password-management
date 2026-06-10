@@ -1,39 +1,39 @@
-import { Password, usePasswordStore } from '@/store/passwordStore';
-import { useQueryClient } from '@tanstack/react-query';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
 import { Stack } from 'expo-router';
+import { useRouter } from 'expo-router';
 import {
-  View,
-  ScrollView,
-  Pressable,
-  Linking,
-  Alert,
-  StyleSheet,
-  Image,
-  useColorScheme,
-} from 'react-native';
-import { Text } from 'react-native';
-import {
+  ChevronLeft,
   Copy,
   Eye,
   EyeOff,
-  Star,
-  Globe,
-  User,
-  Key,
   FileText,
+  Globe,
+  Key,
   MoreHorizontal,
-  ChevronLeft,
+  Star,
+  User,
 } from 'lucide-react-native';
-import { useState, useCallback } from 'react';
-import { useStore } from './context';
-import { useRouter } from 'expo-router';
+import { Edit, Share2, Trash2 } from 'lucide-react-native';
+import { useCallback,useState } from 'react';
+import {
+  Alert,
+  Image,
+  Linking,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  useColorScheme,
+  View,
+} from 'react-native';
+import { Text } from 'react-native';
+import { useQueryClient } from '@tanstack/react-query';
 import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
 import { CopyToast } from '@/components/copy-toast';
+import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
-import * as Haptics from 'expo-haptics';
-import * as Clipboard from 'expo-clipboard';
-import { Edit, Share2, Trash2 } from 'lucide-react-native';
+import { useStore } from './context';
 
 export function Render({ passwordItem }: { passwordItem: Password }) {
   const { toggleFavorite } = usePasswordStore();

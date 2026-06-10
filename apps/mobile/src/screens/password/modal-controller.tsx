@@ -1,6 +1,6 @@
-import { ModalDeletePassword } from './modal-delete-password';
 import { useStore } from './context';
 import ModalAddPassword from './modal-add-password';
+import { ModalDeletePassword } from './modal-delete-password';
 import { ModalEditPassword } from './modal-edit-password';
 
 export function ModalController() {

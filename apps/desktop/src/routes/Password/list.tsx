@@ -1,6 +1,6 @@
 import { Globe, Lock, Search, Star } from 'lucide-react';
-import { Input } from '@repo/ui/primitives/input';
 import { cn } from '@repo/ui/lib/utils';
+import { Input } from '@repo/ui/primitives/input';
 import { usePasswordStore } from '@/store/passwordStore';
 import { ButtonAddPassword } from './button-add-password';
 
@@ -48,8 +48,8 @@ export function PasswordList() {
           </div>
         ) : (
           <div className='space-y-1 px-2'>
-            {filteredPasswords.map(password => (
-              <div
+            {filteredPasswords.map(password => 
+              { return <div
                 key={password.id}
                 className={cn(
                   'group flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 transition-colors duration-150',
@@ -111,8 +111,8 @@ export function PasswordList() {
                     )}
                   />
                 </button>
-              </div>
-            ))}
+              </div> }
+            )}
           </div>
         )}
       </div>

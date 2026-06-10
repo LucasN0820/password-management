@@ -1,5 +1,5 @@
-import { ActivityIndicator, View } from 'react-native';
 import { Lock } from 'lucide-react-native';
+import { ActivityIndicator, View } from 'react-native';
 
 interface LanguageLoaderProps {
   color?: string;

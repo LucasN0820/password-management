@@ -1,9 +1,9 @@
+import * as Localization from 'expo-localization';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import * as Localization from 'expo-localization';
+import { changeLanguage,i18n, supportedLanguages } from '@repo/i18n';
 import { LanguageLoader } from './LanguageLoader';
-import { i18n, supportedLanguages, changeLanguage } from '@repo/i18n';
 
 interface I18nProviderProps {
   children: ReactNode;
@@ -35,8 +35,8 @@ export function I18nProvider({ children }: I18nProviderProps) {
     const deviceLang = getDeviceLanguage();
     changeLanguage(deviceLang)
       .then(() => setReady(true))
-      .catch((err) => {
-        console.error('Failed to change language:', err);
+      .catch((error) => {
+        console.error('Failed to change language:', error);
         setReady(true); // Ensure app renders even if language fails
       });
   }, []);
@@ -49,4 +49,4 @@ export function I18nProvider({ children }: I18nProviderProps) {
 }
 
 // Re-export for convenience
-export { supportedLanguages, changeLanguage };
+export { changeLanguage,supportedLanguages };

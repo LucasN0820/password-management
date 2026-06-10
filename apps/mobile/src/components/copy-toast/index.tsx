@@ -1,16 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
-import { Text, StyleSheet, useColorScheme } from 'react-native';
+import { StyleSheet, Text, useColorScheme } from 'react-native';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
-  withTiming,
-  withSequence,
+  useSharedValue,
   withDelay,
+  withSequence,
   withSpring,
+  withTiming,
 } from 'react-native-reanimated';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface Props {
   visible: boolean;
@@ -49,13 +49,13 @@ export function CopyToast({
         setIsMounted(false);
       }, 1900);
       return () => clearTimeout(timer);
-    } else {
+    } 
       // Exit animation
       opacity.value = withTiming(0, { duration: 200 });
       translateY.value = withTiming(-100, { duration: 200 });
       const timer = setTimeout(() => setIsMounted(false), 250);
       return () => clearTimeout(timer);
-    }
+    
   }, [visible]);
 
   const animatedStyle = useAnimatedStyle(() => ({

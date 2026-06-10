@@ -1,13 +1,13 @@
+import * as Haptics from 'expo-haptics';
 import { Tabs } from 'expo-router';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { KeyRound, Wand2 } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet,Text, View } from 'react-native';
 import { useColorScheme } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTranslation } from '@repo/i18n';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
-import * as Haptics from 'expo-haptics';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 function VaultTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { t } = useTranslation();
@@ -27,7 +27,7 @@ function VaultTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       ]}
     >
       {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key]!;
+        const { options } = descriptors[route.key];
         const isFocused = state.index === index;
         const color = isFocused ? c.foreground : c.tabIconDefault;
 

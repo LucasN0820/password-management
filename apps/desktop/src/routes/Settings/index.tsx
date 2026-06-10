@@ -6,7 +6,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import { useEffect, useState, type KeyboardEvent } from 'react';
+import { type KeyboardEvent,useEffect, useState } from 'react';
 import {
   Button,
   Card,
@@ -23,7 +23,7 @@ import type {
 } from '../../../electron/preload';
 
 function formatBytes(bytes?: number) {
-  if (bytes === undefined) return 'Unknown size';
+  if (bytes === undefined) {return 'Unknown size';}
   if (bytes < 1024 * 1024 * 1024) {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
@@ -31,8 +31,8 @@ function formatBytes(bytes?: number) {
 }
 
 function formatDuration(seconds?: number) {
-  if (!seconds || !Number.isFinite(seconds)) return null;
-  if (seconds < 60) return `${Math.ceil(seconds)}s remaining`;
+  if (!seconds || !Number.isFinite(seconds)) {return null;}
+  if (seconds < 60) {return `${Math.ceil(seconds)}s remaining`;}
   const minutes = Math.ceil(seconds / 60);
   return `${minutes}m remaining`;
 }
@@ -210,11 +210,11 @@ export default function SettingsPage() {
               </CardDescription>
             </div>
             <Button
+              size='sm'
+              variant='outline'
               onClick={() => {
                 void handleOpenModelFolder();
               }}
-              size='sm'
-              variant='outline'
             >
               <FolderOpen className='h-4 w-4' />
               Open Folder
@@ -255,6 +255,8 @@ export default function SettingsPage() {
                   <div
                     key={catalogModel.id}
                     aria-checked={installedModel?.isDefault ?? false}
+                    role={isReady ? 'checkbox' : undefined}
+                    tabIndex={isReady ? 0 : undefined}
                     className={`flex min-h-[236px] flex-col justify-between rounded-lg border bg-background p-4 transition-colors ${
                       installedModel?.isDefault
                         ? 'border-clay ring-1 ring-clay/25'
@@ -274,8 +276,6 @@ export default function SettingsPage() {
                         isReady && !installedModel?.isDefault && !isBusy
                       );
                     }}
-                    role={isReady ? 'checkbox' : undefined}
-                    tabIndex={isReady ? 0 : undefined}
                   >
                     <div>
                       <div className='mb-3 flex items-start justify-between gap-3'>
@@ -339,11 +339,11 @@ export default function SettingsPage() {
                     <div className='mt-4 flex flex-wrap gap-2'>
                       {isDownloading ? (
                         <Button
+                          size='sm'
+                          variant='outline'
                           onClick={() => {
                             void handleCancelDownload();
                           }}
-                          size='sm'
-                          variant='outline'
                         >
                           <X className='h-4 w-4' />
                           Cancel
@@ -351,13 +351,13 @@ export default function SettingsPage() {
                       ) : isReady ? (
                         <Button
                           disabled={isBusy}
+                          size='icon'
+                          title={`Remove ${catalogModel.displayName}`}
+                          variant='ghost'
                           onClick={event => {
                             event.stopPropagation();
                             void handleRemoveModel(catalogModel.id);
                           }}
-                          size='icon'
-                          title={`Remove ${catalogModel.displayName}`}
-                          variant='ghost'
                         >
                           {isBusy ? (
                             <Loader2 className='h-4 w-4 animate-spin' />
@@ -368,10 +368,10 @@ export default function SettingsPage() {
                       ) : (
                         <Button
                           disabled={isBusy || Boolean(downloadProgress)}
+                          size='sm'
                           onClick={() => {
                             void handlePrepareModel(catalogModel.id);
                           }}
-                          size='sm'
                         >
                           {isBusy ? (
                             <Loader2 className='h-4 w-4 animate-spin' />

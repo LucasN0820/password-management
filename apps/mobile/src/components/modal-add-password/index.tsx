@@ -1,22 +1,22 @@
+import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Alert,
-  Modal,
-  View,
-  Pressable,
-  Text,
-  StyleSheet,
   KeyboardAvoidingView,
+  Modal,
+  Pressable,
   ScrollView,
+  StyleSheet,
+  Text,
   useColorScheme,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { PasswordForm, PasswordFormRef } from '@/components/password-form';
 import { useMutation } from '@tanstack/react-query';
+import { PasswordForm, PasswordFormRef } from '@/components/password-form';
 import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
-import * as Haptics from 'expo-haptics';
 
 interface Props {
   onClose: () => void;

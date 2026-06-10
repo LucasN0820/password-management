@@ -7,13 +7,13 @@ export function ModalController() {
   const { modal, setModal } = useStore()
   const { addPassword, updatePassword } = usePasswordStore()
 
-  if (!modal) return null
+  if (!modal) {return null}
 
   if (modal.type === 'edit-password') {
     return (
       <EditPasswordModal
         password={modal.password}
-        onClose={() => setModal(null)}
+        onClose={() => { setModal(null); }}
         onSave={(id, data) => updatePassword(id, data)}
       />
     )
@@ -21,7 +21,7 @@ export function ModalController() {
 
   return (
     <AddPasswordModal
-      onClose={() => setModal(null)}
+      onClose={() => { setModal(null); }}
       onSave={(data) => addPassword(data)}
     />
   )

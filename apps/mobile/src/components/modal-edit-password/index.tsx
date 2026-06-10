@@ -1,7 +1,7 @@
+import { Redirect } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { usePasswordStore } from '@/store/passwordStore';
 import { Render } from './render';
-import { Redirect } from 'expo-router';
 
 interface Props {
   onClose: () => void;

@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
 import { Bot, Home, Key, Lock, Search, Settings, Shield } from 'lucide-react';
+import { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router';
+import { useTranslation } from '@repo/i18n';
 import {
   Sidebar,
   SidebarContent,
@@ -12,7 +13,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from '@repo/ui/primitives/sidebar';
-import { useTranslation } from '@repo/i18n';
 
 export function AppSidebar() {
   const { t } = useTranslation();
@@ -20,12 +20,12 @@ export function AppSidebar() {
   const navigate = useNavigate();
 
   const navItems = useMemo(
-    () => [
+    () => { return [
       { title: t('nav.home'), url: '/', icon: Home },
       { title: t('nav.passwords'), url: '/password', icon: Key },
       { title: t('nav.generator'), url: '/generator', icon: Shield },
       { title: 'AI Import', url: '/onboard', icon: Bot },
-    ],
+    ] },
     [t]
   );
 

@@ -11,7 +11,7 @@
     "eas-build-pre-install": "corepack enable && corepack prepare yarn@4.13.0 --activate",
     "eas:android": "eas build --platform android --profile production --auto-submit --non-interactive --no-wait",
     "eas:ios": "eas build --platform ios --profile production --no-wait --auto-submit --non-interactive",
-    "lint": "eslint .",
+    "lint": "eslint src modules",
     "tsc": "tsc --noEmit"
   },
   "dependencies": {
