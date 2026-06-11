@@ -1,8 +1,8 @@
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
-import { Edit, Globe,Star, Trash2 } from 'lucide-react-native';
+import { Edit, Globe, Star, Trash2 } from 'lucide-react-native';
 import { useMemo, useRef } from 'react';
-import { Image, StyleSheet, Text, useColorScheme,View } from 'react-native';
+import { Image, StyleSheet, Text, useColorScheme, View } from 'react-native';
 import {
   Gesture,
   GestureDetector,
@@ -13,7 +13,7 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { useMutation } from '@tanstack/react-query';
 import { Password, usePasswordStore } from '@/store/passwordStore';
@@ -63,7 +63,7 @@ export function PasswordItem({
 
   const handleEdit = () => {
     onEdit?.(password.id);
-    resetSwipe(1300);
+    resetSwipe(150);
   };
 
   const animatedStyles = useAnimatedStyle(() => ({
@@ -81,8 +81,8 @@ export function PasswordItem({
     };
   });
 
-  const resetSwipe = (stiffness = 100) => {
-    translateX.value = withSpring(0, { stiffness });
+  const resetSwipe = (duration = 250) => {
+    translateX.value = withTiming(0, { duration });
     lastOffset.current = 0;
   };
 
@@ -90,12 +90,12 @@ export function PasswordItem({
     .minDuration(500)
     .onStart(() => {
       'worklet';
-      itemScale.value = withSpring(0.97, { damping: 15 });
+      itemScale.value = withTiming(0.97, { duration: 100 });
       runOnJS(impact)(Haptics.ImpactFeedbackStyle.Medium);
     })
     .onEnd(() => {
       'worklet';
-      itemScale.value = withSpring(1, { damping: 15 });
+      itemScale.value = withTiming(1, { duration: 150 });
       if (onLongPress) {
         runOnJS(onLongPress)(password);
       }
@@ -107,7 +107,7 @@ export function PasswordItem({
         pathname: '/password/[id]',
         params: { id: password.id },
       });
-      resetSwipe(1300);
+      resetSwipe(150);
     })
     .runOnJS(true);
 
@@ -131,10 +131,8 @@ export function PasswordItem({
         shouldSnapOpen = true;
         impact(Haptics.ImpactFeedbackStyle.Light);
       }
-      translateX.value = withSpring(shouldSnapOpen ? -120 : 0, {
-        damping: 20,
-        stiffness: 100,
-        mass: 1,
+      translateX.value = withTiming(shouldSnapOpen ? -120 : 0, {
+        duration: 200,
       });
       lastOffset.current = shouldSnapOpen ? -120 : 0;
     })
@@ -318,22 +316,24 @@ const styles = StyleSheet.create({
   },
   textContent: {
     flex: 1,
+    gap: 6,
   },
   title: {
     fontSize: 16,
+    lineHeight: 20,
   },
   username: {
     fontSize: 14,
-    marginTop: 2,
+    lineHeight: 18,
   },
   urlRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 4,
   },
   url: {
     fontSize: 12,
+    lineHeight: 16,
     flex: 1,
   },
   favoriteButton: {

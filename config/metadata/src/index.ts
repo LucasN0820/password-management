@@ -1,3 +1,3 @@
-export const APP_SLUG = 'password-volt';
-export const APP_NAME = 'Password Volt';
-export const APP_PACKAGE = 'com.lucasni.password';
+export const APP_SLUG = 'password-vault';
+export const APP_NAME = 'Password Vault';
+export const APP_PACKAGE = 'com.lucas.vault';

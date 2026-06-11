@@ -5,7 +5,6 @@ import Animated, {
   useSharedValue,
   withDelay,
   withSequence,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -38,7 +37,7 @@ export function CopyToast({
   useEffect(() => {
     if (visible) {
       setIsMounted(true);
-      translateY.value = withSpring(0, { damping: 20, stiffness: 300 });
+      translateY.value = withTiming(0, { duration: 250 });
       opacity.value = withSequence(
         withTiming(1, { duration: 200 }),
         withDelay(1500, withTiming(0, { duration: 200 }))

@@ -1,9 +1,9 @@
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
-import { type Href,useRouter } from 'expo-router';
-import { FileUp,Plus, Search } from 'lucide-react-native';
+import { type Href, useRouter } from 'expo-router';
+import { FileUp, Plus, Search } from 'lucide-react-native';
 import { ClipboardCopy, Copy, Edit, Star, Trash2 } from 'lucide-react-native';
-import { useCallback,useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   FlatList,
   Pressable,
@@ -22,7 +22,6 @@ import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
 import { useStore } from './context';
-import { ModalController } from './modal-controller';
 
 type Tab = 'all' | 'favorites';
 
@@ -243,18 +242,6 @@ export function Render() {
             >
               <Search size={18} color={c.mutedForeground} />
             </Pressable>
-            <Pressable
-              onPress={() => {
-                impact(Haptics.ImpactFeedbackStyle.Light);
-                setModal({ type: 'add-password' });
-              }}
-              style={[
-                styles.headerIconFilled,
-                { backgroundColor: c.foreground },
-              ]}
-            >
-              <Plus size={18} color={c.background} />
-            </Pressable>
           </View>
         </View>
 
@@ -378,8 +365,6 @@ export function Render() {
         />
       </View>
 
-      <ModalController />
-
       <ActionSheet
         visible={actionSheetVisible}
         onClose={() => setActionSheetVisible(false)}
@@ -420,14 +405,6 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 12,
     borderWidth: 1,
-    borderCurve: 'continuous',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerIconFilled: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
     borderCurve: 'continuous',
     justifyContent: 'center',
     alignItems: 'center',

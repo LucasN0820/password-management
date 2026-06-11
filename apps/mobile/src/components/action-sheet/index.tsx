@@ -13,7 +13,6 @@ import Animated, {
   runOnJS,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { Colors } from '@/theme/colors';
@@ -48,10 +47,10 @@ export function ActionSheet({ visible, onClose, options }: Props) {
     if (visible) {
       setIsMounted(true);
       overlayOpacity.value = withTiming(1, { duration: 200 });
-      translateY.value = withSpring(0, { damping: 20, stiffness: 300 });
+      translateY.value = withTiming(0, { duration: 250 });
     } else {
       overlayOpacity.value = withTiming(0, { duration: 150 });
-      translateY.value = withSpring(400, { damping: 25, stiffness: 400 });
+      translateY.value = withTiming(400, { duration: 200 });
       // Delay unmount until exit animation completes
       const timer = setTimeout(() => setIsMounted(false), 300);
       return () => clearTimeout(timer);

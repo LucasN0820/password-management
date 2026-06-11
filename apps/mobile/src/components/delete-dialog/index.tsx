@@ -11,7 +11,6 @@ import {
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { Colors } from '@/theme/colors';
@@ -35,7 +34,7 @@ export function DeleteDialog({ visible, title, onClose, onConfirm }: Props) {
     if (visible) {
       setIsMounted(true);
       opacity.value = withTiming(1, { duration: 200 });
-      scale.value = withSpring(1, { damping: 20, stiffness: 300 });
+      scale.value = withTiming(1, { duration: 200 });
     } else {
       opacity.value = withTiming(0, { duration: 150 });
       scale.value = withTiming(0.9, { duration: 150 });
@@ -108,13 +107,14 @@ export function DeleteDialog({ visible, title, onClose, onConfirm }: Props) {
             This action cannot be undone.
           </Text>
 
-          <View style={styles.buttons}>
+          <View
+            style={[styles.buttons, { borderTopColor: c.border }]}
+          >
             <Pressable
               onPress={onClose}
               style={({ pressed }) => [
-                styles.button,
-                { borderColor: c.border, borderWidth: 1 },
-                pressed && { backgroundColor: c.hover },
+                styles.actionButton,
+                pressed && { opacity: 0.6 },
               ]}
             >
               <Text
@@ -129,15 +129,14 @@ export function DeleteDialog({ visible, title, onClose, onConfirm }: Props) {
             <Pressable
               onPress={handleConfirm}
               style={({ pressed }) => [
-                styles.button,
-                { backgroundColor: c.accentRed },
-                pressed && { opacity: 0.9 },
+                styles.actionButton,
+                pressed && { opacity: 0.6 },
               ]}
             >
               <Text
                 style={[
                   styles.buttonText,
-                  { color: '#FFFFFF', fontFamily: fonts.bodySemiBold },
+                  { color: c.destructive, fontFamily: fonts.bodySemiBold },
                 ]}
               >
                 Delete
@@ -178,23 +177,25 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 14,
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 0,
     lineHeight: 20,
   },
   buttons: {
     flexDirection: 'row',
-    gap: 12,
-    width: '100%',
-  },
-  button: {
-    flex: 1,
-    height: 44,
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    justifyContent: 'center',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    alignSelf: 'stretch',
+    width: '100%',
+    marginTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1,
+  },
+  actionButton: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 4,
   },
   buttonText: {
-    fontSize: 15,
+    fontSize: 16,
   },
 });

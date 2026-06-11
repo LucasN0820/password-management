@@ -10,7 +10,6 @@ import {
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
   runOnJS,
 } from 'react-native-reanimated';
@@ -54,10 +53,10 @@ export function ActionSheet({
   useEffect(() => {
     if (visible) {
       opacity.value = withTiming(1, { duration: 200 });
-      translateY.value = withSpring(0, { damping: 20, stiffness: 300 });
+      translateY.value = withTiming(0, { duration: 250 });
     } else {
       opacity.value = withTiming(0, { duration: 150 });
-      translateY.value = withSpring(400, { damping: 25, stiffness: 400 });
+      translateY.value = withTiming(400, { duration: 200 });
     }
   }, [visible, opacity, translateY]);
 

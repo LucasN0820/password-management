@@ -17,7 +17,7 @@ import {
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 
 export type ButtonVariant =
@@ -211,18 +211,9 @@ export const Button = forwardRef<View, ButtonProps>(
       // Trigger haptic feedback
       triggerHapticFeedback();
 
-      // Scale up with bouncy spring animation
-      scale.value = withSpring(1.05, {
-        damping: 15,
-        stiffness: 400,
-        mass: 0.5,
-      });
+      scale.value = withTiming(1.05, { duration: 100 });
 
-      // Slight brightness increase for glass effect
-      brightness.value = withSpring(1.1, {
-        damping: 20,
-        stiffness: 300,
-      });
+      brightness.value = withTiming(1.1, { duration: 100 });
 
       // Call original onPressIn if provided
       props.onPressIn?.(ev);
@@ -230,19 +221,9 @@ export const Button = forwardRef<View, ButtonProps>(
 
     const handlePressOut = (ev?: any) => {
       'worklet';
-      // Return to original size with smooth spring
-      scale.value = withSpring(1, {
-        damping: 20,
-        stiffness: 400,
-        mass: 0.8,
-        overshootClamping: false,
-      });
+      scale.value = withTiming(1, { duration: 150 });
 
-      // Return brightness to normal
-      brightness.value = withSpring(1, {
-        damping: 20,
-        stiffness: 300,
-      });
+      brightness.value = withTiming(1, { duration: 150 });
 
       // Call original onPressOut if provided
       props.onPressOut?.(ev);

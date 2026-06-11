@@ -48,71 +48,79 @@ export function PasswordList() {
           </div>
         ) : (
           <div className='space-y-1 px-2'>
-            {filteredPasswords.map(password => 
-              { return <div
-                key={password.id}
-                className={cn(
-                  'group flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 transition-colors duration-150',
-                  selectedPassword?.id === password.id
-                    ? 'bg-selected-bg'
-                    : 'hover:bg-background'
-                )}
-                onClick={() => {
-                  setSelectedPassword(password);
-                }}
-              >
+            {filteredPasswords.map(password => {
+              return (
                 <div
+                  key={password.id}
                   className={cn(
-                    'flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border',
+                    'group flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 transition-colors duration-150',
                     selectedPassword?.id === password.id
-                      ? 'border-clay/20 bg-clay-soft'
-                      : 'border-border bg-background'
+                      ? 'bg-selected-bg'
+                      : 'hover:bg-background'
                   )}
-                >
-                  {password.icon ? (
-                    <img
-                      src={password.icon}
-                      alt={password.title}
-                      className='w-full h-full object-cover'
-                    />
-                  ) : password.url ? (
-                    <Globe className='h-4 w-4 text-muted-foreground' />
-                  ) : (
-                    <Lock className='h-4 w-4 text-muted-foreground' />
-                  )}
-                </div>
-
-                <div className='flex-1 min-w-0'>
-                  <h3 className='truncate text-sm font-semibold text-foreground'>
-                    {password.title}
-                  </h3>
-                  <p className='truncate text-xs text-muted-foreground'>
-                    {password.username || 'No username'}
-                  </p>
-                </div>
-
-                {password.isFavorite && (
-                  <Star className='h-3.5 w-3.5 shrink-0 fill-current text-clay' />
-                )}
-
-                <button
-                  className='shrink-0 rounded-md p-1 opacity-0 transition-colors duration-150 hover:bg-background group-hover:opacity-100'
-                  onClick={e => {
-                    e.stopPropagation();
-                    toggleFavorite(password);
+                  onClick={() => {
+                    setSelectedPassword(password);
                   }}
                 >
-                  <Star
+                  <div
                     className={cn(
-                      'h-3.5 w-3.5 transition-colors duration-150',
-                      password.isFavorite
-                        ? 'fill-clay text-clay'
-                        : 'text-muted-foreground hover:text-clay'
+                      'flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border',
+                      selectedPassword?.id === password.id
+                        ? 'border-clay/20 bg-clay-soft'
+                        : 'border-border bg-background'
                     )}
-                  />
-                </button>
-              </div> }
-            )}
+                  >
+                    {password.icon ? (
+                      <img
+                        src={password.icon}
+                        alt={password.title}
+                        className='w-full h-full object-cover'
+                      />
+                    ) : password.url ? (
+                      <Globe className='h-4 w-4 text-muted-foreground' />
+                    ) : (
+                      <Lock className='h-4 w-4 text-muted-foreground' />
+                    )}
+                  </div>
+
+                  <div className='flex-1 min-w-0'>
+                    <h3 className='truncate text-sm font-semibold text-foreground'>
+                      {password.title}
+                    </h3>
+                    <p className='truncate text-xs text-muted-foreground'>
+                      {password.username || 'No username'}
+                    </p>
+                  </div>
+
+                  <button
+                    className={cn(
+                      'shrink-0 rounded-md p-1 transition-colors duration-150 hover:bg-background',
+                      password.isFavorite
+                        ? 'opacity-100'
+                        : 'opacity-0 group-hover:opacity-100'
+                    )}
+                    aria-label={
+                      password.isFavorite
+                        ? `Remove ${password.title} from favorites`
+                        : `Add ${password.title} to favorites`
+                    }
+                    onClick={e => {
+                      e.stopPropagation();
+                      toggleFavorite(password);
+                    }}
+                  >
+                    <Star
+                      className={cn(
+                        'h-3.5 w-3.5 transition-colors duration-150',
+                        password.isFavorite
+                          ? 'fill-clay text-clay'
+                          : 'text-muted-foreground hover:text-clay'
+                      )}
+                    />
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

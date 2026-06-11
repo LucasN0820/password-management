@@ -8,6 +8,9 @@ dist
 Makefile
 assets
 
+apps/mobile/modules/**/android/build/**
+apps/mobile/modules/**/ios/build/**
+
 # Electron Builder output
 release/
 *.dmg
