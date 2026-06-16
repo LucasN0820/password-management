@@ -1,9 +1,9 @@
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { ImageIcon, X } from 'lucide-react-native';
 import { useFormContext } from 'react-hook-form';
 import {
   Alert,
-  Image,
   StyleSheet,
   TouchableOpacity,
   View,
@@ -89,6 +89,7 @@ export function FieldIcon() {
             <Image
               source={{ uri: icon }}
               style={styles.previewImage}
+              contentFit="cover"
               onError={() => {
                 console.warn('Failed to load icon preview');
                 setValue('icon', undefined, { shouldDirty: true });

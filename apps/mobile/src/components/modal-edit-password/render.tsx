@@ -34,7 +34,7 @@ export function Render({
   const { updatePassword } = usePasswordStore();
   const [visible, setVisible] = useState(true);
   const formRef = useRef<PasswordFormRef>(null);
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
 
   const handleClose = useCallback(() => {

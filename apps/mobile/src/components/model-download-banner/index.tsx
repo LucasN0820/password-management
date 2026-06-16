@@ -60,7 +60,7 @@ export function GlobalModelDownloadBanner() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
 
   const cardWidth = width - MARGIN * 2;
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     borderCurve: 'continuous',
   },
   surface: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     borderWidth: 1,
     borderCurve: 'continuous',
     shadowColor: '#000',
@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   clip: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     overflow: 'hidden',
     borderCurve: 'continuous',
   },
@@ -343,7 +343,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   badgeCenter: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     alignItems: 'center',
     justifyContent: 'center',
   },

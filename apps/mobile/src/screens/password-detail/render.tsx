@@ -1,5 +1,6 @@
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
 import { Stack } from 'expo-router';
 import { useRouter } from 'expo-router';
 import {
@@ -18,7 +19,6 @@ import { Edit, Share2, Trash2 } from 'lucide-react-native';
 import { useCallback,useState } from 'react';
 import {
   Alert,
-  Image,
   Linking,
   Pressable,
   ScrollView,
@@ -47,7 +47,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   const setModal = useStore(s => s.setModal);
   const router = useRouter();
   const qc = useQueryClient();
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
 
   const { id, title, username, password, url, notes, isFavorite, icon } =
@@ -167,7 +167,13 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
         <View style={styles.heroSection}>
           <View style={[styles.heroIcon, { backgroundColor: c.foreground }]}>
             {icon ? (
-              <Image source={{ uri: icon }} style={styles.heroIconImage} />
+              <Image
+                source={{ uri: icon }}
+                style={styles.heroIconImage}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                transition={120}
+              />
             ) : (
               <Text
                 style={[

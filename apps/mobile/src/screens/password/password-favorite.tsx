@@ -13,7 +13,7 @@ interface Props {
 export function FavoritePassword({ onLongPress }: Props) {
   const { filteredPasswords } = usePasswordStore();
   const setModal = useStore(s => s.setModal);
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
 
   const favorites = filteredPasswords.filter(p => p.isFavorite);

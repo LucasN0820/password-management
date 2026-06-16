@@ -55,8 +55,10 @@ interface ExpoModelDownloadNativeModule {
   getActiveModelDownload: () => Promise<NativeModelDownloadTask | null>;
   cancelModelDownload: (taskId: string) => Promise<void>;
   resumeModelDownload: (taskId: string) => Promise<void>;
-  // Only the iOS module implements this; Android requests POST_NOTIFICATIONS
-  // from JS via PermissionsAndroid, so the call is optional.
+  /**
+   * Only the iOS module implements this; Android requests POST_NOTIFICATIONS
+   * from JS via PermissionsAndroid, so the call is optional.
+   */
   requestNotificationPermission?: () => Promise<void>;
   addListener: (
     event: 'onModelDownloadUpdate',
@@ -263,8 +265,8 @@ export function resumeModelDownload(taskId: string) {
 
 /**
  * Request the OS notification permission used by the background download card.
- * iOS prompts via the native module; Android's POST_NOTIFICATIONS runtime grant
- * is handled by the caller through PermissionsAndroid.
+ * On iOS this prompts via the native module; on Android the POST_NOTIFICATIONS
+ * runtime grant is handled by the caller through PermissionsAndroid.
  */
 export function requestNotificationPermission() {
   return getBackend().requestNotificationPermission();

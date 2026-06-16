@@ -37,7 +37,7 @@ export function Toast() {
   const nonce = useToastStore(state => state.nonce);
   const clear = useToastStore(state => state.clear);
   const insets = useSafeAreaInsets();
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
 
   const translateY = useSharedValue(-120);

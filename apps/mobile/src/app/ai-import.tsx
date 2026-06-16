@@ -8,7 +8,7 @@ import { Colors } from '@/theme/colors';
 export default function Screen() {
   const { t } = useTranslation();
   const c = useColorScheme();
-  const colors = Colors[c ?? 'light'];
+  const colors = Colors[c === 'dark' ? 'dark' : 'light'];
 
   return (
     <>

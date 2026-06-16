@@ -1,8 +1,9 @@
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Edit, Globe, Star, Trash2 } from 'lucide-react-native';
 import { useMemo, useRef } from 'react';
-import { Image, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { StyleSheet, Text, useColorScheme, View } from 'react-native';
 import {
   Gesture,
   GestureDetector,
@@ -48,7 +49,7 @@ export function PasswordItem({
   const translateX = useSharedValue(0);
   const lastOffset = useRef(0);
   const itemScale = useSharedValue(1);
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
 
   const { mutate: favoriteMutate } = useMutation({
@@ -190,7 +191,14 @@ export function PasswordItem({
             ]}
           >
             {password.icon ? (
-              <Image source={{ uri: password.icon }} style={styles.iconImage} />
+              <Image
+                source={{ uri: password.icon }}
+                style={styles.iconImage}
+                contentFit="cover"
+                cachePolicy="memory-disk"
+                recyclingKey={String(password.id)}
+                transition={120}
+              />
             ) : (
               <Text
                 style={[

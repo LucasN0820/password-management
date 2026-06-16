@@ -47,7 +47,7 @@ export function GeneratorScreen() {
   const [toastVisible, setToastVisible] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
 
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
 
   const generatePassword = useCallback(() => {

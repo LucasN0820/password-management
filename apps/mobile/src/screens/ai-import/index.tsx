@@ -49,7 +49,7 @@ function useDownloadBusy() {
 export function AiImportScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const { addPasswords } = usePasswordStore();
 
@@ -378,7 +378,7 @@ function SectionTitle({ title, color }: { title: string; color: string }) {
  */
 const ModelCard = memo(({ status }: { status: MobileModelStatus }) => {
   const { t } = useTranslation();
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
 
   const selected = useMobileImportStore(
@@ -514,7 +514,7 @@ function CandidateCard({
   onRemove: () => void;
 }) {
   const { t } = useTranslation();
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   return (
     <View
@@ -601,7 +601,7 @@ function CandidateField({
   label,
   ...props
 }: { label: string } & React.ComponentProps<typeof TextInput>) {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   return (
     <View style={styles.field}>
