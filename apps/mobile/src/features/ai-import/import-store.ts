@@ -4,6 +4,10 @@ import { create } from 'zustand';
 import { runImportWorkflow } from '@repo/ai-import-core/workflow';
 import type { PasswordInput } from '@repo/db';
 import {
+  cancelActiveDownload,
+  startModelDownloadFor,
+} from '@/features/model-download/download-coordinator';
+import {
   cleanupPickedImportFiles,
   MAX_IMPORT_FILE_BYTES,
   MAX_IMPORT_FILES,
@@ -16,8 +20,6 @@ import {
   stopMobileLlamaCompletion,
 } from './mobile-llama-runtime';
 import {
-  cancelMobileModelDownload,
-  downloadMobileModel,
   getDefaultMobileModelId,
   getMobileModelStatuses,
   removeMobileModel,
@@ -30,7 +32,6 @@ import type {
   MobileImportStage,
   MobileModelId,
   MobileModelStatus,
-  ModelDownloadProgress,
 } from './types';
 
 interface MobileImportState {
@@ -42,12 +43,13 @@ interface MobileImportState {
   warnings: string[];
   error: string | null;
   progress: ImportProgress | null;
-  downloadProgress: ModelDownloadProgress | null;
   initialize: () => Promise<void>;
+  refreshModels: () => Promise<void>;
   pickFiles: () => Promise<void>;
   selectModel: (modelId: MobileModelId) => Promise<void>;
   downloadSelectedModel: () => Promise<void>;
-  cancelCurrentOperation: () => Promise<void>;
+  cancelModelDownload: () => Promise<void>;
+  cancelImportProcessing: () => Promise<void>;
   removeModel: (modelId: MobileModelId) => Promise<void>;
   runImport: () => Promise<void>;
   updateCandidate: (
@@ -91,7 +93,6 @@ export const useMobileImportStore = create<MobileImportState>((set, get) => ({
   warnings: [],
   error: null,
   progress: null,
-  downloadProgress: null,
 
   initialize: async () => {
     const [models, selectedModelId] = await Promise.all([
@@ -99,6 +100,10 @@ export const useMobileImportStore = create<MobileImportState>((set, get) => ({
       getDefaultMobileModelId(),
     ]);
     set({ models, selectedModelId });
+  },
+
+  refreshModels: async () => {
+    set({ models: await getMobileModelStatuses() });
   },
 
   pickFiles: async () => {
@@ -149,32 +154,29 @@ export const useMobileImportStore = create<MobileImportState>((set, get) => ({
 
   downloadSelectedModel: async () => {
     const modelId = get().selectedModelId;
-    set({ stage: 'downloading', error: null, downloadProgress: null });
+    set({ error: null });
     try {
-      await downloadMobileModel(modelId, downloadProgress => {
-        set({ downloadProgress });
-      });
-      set({
-        models: await getMobileModelStatuses(),
-        stage: 'idle',
-        downloadProgress: null,
-      });
+      // The coordinator owns the transfer lifecycle; progress is published on
+      // the global download store, not this import store.
+      await startModelDownloadFor(modelId);
     } catch (error) {
-      set({
-        stage: 'idle',
-        downloadProgress: null,
-        error: toErrorMessage(error, 'Model download failed.'),
-      });
+      set({ error: toErrorMessage(error, 'Model download failed.') });
     }
   },
 
-  cancelCurrentOperation: async () => {
+  /**
+   * Cancel only the model download. Kept separate from import processing so a
+   * user stopping an extraction never deletes an in-flight background download.
+   */
+  cancelModelDownload: async () => {
+    await cancelActiveDownload('user').catch(() => undefined);
+  },
+
+  /** Cancel only the in-progress AI extraction. Never touches the download. */
+  cancelImportProcessing: async () => {
     currentAbortController?.abort();
-    await Promise.all([
-      cancelMobileModelDownload().catch(() => undefined),
-      stopMobileLlamaCompletion().catch(() => undefined),
-    ]);
-    set({ stage: 'idle', progress: null, downloadProgress: null });
+    await stopMobileLlamaCompletion().catch(() => undefined);
+    set({ stage: 'idle', progress: null });
   },
 
   removeModel: async modelId => {
@@ -320,7 +322,6 @@ export const useMobileImportStore = create<MobileImportState>((set, get) => ({
       warnings: [],
       error: null,
       progress: null,
-      downloadProgress: null,
     });
   },
 }));

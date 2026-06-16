@@ -10,15 +10,11 @@ import type {
   MobileModelId,
   MobileModelManifest,
   MobileModelStatus,
-  ModelDownloadProgress,
 } from './types';
 
 const MANIFEST_VERSION = 1;
 const MODELS_DIR = `${FileSystem.documentDirectory ?? ''}models/`;
 const MANIFEST_PATH = `${MODELS_DIR}model-library.json`;
-
-let activeDownload: FileSystem.DownloadResumable | null = null;
-let activeDownloadModelId: MobileModelId | null = null;
 
 function emptyManifest(): MobileModelManifest {
   return {
@@ -100,82 +96,94 @@ export async function markMobileModelUsed(modelId: MobileModelId) {
   await writeManifest(manifest);
 }
 
-export async function downloadMobileModel(
-  modelId: MobileModelId,
-  onProgress?: (progress: ModelDownloadProgress) => void
-) {
-  if (activeDownload) {
-    throw new Error(
-      `A model download is already running: ${activeDownloadModelId}`
-    );
-  }
-
+/**
+ * Resolve the on-disk locations for a model. The coordinator and native
+ * transfer layer download into `partialPath`; `verifyAndCommitModel` promotes a
+ * verified partial to `finalPath`.
+ */
+export async function getModelFilePaths(modelId: MobileModelId) {
   const model = getMobileModel(modelId);
   await ensureModelsDirectory();
   const finalPath = `${MODELS_DIR}${model.fileName}`;
-  const partialPath = `${finalPath}.partial`;
-  await FileSystem.deleteAsync(partialPath, { idempotent: true });
-
-  activeDownloadModelId = modelId;
-  activeDownload = FileSystem.createDownloadResumable(
-    getMobileModelDownloadUrl(model),
-    partialPath,
-    {},
-    progress => {
-      const totalBytes = progress.totalBytesExpectedToWrite || model.sizeBytes;
-      onProgress?.({
-        modelId,
-        downloadedBytes: progress.totalBytesWritten,
-        totalBytes,
-        fraction:
-          totalBytes > 0
-            ? Math.min(progress.totalBytesWritten / totalBytes, 1)
-            : 0,
-      });
-    }
-  );
-
-  try {
-    const result = await activeDownload.downloadAsync();
-    if (!result) throw new Error('Model download cancelled');
-
-    const info = await FileSystem.getInfoAsync(partialPath);
-    if (!info.exists || info.size !== model.sizeBytes) {
-      throw new Error('Downloaded model size does not match the catalog.');
-    }
-
-    const hash = (await sha256File(partialPath)).toLowerCase();
-    if (hash !== model.sha256) {
-      throw new Error('Downloaded model failed SHA-256 verification.');
-    }
-
-    await FileSystem.deleteAsync(finalPath, { idempotent: true });
-    await FileSystem.moveAsync({ from: partialPath, to: finalPath });
-
-    const manifest = await readManifest();
-    const now = new Date().toISOString();
-    manifest.models[modelId] = {
-      id: modelId,
-      path: finalPath,
-      sizeBytes: model.sizeBytes,
-      sha256: model.sha256,
-      downloadedAt: now,
-      lastUsedAt: now,
-    };
-    await writeManifest(manifest);
-    return finalPath;
-  } catch (error) {
-    await FileSystem.deleteAsync(partialPath, { idempotent: true });
-    throw error;
-  } finally {
-    activeDownload = null;
-    activeDownloadModelId = null;
-  }
+  return {
+    finalPath,
+    partialPath: `${finalPath}.partial`,
+    sourceUrl: getMobileModelDownloadUrl(model),
+    expectedBytes: model.sizeBytes,
+  };
 }
 
-export async function cancelMobileModelDownload() {
-  const download = activeDownload;
-  if (download) await download.cancelAsync();
+/**
+ * Verify a freshly downloaded `.partial` (size + SHA-256), atomically promote it
+ * to the final GGUF file, and record it in `model-library.json`. The model
+ * library only ever contains verified, inference-ready files.
+ */
+export async function verifyAndCommitModel(
+  modelId: MobileModelId,
+  partialPath: string
+) {
+  const model = getMobileModel(modelId);
+  const { finalPath } = await getModelFilePaths(modelId);
+
+  const info = await FileSystem.getInfoAsync(partialPath);
+  if (!info.exists || info.size !== model.sizeBytes) {
+    throw modelVerificationError(
+      'size-mismatch',
+      'Downloaded model size does not match the catalog.'
+    );
+  }
+
+  const hash = (await sha256File(partialPath)).toLowerCase();
+  if (hash !== model.sha256) {
+    throw modelVerificationError(
+      'sha256-mismatch',
+      'Downloaded model failed SHA-256 verification.'
+    );
+  }
+
+  await FileSystem.deleteAsync(finalPath, { idempotent: true });
+  await FileSystem.moveAsync({ from: partialPath, to: finalPath });
+
+  const manifest = await readManifest();
+  const now = new Date().toISOString();
+  manifest.models[modelId] = {
+    id: modelId,
+    path: finalPath,
+    sizeBytes: model.sizeBytes,
+    sha256: model.sha256,
+    downloadedAt: now,
+    lastUsedAt: now,
+  };
+  await writeManifest(manifest);
+  return finalPath;
+}
+
+export type ModelVerificationErrorCode = 'size-mismatch' | 'sha256-mismatch';
+
+export interface ModelVerificationError extends Error {
+  code: ModelVerificationErrorCode;
+}
+
+/** Build an error flagged as a verification failure (size or SHA-256). */
+function modelVerificationError(
+  code: ModelVerificationErrorCode,
+  message: string
+): ModelVerificationError {
+  const error = new Error(message) as ModelVerificationError;
+  error.name = 'ModelVerificationError';
+  error.code = code;
+  return error;
+}
+
+/** Type guard for {@link ModelVerificationError}. */
+export function isModelVerificationError(
+  error: unknown
+): error is ModelVerificationError {
+  return (
+    error instanceof Error &&
+    error.name === 'ModelVerificationError' &&
+    'code' in error
+  );
 }
 
 export async function removeMobileModel(modelId: MobileModelId) {

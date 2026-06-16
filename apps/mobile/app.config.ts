@@ -75,6 +75,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         },
       },
     ],
+    './plugins/expo-model-download.js',
   ],
   experiments: {
     typedRoutes: true,
