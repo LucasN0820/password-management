@@ -4,6 +4,7 @@ import { i18n } from '@repo/i18n';
 import { useToastStore } from '@/components/toast';
 import { useMobileImportStore } from '@/features/ai-import/import-store';
 import {
+  ensureNotificationPermission,
   initModelDownloadCoordinator,
   registerLibraryCommittedListener,
   resumeActiveDownload,
@@ -17,6 +18,9 @@ import {
 export function ModelDownloadProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     void initModelDownloadCoordinator();
+    // Ask for notification permission at app load so the background-download
+    // card can show on the first download without a button-gated prompt.
+    void ensureNotificationPermission();
 
     // Refresh the model library whenever a background download commits, so any
     // mounted AI Import Screen reflects the newly available model, and surface

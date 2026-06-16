@@ -1,5 +1,6 @@
 import * as Crypto from 'expo-crypto';
 import * as FileSystem from 'expo-file-system/legacy';
+import { PermissionsAndroid, Platform } from 'react-native';
 import { getMobileModel } from '@/features/ai-import/model-catalog';
 import {
   getModelFilePaths,
@@ -12,6 +13,7 @@ import {
   cancelModelDownload as nativeCancel,
   getActiveModelDownload,
   type NativeModelDownloadTask,
+  requestNotificationPermission as nativeRequestNotificationPermission,
   resumeModelDownload as nativeResume,
   startModelDownload as nativeStart,
 } from '../../../modules/expo-model-download/src';
@@ -185,6 +187,29 @@ function onNativeUpdate(task: NativeModelDownloadTask) {
       errorCode: task.errorCode ?? record?.errorCode,
     });
   })();
+}
+
+/**
+ * Ask for the notification permission the download card needs, up front at app
+ * load rather than gated behind the Download button. On Android this is the
+ * `POST_NOTIFICATIONS` runtime permission (Android 13+ only); on iOS the native
+ * module requests UNUserNotificationCenter authorization. Best-effort: if the
+ * user denies, the download still runs — it just loses its system notification.
+ */
+export async function ensureNotificationPermission() {
+  try {
+    if (Platform.OS === 'android') {
+      if (typeof Platform.Version === 'number' && Platform.Version < 33) return;
+      const permission = PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS;
+      if (!permission) return;
+      if (await PermissionsAndroid.check(permission)) return;
+      await PermissionsAndroid.request(permission);
+    } else if (Platform.OS === 'ios') {
+      await nativeRequestNotificationPermission();
+    }
+  } catch {
+    // Ignore — the transfer must not depend on the notification permission.
+  }
 }
 
 function ensureSubscribed() {

@@ -58,6 +58,9 @@ final class ModelDownloadManager: NSObject {
 
   private let progressIntervalMs: Double = 500
   private var lastEmit: TimeInterval = 0
+  /// Show a heads-up banner once per download; later progress ticks refresh the
+  /// notification quietly so we don't re-pop a banner every ~500ms.
+  private var foregroundBannerShown = false
 
   /// Set by the module while the JS runtime is attached.
   var onUpdate: (([String: Any]) -> Void)?
@@ -92,6 +95,7 @@ final class ModelDownloadManager: NSObject {
     task.state = ModelDownloadState.starting
     task.updatedAt = Self.nowIso()
     current = task
+    foregroundBannerShown = false
     registerCategory()
     emit(task)
 
@@ -200,6 +204,12 @@ final class ModelDownloadManager: NSObject {
   }
 
   // MARK: - Notifications
+
+  /// Requests notification authorization and registers the Cancel category up
+  /// front, so the prompt appears at app load rather than on the first download.
+  func prepareNotifications() {
+    registerCategory()
+  }
 
   private func registerCategory() {
     UNUserNotificationCenter.current()
@@ -335,6 +345,23 @@ extension ModelDownloadManager: URLSessionDownloadDelegate {
 // MARK: - Notification responses
 
 extension ModelDownloadManager: UNUserNotificationCenterDelegate {
+  // Without this, iOS suppresses the download notification while the app is in
+  // the foreground. Announce with a banner once, then let progress updates
+  // refresh silently in Notification Center and on the lock screen.
+  func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification,
+    withCompletionHandler completionHandler:
+      @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    if foregroundBannerShown {
+      completionHandler([.list])
+    } else {
+      foregroundBannerShown = true
+      completionHandler([.banner, .list])
+    }
+  }
+
   func userNotificationCenter(
     _ center: UNUserNotificationCenter,
     didReceive response: UNNotificationResponse,

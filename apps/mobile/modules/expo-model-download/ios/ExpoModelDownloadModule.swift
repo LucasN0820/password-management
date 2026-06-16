@@ -23,6 +23,10 @@ public class ExpoModelDownloadModule: Module {
       ModelDownloadManager.shared.bootstrap()
     }
 
+    AsyncFunction("requestNotificationPermission") {
+      ModelDownloadManager.shared.prepareNotifications()
+    }
+
     AsyncFunction("startModelDownload") { (input: StartRecord) in
       let now = Self.nowIso()
       let task = ModelTask(

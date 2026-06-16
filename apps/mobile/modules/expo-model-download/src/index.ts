@@ -46,6 +46,7 @@ interface ModelDownloadBackend {
   getActiveModelDownload: () => Promise<NativeModelDownloadTask | null>;
   cancelModelDownload: (taskId: string) => Promise<void>;
   resumeModelDownload: (taskId: string) => Promise<void>;
+  requestNotificationPermission: () => Promise<void>;
   addListener: (listener: TaskListener) => Subscription;
 }
 
@@ -54,6 +55,9 @@ interface ExpoModelDownloadNativeModule {
   getActiveModelDownload: () => Promise<NativeModelDownloadTask | null>;
   cancelModelDownload: (taskId: string) => Promise<void>;
   resumeModelDownload: (taskId: string) => Promise<void>;
+  // Only the iOS module implements this; Android requests POST_NOTIFICATIONS
+  // from JS via PermissionsAndroid, so the call is optional.
+  requestNotificationPermission?: () => Promise<void>;
   addListener: (
     event: 'onModelDownloadUpdate',
     listener: TaskListener
@@ -72,6 +76,9 @@ function createNativeBackend(): ModelDownloadBackend | null {
       getActiveModelDownload: () => native.getActiveModelDownload(),
       cancelModelDownload: taskId => native.cancelModelDownload(taskId),
       resumeModelDownload: taskId => native.resumeModelDownload(taskId),
+      requestNotificationPermission: async () => {
+        await native.requestNotificationPermission?.();
+      },
       addListener: listener => native.addListener(NATIVE_EVENT, listener),
     };
   } catch {
@@ -212,6 +219,9 @@ function createJsFallbackBackend(): ModelDownloadBackend {
         expectedBytes: task.totalBytes,
       });
     },
+    requestNotificationPermission: async () => {
+      // No native notifications in the fallback transfer; nothing to authorize.
+    },
     addListener: listener => {
       listeners.add(listener);
       return {
@@ -249,6 +259,15 @@ export function cancelModelDownload(taskId: string) {
 
 export function resumeModelDownload(taskId: string) {
   return getBackend().resumeModelDownload(taskId);
+}
+
+/**
+ * Request the OS notification permission used by the background download card.
+ * iOS prompts via the native module; Android's POST_NOTIFICATIONS runtime grant
+ * is handled by the caller through PermissionsAndroid.
+ */
+export function requestNotificationPermission() {
+  return getBackend().requestNotificationPermission();
 }
 
 export function addModelDownloadListener(
