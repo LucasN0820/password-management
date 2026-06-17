@@ -74,6 +74,12 @@
       "sourceType": "github",
       "skillPath": "skills/react-best-practices/SKILL.md",
       "computedHash": "ca7b0c0c6e5f2750043f7f0cd72d16ac4e2abc48f9b5500d047a4b77a2506212"
+    },
+    "web-design-engineer": {
+      "source": "conardli/garden-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-design-engineer/SKILL.md",
+      "computedHash": "b386fc89ae8c82d34a80c335b8e47d4284886242bea5fbe45cd68c4cd55f9618"
     }
   }
 }
