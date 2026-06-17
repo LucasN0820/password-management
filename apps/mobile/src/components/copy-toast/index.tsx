@@ -22,7 +22,7 @@ export function CopyToast({
   message = 'Copied to clipboard',
   onHide,
 }: Props) {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const insets = useSafeAreaInsets();
   const [isMounted, setIsMounted] = useState(false);

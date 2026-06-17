@@ -1,9 +1,9 @@
-import { ReactNode } from 'react';
 import {
   DarkTheme,
   DefaultTheme,
   ThemeProvider as RNThemeProvider,
-} from '@react-navigation/native';
+} from 'expo-router/react-navigation';
+import { ReactNode } from 'react';
 import { useColorScheme } from '@/hooks/useColorTheme';
 import { Colors } from '@/theme/colors';
 

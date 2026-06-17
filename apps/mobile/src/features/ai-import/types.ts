@@ -43,20 +43,12 @@ export interface MobileModelStatus {
   path: string | null;
 }
 
-export interface ModelDownloadProgress {
-  modelId: MobileModelId;
-  downloadedBytes: number;
-  totalBytes: number;
-  fraction: number;
-}
-
 export interface EditableImportCandidate extends ImportCandidateDraft {
   selected: boolean;
 }
 
 export type MobileImportStage =
   | 'idle'
-  | 'downloading'
   | 'processing'
   | 'review'
   | 'saving';

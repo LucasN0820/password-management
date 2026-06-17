@@ -1,5 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { Tabs } from 'expo-router';
+import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { KeyRound, Plus, Wand2 } from 'lucide-react-native';
 import { useMemo } from 'react';
 import {
@@ -10,7 +11,6 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTranslation } from '@repo/i18n';
 import {
   createStore,
@@ -23,7 +23,7 @@ import { fonts } from '@/theme/globals';
 
 function VaultTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { t } = useTranslation();
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const insets = useSafeAreaInsets();
   const setModal = useStore(s => s.setModal);
@@ -127,7 +127,7 @@ export default function TabLayout() {
       <View style={[styles.safeArea, { paddingTop: insets.top }]}>
         <Tabs
           tabBar={props => <VaultTabBar {...props} />}
-          screenOptions={{ headerShown: false }}
+          screenOptions={{ headerShown: false, freezeOnBlur: true }}
         >
           <Tabs.Screen name="index" />
           <Tabs.Screen name="generator" />

@@ -32,7 +32,7 @@ interface Props {
 }
 
 export function ActionSheet({ visible, onClose, options }: Props) {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const [isMounted, setIsMounted] = useState(false);
   const translateY = useSharedValue(400);
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(31, 30, 27, 0.36)',
   },
   sheet: {

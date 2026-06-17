@@ -11,12 +11,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   orientation: 'portrait',
   icon: './assets/images/icon.png',
   userInterfaceStyle: 'automatic',
-  newArchEnabled: true,
-  splash: {
-    image: './assets/images/splash-icon.png',
-    resizeMode: 'contain',
-    backgroundColor: '#faf9f5',
-  },
   ios: {
     supportsTablet: true,
     bundleIdentifier: APP_PACKAGE,
@@ -26,8 +20,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: '#faf9f5',
     },
-    edgeToEdgeEnabled: true,
-    predictiveBackGestureEnabled: false,
+    predictiveBackGestureEnabled: true,
     package: APP_PACKAGE,
   },
   web: {
@@ -36,6 +29,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   plugins: [
     'expo-router',
     'expo-localization',
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/images/splash-icon.png',
+        resizeMode: 'contain',
+        backgroundColor: '#faf9f5',
+      },
+    ],
     [
       'expo-sqlite',
       {
@@ -68,13 +69,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-build-properties',
       {
         ios: {
-          deploymentTarget: '15.1',
+          deploymentTarget: '16.4',
         },
         android: {
           minSdkVersion: 24,
         },
       },
     ],
+    './plugins/expo-model-download.js',
   ],
   experiments: {
     typedRoutes: true,

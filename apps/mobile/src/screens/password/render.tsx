@@ -5,7 +5,6 @@ import { FileUp, Plus, Search } from 'lucide-react-native';
 import { ClipboardCopy, Copy, Edit, Star, Trash2 } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
-  FlatList,
   Pressable,
   RefreshControl,
   StyleSheet,
@@ -15,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from '@repo/i18n';
+import { FlashList } from '@shopify/flash-list';
 import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
 import { CopyToast } from '@/components/copy-toast';
 import { PasswordItem } from '@/components/password-item';
@@ -24,6 +24,14 @@ import { fonts } from '@/theme/globals';
 import { useStore } from './context';
 
 type Tab = 'all' | 'favorites';
+
+// FlashList's contentContainerStyle does not support `gap`; the inter-item
+/**
+ * Spacing the old FlatList got from `gap: 8` is rendered as a separator instead.
+ */
+function ItemSeparator() {
+  return <View style={styles.separator} />;
+}
 
 function impact(style: Haptics.ImpactFeedbackStyle) {
   if (process.env.EXPO_OS === 'ios') {
@@ -58,7 +66,7 @@ export function Render() {
     loadPasswords,
     toggleFavorite,
   } = usePasswordStore();
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const activePasswords =
     activeTab === 'all'
@@ -343,26 +351,27 @@ export function Render() {
           </View>
         </View>
 
-        <FlatList
-          data={activePasswords}
-          renderItem={renderPassword}
-          keyExtractor={item => String(item.id)}
-          style={styles.list}
-          contentContainerStyle={[
-            styles.listContent,
-            activePasswords.length === 0 && styles.emptyListContent,
-          ]}
-          showsVerticalScrollIndicator={false}
-          contentInsetAdjustmentBehavior="automatic"
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={c.foreground}
-            />
-          }
-          ListEmptyComponent={renderEmptyState}
-        />
+        {activePasswords.length === 0 ? (
+          renderEmptyState()
+        ) : (
+          <FlashList
+            data={activePasswords}
+            renderItem={renderPassword}
+            keyExtractor={item => String(item.id)}
+            style={styles.list}
+            contentContainerStyle={styles.listContent}
+            ItemSeparatorComponent={ItemSeparator}
+            showsVerticalScrollIndicator={false}
+            contentInsetAdjustmentBehavior="automatic"
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                tintColor={c.foreground}
+              />
+            }
+          />
+        )}
       </View>
 
       <ActionSheet
@@ -458,10 +467,9 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingBottom: 20,
-    gap: 8,
   },
-  emptyListContent: {
-    flexGrow: 1,
+  separator: {
+    height: 8,
   },
   emptyState: {
     flex: 1,

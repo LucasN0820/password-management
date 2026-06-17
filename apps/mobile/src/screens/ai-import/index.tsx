@@ -9,11 +9,10 @@ import {
   Trash2,
   X,
 } from 'lucide-react-native';
-import { useCallback, useEffect } from 'react';
+import { memo, useCallback, useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  AppState,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -29,6 +28,9 @@ import type {
   EditableImportCandidate,
   MobileModelStatus,
 } from '@/features/ai-import/types';
+import { useModelDownloadStore } from '@/features/model-download/download-store';
+import { downloadStatusKey } from '@/features/model-download/format';
+import { isActiveDownloadState } from '@/features/model-download/types';
 import { usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
@@ -38,36 +40,59 @@ function formatBytes(bytes: number) {
   return `${Math.round(bytes / 1024 ** 2)} MB`;
 }
 
+function useDownloadBusy() {
+  return useModelDownloadStore(state =>
+    state.activeTask ? isActiveDownloadState(state.activeTask.state) : false
+  );
+}
+
 export function AiImportScreen() {
   const { t } = useTranslation();
   const router = useRouter();
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const { addPasswords } = usePasswordStore();
-  const state = useMobileImportStore();
 
+  // Precise selectors — high-frequency download progress lives in its own store
+  // and never re-renders this screen's models, files or review form.
+  const models = useMobileImportStore(state => state.models);
+  const stage = useMobileImportStore(state => state.stage);
+  const files = useMobileImportStore(state => state.files);
+  const candidates = useMobileImportStore(state => state.candidates);
+  const warnings = useMobileImportStore(state => state.warnings);
+  const error = useMobileImportStore(state => state.error);
+  const progress = useMobileImportStore(state => state.progress);
+
+  const initialize = useMobileImportStore(state => state.initialize);
+  const pickFiles = useMobileImportStore(state => state.pickFiles);
+  const runImport = useMobileImportStore(state => state.runImport);
+  const cancelImportProcessing = useMobileImportStore(
+    state => state.cancelImportProcessing
+  );
+  const reset = useMobileImportStore(state => state.reset);
+  const updateCandidate = useMobileImportStore(state => state.updateCandidate);
+  const removeCandidate = useMobileImportStore(state => state.removeCandidate);
+  const saveCandidates = useMobileImportStore(state => state.saveCandidates);
+
+  const downloadBusy = useDownloadBusy();
+
+  // The screen no longer owns the download lifecycle, so it only initialises the
+  // model list. AppState handling and task restore live in ModelDownloadProvider.
   useEffect(() => {
-    void state.initialize();
-    const subscription = AppState.addEventListener('change', nextState => {
-      if (nextState !== 'active') void state.handleAppBackground();
-    });
-    return () => {
-      subscription.remove();
-      void state.handleAppBackground();
-    };
-  }, []);
+    void initialize();
+  }, [initialize]);
 
   const handleSave = useCallback(async () => {
-    const saved = await state.saveCandidates(addPasswords);
+    const saved = await saveCandidates(addPasswords);
     if (!saved) return;
     if (process.env.EXPO_OS === 'ios') {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     router.back();
-  }, [addPasswords, router, state.saveCandidates]);
+  }, [addPasswords, router, saveCandidates]);
 
-  const busy = ['downloading', 'processing', 'saving'].includes(state.stage);
-  const selectedCount = state.candidates.filter(
+  const busy = stage === 'processing' || stage === 'saving' || downloadBusy;
+  const selectedCount = candidates.filter(
     candidate => candidate.selected
   ).length;
 
@@ -121,42 +146,8 @@ export function AiImportScreen() {
         {t('aiImport.modelHint')}
       </Text>
       <View style={styles.stack}>
-        {state.models.map(status => (
-          <ModelCard
-            key={status.model.id}
-            status={status}
-            selected={status.model.id === state.selectedModelId}
-            downloading={
-              state.stage === 'downloading' &&
-              state.downloadProgress?.modelId === status.model.id
-            }
-            progress={
-              state.downloadProgress?.modelId === status.model.id
-                ? state.downloadProgress.fraction
-                : 0
-            }
-            disabled={busy}
-            onSelect={() => void state.selectModel(status.model.id)}
-            onDownload={() => {
-              void state
-                .selectModel(status.model.id)
-                .then(() => state.downloadSelectedModel());
-            }}
-            onRemove={() => {
-              Alert.alert(
-                t('aiImport.removeModel'),
-                t('aiImport.removeModelConfirm', { name: status.model.name }),
-                [
-                  { text: t('aiImport.cancel'), style: 'cancel' },
-                  {
-                    text: t('aiImport.remove'),
-                    style: 'destructive',
-                    onPress: () => void state.removeModel(status.model.id),
-                  },
-                ]
-              );
-            }}
-          />
+        {models.map(status => (
+          <ModelCard key={status.model.id} status={status} />
         ))}
       </View>
 
@@ -170,7 +161,7 @@ export function AiImportScreen() {
         {t('aiImport.filesHint')}
       </Text>
       <Pressable
-        onPress={() => void state.pickFiles()}
+        onPress={() => void pickFiles()}
         disabled={busy}
         style={[
           styles.outlineButton,
@@ -187,7 +178,7 @@ export function AiImportScreen() {
           {t('aiImport.selectFiles')}
         </Text>
       </Pressable>
-      {state.files.map(file => (
+      {files.map(file => (
         <View
           key={file.path}
           style={[styles.fileRow, { borderColor: c.border }]}
@@ -215,16 +206,16 @@ export function AiImportScreen() {
         </View>
       ))}
 
-      {state.error ? (
+      {error ? (
         <Text
           selectable
           style={[styles.error, { color: c.accentRed, fontFamily: fonts.body }]}
         >
-          {state.error}
+          {error}
         </Text>
       ) : null}
 
-      {state.warnings.map(warning => (
+      {warnings.map(warning => (
         <Text
           key={warning}
           selectable
@@ -237,7 +228,7 @@ export function AiImportScreen() {
         </Text>
       ))}
 
-      {state.stage === 'processing' && state.progress ? (
+      {stage === 'processing' && progress ? (
         <View style={[styles.progressCard, { backgroundColor: c.surface }]}>
           <ActivityIndicator color={c.foreground} />
           <View style={{ flex: 1 }}>
@@ -247,7 +238,7 @@ export function AiImportScreen() {
                 { color: c.foreground, fontFamily: fonts.bodySemiBold },
               ]}
             >
-              {t(`aiImport.phase.${state.progress.phase}`)}
+              {t(`aiImport.phase.${progress.phase}`)}
             </Text>
             <Text
               numberOfLines={1}
@@ -256,26 +247,26 @@ export function AiImportScreen() {
                 { color: c.mutedForeground, fontFamily: fonts.caption },
               ]}
             >
-              {state.progress.fileName ?? t('aiImport.finishing')}
+              {progress.fileName ?? t('aiImport.finishing')}
             </Text>
           </View>
         </View>
       ) : null}
 
-      {state.stage !== 'review' ? (
+      {stage !== 'review' ? (
         <View style={styles.buttonRow}>
           <Pressable
-            onPress={() => void state.runImport()}
-            disabled={busy || !state.files.length}
+            onPress={() => void runImport()}
+            disabled={busy || !files.length}
             style={[
               styles.primaryButton,
               {
                 backgroundColor: c.foreground,
-                opacity: busy || !state.files.length ? 0.45 : 1,
+                opacity: busy || !files.length ? 0.45 : 1,
               },
             ]}
           >
-            {state.stage === 'processing' ? (
+            {stage === 'processing' ? (
               <ActivityIndicator color={c.background} />
             ) : (
               <Play size={18} color={c.background} />
@@ -289,9 +280,9 @@ export function AiImportScreen() {
               {t('aiImport.startImport')}
             </Text>
           </Pressable>
-          {busy ? (
+          {stage === 'processing' ? (
             <Pressable
-              onPress={() => void state.cancelCurrentOperation()}
+              onPress={() => void cancelImportProcessing()}
               style={[styles.cancelButton, { borderColor: c.border }]}
             >
               <X size={18} color={c.accentRed} />
@@ -300,7 +291,7 @@ export function AiImportScreen() {
         </View>
       ) : null}
 
-      {state.stage === 'review' || state.stage === 'saving' ? (
+      {stage === 'review' || stage === 'saving' ? (
         <>
           <SectionTitle
             title={t('aiImport.reviewTitle')}
@@ -314,13 +305,13 @@ export function AiImportScreen() {
           >
             {t('aiImport.reviewHint')}
           </Text>
-          {state.candidates.length ? (
-            state.candidates.map(candidate => (
+          {candidates.length ? (
+            candidates.map(candidate => (
               <CandidateCard
                 key={candidate.id}
                 candidate={candidate}
-                onChange={patch => state.updateCandidate(candidate.id, patch)}
-                onRemove={() => state.removeCandidate(candidate.id)}
+                onChange={patch => updateCandidate(candidate.id, patch)}
+                onRemove={() => removeCandidate(candidate.id)}
               />
             ))
           ) : (
@@ -336,7 +327,7 @@ export function AiImportScreen() {
           <View style={styles.buttonRow}>
             <Pressable
               onPress={() => void handleSave()}
-              disabled={!selectedCount || state.stage === 'saving'}
+              disabled={!selectedCount || stage === 'saving'}
               style={[
                 styles.primaryButton,
                 {
@@ -345,7 +336,7 @@ export function AiImportScreen() {
                 },
               ]}
             >
-              {state.stage === 'saving' ? (
+              {stage === 'saving' ? (
                 <ActivityIndicator color={c.background} />
               ) : (
                 <ShieldCheck size={18} color={c.background} />
@@ -360,7 +351,7 @@ export function AiImportScreen() {
               </Text>
             </Pressable>
             <Pressable
-              onPress={() => void state.reset()}
+              onPress={() => void reset()}
               style={[styles.cancelButton, { borderColor: c.border }]}
             >
               <X size={18} color={c.mutedForeground} />
@@ -380,28 +371,57 @@ function SectionTitle({ title, color }: { title: string; color: string }) {
   );
 }
 
-function ModelCard({
-  status,
-  selected,
-  downloading,
-  progress,
-  disabled,
-  onSelect,
-  onDownload,
-  onRemove,
-}: {
-  status: MobileModelStatus;
-  selected: boolean;
-  downloading: boolean;
-  progress: number;
-  disabled: boolean;
-  onSelect: () => void;
-  onDownload: () => void;
-  onRemove: () => void;
-}) {
+/**
+ * Self-contained model card. It subscribes to its own slice of the global
+ * download store so only the actively-downloading card re-renders on each
+ * progress tick — the rest of the list stays still.
+ */
+const ModelCard = memo(({ status }: { status: MobileModelStatus }) => {
   const { t } = useTranslation();
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
+
+  const selected = useMobileImportStore(
+    state => state.selectedModelId === status.model.id
+  );
+  const importBusy = useMobileImportStore(
+    state => state.stage === 'processing' || state.stage === 'saving'
+  );
+  const task = useModelDownloadStore(state => {
+    const active = state.activeTask;
+    return active?.modelId === status.model.id ? active : null;
+  });
+  const anyDownloadActive = useModelDownloadStore(state =>
+    state.activeTask ? isActiveDownloadState(state.activeTask.state) : false
+  );
+
+  const downloading = task ? isActiveDownloadState(task.state) : false;
+  const disabled = importBusy || anyDownloadActive;
+
+  const onSelect = () =>
+    void useMobileImportStore.getState().selectModel(status.model.id);
+  const onDownload = () => {
+    const store = useMobileImportStore.getState();
+    void store
+      .selectModel(status.model.id)
+      .then(() => store.downloadSelectedModel());
+  };
+  const onRemove = () => {
+    Alert.alert(
+      t('aiImport.removeModel'),
+      t('aiImport.removeModelConfirm', { name: status.model.name }),
+      [
+        { text: t('aiImport.cancel'), style: 'cancel' },
+        {
+          text: t('aiImport.remove'),
+          style: 'destructive',
+          onPress: () =>
+            void useMobileImportStore.getState().removeModel(status.model.id),
+        },
+      ]
+    );
+  };
+
   return (
     <Pressable
       onPress={onSelect}
@@ -435,7 +455,7 @@ function ModelCard({
         </View>
         {selected ? <CheckCircle2 size={20} color={c.accentBlue} /> : null}
       </View>
-      {downloading ? (
+      {downloading && task ? (
         <View style={styles.downloadRow}>
           <ActivityIndicator size="small" color={c.foreground} />
           <Text
@@ -444,7 +464,9 @@ function ModelCard({
               { color: c.foreground, fontFamily: fonts.caption },
             ]}
           >
-            {Math.round(progress * 100)}%
+            {task.state === 'downloading'
+              ? `${Math.round(task.fraction * 100)}%`
+              : t(downloadStatusKey(task.state))}
           </Text>
         </View>
       ) : status.downloaded ? (
@@ -480,7 +502,7 @@ function ModelCard({
       )}
     </Pressable>
   );
-}
+});
 
 function CandidateCard({
   candidate,
@@ -492,7 +514,7 @@ function CandidateCard({
   onRemove: () => void;
 }) {
   const { t } = useTranslation();
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   return (
     <View
@@ -579,7 +601,7 @@ function CandidateField({
   label,
   ...props
 }: { label: string } & React.ComponentProps<typeof TextInput>) {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   return (
     <View style={styles.field}>

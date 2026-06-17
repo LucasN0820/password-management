@@ -24,7 +24,7 @@ interface Props {
 }
 
 export function DeleteDialog({ visible, title, onClose, onConfirm }: Props) {
-  const scheme = useColorScheme() ?? 'light';
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
   const [isMounted, setIsMounted] = useState(false);
   const scale = useSharedValue(0.9);
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
   },
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(31, 30, 27, 0.28)',
   },
   card: {
