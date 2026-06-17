@@ -1,6 +1,13 @@
+import path from 'node:path';
 import { ExpoConfig, ConfigContext } from 'expo/config';
 import { APP_NAME, APP_PACKAGE, APP_SLUG } from '@repo/metadata';
 import packageJson from './package.json';
+
+// Resolve asset paths against this config's directory rather than relying on
+// process.cwd(). On EAS the prebuild step runs from the monorepo root, and
+// @expo/image-utils reads icon paths relative to cwd, so a plain
+// './assets/...' path resolves to <repo-root>/assets and fails with ENOENT.
+const asset = (relativePath: string) => path.resolve(__dirname, relativePath);
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
@@ -9,7 +16,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   scheme: APP_SLUG,
   version: packageJson.version,
   orientation: 'portrait',
-  icon: './assets/images/icon.png',
+  icon: asset('./assets/images/icon.png'),
   userInterfaceStyle: 'automatic',
   ios: {
     supportsTablet: true,
@@ -17,14 +24,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   },
   android: {
     adaptiveIcon: {
-      foregroundImage: './assets/images/adaptive-icon.png',
+      foregroundImage: asset('./assets/images/adaptive-icon.png'),
       backgroundColor: '#faf9f5',
     },
     predictiveBackGestureEnabled: true,
     package: APP_PACKAGE,
   },
   web: {
-    favicon: './assets/images/favicon.png',
+    favicon: asset('./assets/images/favicon.png'),
   },
   plugins: [
     'expo-router',
@@ -32,7 +39,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     [
       'expo-splash-screen',
       {
-        image: './assets/images/splash-icon.png',
+        image: asset('./assets/images/splash-icon.png'),
         resizeMode: 'contain',
         backgroundColor: '#faf9f5',
       },
