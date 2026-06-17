@@ -20,7 +20,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: '#faf9f5',
     },
-    predictiveBackGestureEnabled: false,
+    predictiveBackGestureEnabled: true,
     package: APP_PACKAGE,
   },
   web: {
