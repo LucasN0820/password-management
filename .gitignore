@@ -6,7 +6,10 @@ dist-electron
 dist
 .DS_Store
 Makefile
-assets
+# Anchored to the repo root so it only ignores the top-level ./assets/ scratch
+# dir. A bare "assets" also matched apps/mobile/assets, which dropped the mobile
+# app's committed icons/fonts from the EAS build upload (prebuild ENOENT on icon.png).
+/assets
 
 apps/mobile/modules/**/android/build/**
 apps/mobile/modules/**/ios/build/**
