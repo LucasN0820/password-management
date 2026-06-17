@@ -27,15 +27,19 @@ import {
   View,
 } from 'react-native';
 import { Text } from 'react-native';
+import { useTranslation } from '@repo/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
 import { CopyToast } from '@/components/copy-toast';
+import { useSecureScreen } from '@/hooks/useSecureScreen';
+import { copySensitive } from '@/lib/clipboard';
 import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
 import { useStore } from './context';
 
 export function Render({ passwordItem }: { passwordItem: Password }) {
+  const { t } = useTranslation();
   const { toggleFavorite } = usePasswordStore();
   const [showPassword, setShowPassword] = useState(false);
   const [optimisticFavorite, setOptimisticFavorite] = useState<boolean | null>(
@@ -50,6 +54,9 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
 
+  // The password can be revealed on this screen — block screenshots while here.
+  useSecureScreen('password-detail');
+
   const { id, title, username, password, url, notes, isFavorite, icon } =
     passwordItem;
   const currentFavorite =
@@ -60,8 +67,12 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
     setToastVisible(true);
   }, []);
 
-  const handleCopy = async (text: string, label: string) => {
-    await Clipboard.setStringAsync(text);
+  const handleCopy = async (text: string, label: string, sensitive = false) => {
+    if (sensitive) {
+      await copySensitive(text);
+    } else {
+      await Clipboard.setStringAsync(text);
+    }
     if (process.env.EXPO_OS === 'ios') {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
@@ -107,6 +118,34 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
     return title.charAt(0).toUpperCase() || '';
   };
 
+  const share = async (includePassword: boolean) => {
+    const { Share } = await import('react-native');
+    const lines = [title, `${t('aiImport.fields.username')}: ${username}`];
+    if (url) {
+      lines.push(`${t('aiImport.fields.url')}: ${url}`);
+    }
+    if (includePassword) {
+      lines.push(`${t('aiImport.fields.password')}: ${password}`);
+    }
+    await Share.share({ message: lines.join('\n') });
+  };
+
+  /** Confirm before sharing so the password is only included on explicit opt-in. */
+  const confirmShare = () => {
+    Alert.alert(t('share.title'), t('share.message'), [
+      { text: t('share.cancel'), style: 'cancel' },
+      {
+        text: t('share.withoutPassword'),
+        onPress: () => void share(false),
+      },
+      {
+        text: t('share.includePassword'),
+        style: 'destructive',
+        onPress: () => void share(true),
+      },
+    ]);
+  };
+
   const overflowOptions: ActionSheetOption[] = [
     {
       label: 'Edit',
@@ -116,12 +155,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
     {
       label: 'Share',
       icon: Share2,
-      onPress: async () => {
-        const { Share } = await import('react-native');
-        Share.share({
-          message: `${title}\nUsername: ${username}\nPassword: ${password}`,
-        });
-      },
+      onPress: confirmShare,
     },
     {
       label: 'Delete',
@@ -286,7 +320,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
                 )}
               </Pressable>
               <Pressable
-                onPress={() => handleCopy(password, 'Password')}
+                onPress={() => handleCopy(password, 'Password', true)}
                 style={[styles.copyBtn, { backgroundColor: c.surface }]}
               >
                 <Copy size={16} color={c.accentBlue} />

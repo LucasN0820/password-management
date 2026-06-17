@@ -128,6 +128,44 @@
       "notes": "备注"
     }
   },
+  "settings": {
+    "title": "设置",
+    "appearance": "外观",
+    "theme": "主题",
+    "system": "跟随系统",
+    "light": "浅色",
+    "dark": "深色",
+    "language": "语言",
+    "security": "安全",
+    "appLock": "应用锁",
+    "appLockHint": "打开保险库需通过面容、指纹或设备密码验证。",
+    "autoLock": "自动锁定",
+    "autoLockHint": "应用进入后台超过此时长后重新锁定。",
+    "clipboardClear": "清除剪贴板",
+    "clipboardClearHint": "复制密码后超过此时长自动清除。",
+    "immediately": "立即",
+    "never": "从不",
+    "seconds": "{{count}} 秒",
+    "minutes": "{{count}} 分钟",
+    "about": "关于",
+    "version": "版本",
+    "privacyNote": "您的密码永不离开本设备。"
+  },
+  "share": {
+    "title": "分享凭据",
+    "message": "包含密码会以明文形式分享，任何看到该信息的人都能读取。",
+    "withoutPassword": "不含密码分享",
+    "includePassword": "包含密码",
+    "cancel": "取消"
+  },
+  "appLock": {
+    "title": "保险库已锁定",
+    "subtitle": "使用面容、指纹或设备密码解锁，以查看您的密码。",
+    "unlock": "解锁",
+    "promptMessage": "解锁您的保险库",
+    "cancel": "取消",
+    "failed": "验证未通过，请重试。"
+  },
   "tabs": {
     "myVault": "我的保险库",
     "generate": "生成"

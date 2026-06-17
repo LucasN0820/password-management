@@ -1,7 +1,7 @@
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { type Href, useRouter } from 'expo-router';
-import { FileUp, Plus, Search } from 'lucide-react-native';
+import { FileUp, Plus, Search, Settings } from 'lucide-react-native';
 import { ClipboardCopy, Copy, Edit, Star, Trash2 } from 'lucide-react-native';
 import { useCallback, useState } from 'react';
 import {
@@ -18,6 +18,7 @@ import { FlashList } from '@shopify/flash-list';
 import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
 import { CopyToast } from '@/components/copy-toast';
 import { PasswordItem } from '@/components/password-item';
+import { copySensitive } from '@/lib/clipboard';
 import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
@@ -96,7 +97,7 @@ export function Render() {
           icon: Copy,
           onPress: async () => {
             if (selectedPassword) {
-              await Clipboard.setStringAsync(selectedPassword.password);
+              await copySensitive(selectedPassword.password);
               notify(Haptics.NotificationFeedbackType.Success);
               showToast(t('passwords.passwordCopied'));
             }
@@ -224,6 +225,20 @@ export function Render() {
             {t('passwords.myVault')}
           </Text>
           <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => {
+                impact(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/settings' as Href);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t('settings.title')}
+              style={[
+                styles.headerIcon,
+                { backgroundColor: c.surface, borderColor: c.border },
+              ]}
+            >
+              <Settings size={18} color={c.mutedForeground} />
+            </Pressable>
             <Pressable
               onPress={() => {
                 impact(Haptics.ImpactFeedbackStyle.Light);

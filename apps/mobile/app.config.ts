@@ -62,6 +62,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     'expo-font',
     'expo-secure-store',
+    [
+      'expo-local-authentication',
+      {
+        faceIDPermission:
+          'Allow $(PRODUCT_NAME) to use Face ID to unlock your vault.',
+      },
+    ],
     'expo-web-browser',
     [
       'llama.rn',

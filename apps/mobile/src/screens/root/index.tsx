@@ -8,6 +8,8 @@ import { NotoSansSC_400Regular } from '@expo-google-fonts/noto-sans-sc/400Regula
 import { NotoSansSC_600SemiBold } from '@expo-google-fonts/noto-sans-sc/600SemiBold';
 import { NotoSerifSC_500Medium } from '@expo-google-fonts/noto-serif-sc/500Medium';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AppLockGate } from '@/features/app-lock';
+import { SettingsProvider } from '@/features/settings';
 import { DBProvider } from '@/providers/db';
 import { I18nProvider } from '@/providers/i18n';
 import { PasswordProvider } from '@/providers/password';
@@ -43,13 +45,17 @@ export function RootScreen() {
       <SafeAreaProvider>
         <QueryClientProvider client={queryClient}>
           <DBProvider>
-            <I18nProvider>
-              <PasswordProvider>
-                <ThemeProvider>
-                  <Render />
-                </ThemeProvider>
-              </PasswordProvider>
-            </I18nProvider>
+            <SettingsProvider>
+              <I18nProvider>
+                <PasswordProvider>
+                  <ThemeProvider>
+                    <AppLockGate>
+                      <Render />
+                    </AppLockGate>
+                  </ThemeProvider>
+                </PasswordProvider>
+              </I18nProvider>
+            </SettingsProvider>
           </DBProvider>
         </QueryClientProvider>
       </SafeAreaProvider>

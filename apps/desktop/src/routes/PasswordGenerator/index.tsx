@@ -7,6 +7,7 @@ import { Input } from '@repo/ui/primitives/input';
 import { Label } from '@repo/ui/primitives/label';
 import { Slider } from '@repo/ui/primitives/slider';
 import { Switch } from '@repo/ui/primitives/switch';
+import { generateSecurePassword } from '@/lib/secure-random';
 import { usePasswordStore } from '@/store/passwordStore';
 
 interface GeneratorSettings {
@@ -54,14 +55,9 @@ export function PasswordGeneratorPage() {
   }, []);
 
   const generatePassword = useCallback(() => {
-    let charset = '';
-    if (settings.includeLowercase) {charset = `${charset  }abcdefghijklmnopqrstuvwxyz`;}
-    if (settings.includeUppercase) {charset = `${charset  }ABCDEFGHIJKLMNOPQRSTUVWXYZ`;}
-    if (settings.includeNumbers) {charset = `${charset  }0123456789`;}
-    if (settings.includeSymbols) {charset = `${charset  }!@#$%^&*()_+-=[]{}|;:,.<>?`;}
-    if (settings.excludeSimilar) {charset = charset.replaceAll(/[il1o0]/gi, '');}
+    const pwd = generateSecurePassword(settings);
 
-    if (!charset) {
+    if (!pwd) {
       toast({
         title: t('toast.error'),
         description: t('generator.selectAtLeastOne'),
@@ -70,10 +66,6 @@ export function PasswordGeneratorPage() {
       return;
     }
 
-    let pwd = '';
-    for (let i = 0; i < settings.length; i++) {
-      pwd = pwd + charset.charAt(Math.floor(Math.random() * charset.length));
-    }
     setPassword(pwd);
     setStrength(calculateStrength(pwd));
   }, [settings, calculateStrength, toast]);
