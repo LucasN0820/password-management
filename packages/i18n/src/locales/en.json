@@ -300,5 +300,21 @@
     "errorNotBackup": "This file is not a valid vault backup.",
     "errorUnsupported": "This backup was made by a newer app version.",
     "errorGeneric": "Something went wrong. Please try again."
+  },
+  "breach": {
+    "title": "Breach Detection",
+    "toggle": "Check for breached passwords",
+    "toggleHint": "Sends only the first 5 characters of each password's SHA-1 hash to Have I Been Pwned. Your passwords never leave this device.",
+    "off": "Off",
+    "scanning": "Checking against known breaches…",
+    "breached": "Breached Passwords",
+    "breachedHint": "Found in known data breaches — change these now",
+    "count_one": "Seen {{count}} time in breaches",
+    "count_other": "Seen {{count}} times in breaches",
+    "clear": "No breached passwords found",
+    "clearHint": "None of your passwords appear in known breaches.",
+    "offlineTitle": "Couldn't reach the breach service",
+    "offlineHint": "Some passwords couldn't be checked. Showing partial results; try again when you're online.",
+    "recheck": "Check again"
   }
 }

@@ -300,5 +300,21 @@
     "errorNotBackup": "该文件不是有效的密码库备份。",
     "errorUnsupported": "该备份由更新版本的应用创建。",
     "errorGeneric": "出现问题,请重试。"
+  },
+  "breach": {
+    "title": "泄露检测",
+    "toggle": "检测已泄露的密码",
+    "toggleHint": "仅将每个密码 SHA-1 哈希的前 5 位发送至 Have I Been Pwned,你的密码不会离开本机。",
+    "off": "已关闭",
+    "scanning": "正在比对已知泄露库…",
+    "breached": "已泄露密码",
+    "breachedHint": "出现在已知数据泄露中——请立即修改",
+    "count_one": "在泄露库中出现 {{count}} 次",
+    "count_other": "在泄露库中出现 {{count}} 次",
+    "clear": "未发现已泄露的密码",
+    "clearHint": "你的密码均未出现在已知泄露库中。",
+    "offlineTitle": "无法连接泄露检测服务",
+    "offlineHint": "部分密码无法检测。已显示部分结果,联网后请重试。",
+    "recheck": "重新检测"
   }
 }
