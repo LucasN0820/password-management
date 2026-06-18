@@ -12,6 +12,7 @@ export function Render() {
         <Stack.Screen name="ai-import" />
         <Stack.Screen name="settings" />
         <Stack.Screen name="health" />
+        <Stack.Screen name="backup" />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
       <GlobalModelDownloadBanner />
