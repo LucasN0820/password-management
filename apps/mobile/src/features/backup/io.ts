@@ -53,6 +53,50 @@ async function shareFile(uri: string, mimeType: string): Promise<void> {
   );
 }
 
+/** How the export reached the user: a real file save vs the iOS share sheet. */
+export type SaveMethod = 'saved' | 'shared';
+
+export interface SaveResult {
+  uri: string;
+  method: SaveMethod;
+}
+
+/**
+ * Get the export onto the device the most native way per platform. On Android
+ * it writes straight into a folder the user picks via the Storage Access
+ * Framework (a real "download"), falling back to the share sheet if the folder
+ * permission is denied. On iOS it uses the share sheet, which is the
+ * OS-sanctioned "Save to Files" path since iOS has no public Downloads folder.
+ */
+async function saveToDevice(
+  name: string,
+  content: string,
+  mimeType: string
+): Promise<SaveResult> {
+  if (process.env.EXPO_OS === 'android') {
+    try {
+      const permission =
+        await FileSystem.StorageAccessFramework.requestDirectoryPermissionsAsync();
+      if (permission.granted) {
+        const fileUri = await FileSystem.StorageAccessFramework.createFileAsync(
+          permission.directoryUri,
+          name,
+          mimeType
+        );
+        await FileSystem.writeAsStringAsync(fileUri, content, {
+          encoding: FileSystem.EncodingType.UTF8,
+        });
+        return { uri: fileUri, method: 'saved' };
+      }
+    } catch {
+      // Fall through to the share sheet below.
+    }
+  }
+  const uri = await writeTempFile(name, content);
+  await shareFile(uri, mimeType);
+  return { uri, method: 'shared' };
+}
+
 /** Best-effort cleanup so plaintext/backup files do not linger in the cache. */
 export async function deleteExportedFile(uri: string): Promise<void> {
   try {
@@ -63,13 +107,14 @@ export async function deleteExportedFile(uri: string): Promise<void> {
 }
 
 /**
- * Build, write, and share an encrypted backup of the given vault rows. Returns
- * the temporary file URI so the caller can offer to delete it afterwards.
+ * Build and save an encrypted backup of the given vault rows. On Android the
+ * file lands in a folder the user picks; on iOS it goes through the share sheet.
+ * Returns where it landed and how (for the post-export UX).
  */
 export async function exportEncryptedBackup(
   passwords: Password[],
   passphrase: string
-): Promise<string> {
+): Promise<SaveResult> {
   const entries: BackupEntry[] = passwords.map(passwordToBackupEntry);
   const payload = buildBackupPayload(entries, new Date().toISOString());
   const content = await createEncryptedBackup(payload, passphrase, {
@@ -77,18 +122,22 @@ export async function exportEncryptedBackup(
     randomHex,
     randomBytes,
   });
-  const uri = await writeTempFile(`vault-backup-${timestampSlug()}.pmbak`, content);
-  await shareFile(uri, 'application/json');
-  return uri;
+  return saveToDevice(
+    `vault-backup-${timestampSlug()}.pmbak`,
+    content,
+    'application/json'
+  );
 }
 
-/** Build, write, and share a plaintext CSV export. Returns the file URI. */
-export async function exportCsv(passwords: Password[]): Promise<string> {
+/** Build and save a plaintext CSV export. */
+export async function exportCsv(passwords: Password[]): Promise<SaveResult> {
   const entries = passwords.map(passwordToBackupEntry);
   const content = serializeCsv(entries);
-  const uri = await writeTempFile(`vault-export-${timestampSlug()}.csv`, content);
-  await shareFile(uri, 'text/csv');
-  return uri;
+  return saveToDevice(
+    `vault-export-${timestampSlug()}.csv`,
+    content,
+    'text/csv'
+  );
 }
 
 export interface PickedBackupFile {

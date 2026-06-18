@@ -46,3 +46,7 @@
   - UI:新增 `screens/backup` + `app/backup.tsx` 路由,在设置页「备份与导出」Section 进入;CSV 导出前强制明文警示 `Alert`,导出后提示删除临时文件。
   - i18n:新增 `backup` 命名空间(en/zh 键对齐,parity 测试通过)。
   - 验证:`vitest run apps/mobile/src` 81 passed;`tsc --noEmit` 通过;eslint 通过。未使用 Hermes 缺失的数组方法。
+- 2026-06-18(改进):导出由「统一 `Share.share`」改为**按平台保存到本地**。
+  - **Android**:用 `FileSystem.StorageAccessFramework` 让用户选目录后**直接写入**(真正的「下载到本地」);用户拒绝授权则回退分享面板。
+  - **iOS**:仍走分享面板——这是系统唯一允许的「存储到‘文件’」路径(iOS 无公共 Downloads、不允许静默落盘)。
+  - `io.ts` 抽出 `saveToDevice` 返回 `{ uri, method:'saved'|'shared' }`;`saved` 弹保存成功提示(无需清理),`shared` 仍提示删除临时文件。复用此前未使用的 `backup.exportSuccess*` 文案。

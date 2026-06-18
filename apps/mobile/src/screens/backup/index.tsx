@@ -117,11 +117,26 @@ export function BackupScreen() {
     ]);
   };
 
+  /** Android SAF saves to the user's folder; iOS shares (temp file to clean). */
+  const handleExported = (result: {
+    uri: string;
+    method: 'saved' | 'shared';
+  }) => {
+    if (result.method === 'saved') {
+      Alert.alert(
+        t('backup.exportSuccessTitle'),
+        t('backup.exportSuccessMessage')
+      );
+    } else {
+      offerCleanup(result.uri);
+    }
+  };
+
   const runEncryptedExport = async (pass: string) => {
     setBusy('export');
     try {
-      const uri = await exportEncryptedBackup(passwords, pass);
-      offerCleanup(uri);
+      const result = await exportEncryptedBackup(passwords, pass);
+      handleExported(result);
     } catch (error) {
       Alert.alert(t('backup.errorTitle'), backupErrorMessage(error, t));
     } finally {
@@ -196,8 +211,8 @@ export function BackupScreen() {
           void (async () => {
             setBusy('export');
             try {
-              const uri = await exportCsv(passwords);
-              offerCleanup(uri);
+              const result = await exportCsv(passwords);
+              handleExported(result);
             } catch (error) {
               Alert.alert(
                 t('backup.errorTitle'),
