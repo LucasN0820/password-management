@@ -5,25 +5,35 @@ import { Render } from './render';
 
 interface Props {
   onClose: () => void;
-  id: number
+  id: number;
 }
 
 export function ModalEditPassword(props: Props) {
-  const { findPassword } = usePasswordStore()
+  const { findPassword } = usePasswordStore();
 
   const { data, isLoading } = useQuery({
     queryKey: ['password', props.id],
-    queryFn: () => findPassword(props.id)
-  })
+    queryFn: () => findPassword(props.id),
+  });
 
   if (isLoading) {
-    return null
+    return null;
   }
 
   if (!data) {
-    return <Redirect href="/" />
+    return <Redirect href="/" />;
   }
 
-  return <Render {...props} initialValue={{ ...data, url: data.url ?? undefined, icon: data.icon ?? undefined, notes: data.notes ?? undefined }} />
+  return (
+    <Render
+      {...props}
+      initialValue={{
+        ...data,
+        url: data.url ?? undefined,
+        icon: data.icon ?? undefined,
+        notes: data.notes ?? undefined,
+        totpSecret: data.totp_secret ?? undefined,
+      }}
+    />
+  );
 }
-

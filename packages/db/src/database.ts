@@ -44,6 +44,7 @@ function toPasswordRowInput(data: PasswordInput) {
     url: normalizeNullable(data.url),
     notes: normalizeNullable(data.notes),
     icon: normalizeNullable(data.icon),
+    totp_secret: normalizeNullable(data.totp_secret),
     favorite: isFavorite,
   };
 }
@@ -115,9 +116,19 @@ function markMigrationApplied(db: PasswordDatabase, entry: MigrationEntry) {
 function repairLegacyPasswordsTable(db: PasswordDatabase) {
   const columns = getTableColumns(db, 'passwords');
   const hasIconColumn = columns.some(column => column.name === 'icon');
+  const hasTotpSecretColumn = columns.some(
+    column => column.name === 'totp_secret'
+  );
 
   if (!hasIconColumn) {
     db.run(sql`ALTER TABLE passwords ADD COLUMN icon text`);
+  }
+
+  // Additive, defensive column (mirrors `icon`) so legacy databases bootstrapped
+  // at the baseline migration still gain `totp_secret` when the m0002 entry has
+  // already been recorded as applied.
+  if (!hasTotpSecretColumn) {
+    db.run(sql`ALTER TABLE passwords ADD COLUMN totp_secret text`);
   }
 }
 

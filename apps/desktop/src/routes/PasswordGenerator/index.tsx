@@ -42,15 +42,31 @@ export function PasswordGeneratorPage() {
   });
 
   const calculateStrength = useCallback((pwd: string) => {
-    if (!pwd) {return 0;}
+    if (!pwd) {
+      return 0;
+    }
     let score = 0;
-    if (pwd.length >= 8) {score = score + 25;}
-    if (pwd.length >= 12) {score = score + 25;}
-    if (pwd.length >= 16) {score = score + 25;}
-    if (/[a-z]/.test(pwd)) {score = score + 10;}
-    if (/[A-Z]/.test(pwd)) {score = score + 10;}
-    if (/\d/.test(pwd)) {score = score + 10;}
-    if (/[^a-z0-9]/i.test(pwd)) {score = score + 15;}
+    if (pwd.length >= 8) {
+      score = score + 25;
+    }
+    if (pwd.length >= 12) {
+      score = score + 25;
+    }
+    if (pwd.length >= 16) {
+      score = score + 25;
+    }
+    if (/[a-z]/.test(pwd)) {
+      score = score + 10;
+    }
+    if (/[A-Z]/.test(pwd)) {
+      score = score + 10;
+    }
+    if (/\d/.test(pwd)) {
+      score = score + 10;
+    }
+    if (/[^a-z0-9]/i.test(pwd)) {
+      score = score + 15;
+    }
     return Math.min(100, score);
   }, []);
 
@@ -75,18 +91,24 @@ export function PasswordGeneratorPage() {
   }, [generatePassword]);
 
   const copyToClipboard = async () => {
-    if (!password) {return;}
+    if (!password) {
+      return;
+    }
     await navigator.clipboard.writeText(password);
     setCopied(true);
     toast({
       title: t('generator.copied'),
       description: t('generator.copiedToClipboard'),
     });
-    setTimeout(() => { setCopied(false); }, 2000);
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
   };
 
   const savePassword = async () => {
-    if (!password) {return;}
+    if (!password) {
+      return;
+    }
     await addPassword({
       title: saveTitle || `Generated ${new Date().toLocaleDateString()}`,
       username: saveUsername,
@@ -96,6 +118,7 @@ export function PasswordGeneratorPage() {
       category: 'all',
       isFavorite: false,
       icon: '',
+      totp_secret: null,
     });
     toast({ title: t('toast.saved'), description: t('generator.saved') });
     setShowSave(false);
@@ -185,7 +208,9 @@ export function PasswordGeneratorPage() {
               <Button
                 variant='outline'
                 className='border-border bg-card transition-colors duration-150'
-                onClick={() => { setShowSave(!showSave); }}
+                onClick={() => {
+                  setShowSave(!showSave);
+                }}
               >
                 <Save className='h-4 w-4 mr-2' />
                 {t('generator.saveToVault')}
@@ -213,9 +238,9 @@ export function PasswordGeneratorPage() {
                   min={4}
                   max={64}
                   step={1}
-                  onValueChange={([value]) =>
-                    { setSettings({ ...settings, length: value }); }
-                  }
+                  onValueChange={([value]) => {
+                    setSettings({ ...settings, length: value });
+                  }}
                 />
                 <div className='mt-1.5 flex justify-between font-mono text-[10px] text-text-tertiary'>
                   <span>4</span>
@@ -233,17 +258,22 @@ export function PasswordGeneratorPage() {
                     ['includeSymbols', t('generator.symbols')],
                     ['excludeSimilar', t('generator.excludeSimilar')],
                   ] as const
-                ).map(([key, label]) => 
-                  { return <div key={key} className='flex items-center justify-between'>
-                    <Label className='text-sm text-foreground'>{label}</Label>
-                    <Switch
-                      checked={settings[key]}
-                      onCheckedChange={checked =>
-                        { setSettings({ ...settings, [key]: checked }); }
-                      }
-                    />
-                  </div> }
-                )}
+                ).map(([key, label]) => {
+                  return (
+                    <div
+                      key={key}
+                      className='flex items-center justify-between'
+                    >
+                      <Label className='text-sm text-foreground'>{label}</Label>
+                      <Switch
+                        checked={settings[key]}
+                        onCheckedChange={checked => {
+                          setSettings({ ...settings, [key]: checked });
+                        }}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -268,7 +298,9 @@ export function PasswordGeneratorPage() {
                   value={saveTitle}
                   placeholder={t('generator.titlePlaceholder')}
                   className='border-border bg-background focus:border-clay'
-                  onChange={e => { setSaveTitle(e.target.value); }}
+                  onChange={e => {
+                    setSaveTitle(e.target.value);
+                  }}
                 />
               </div>
 
@@ -280,7 +312,9 @@ export function PasswordGeneratorPage() {
                   value={saveUsername}
                   placeholder={t('generator.usernamePlaceholder')}
                   className='border-border bg-background focus:border-clay'
-                  onChange={e => { setSaveUsername(e.target.value); }}
+                  onChange={e => {
+                    setSaveUsername(e.target.value);
+                  }}
                 />
               </div>
 
@@ -292,7 +326,9 @@ export function PasswordGeneratorPage() {
                   value={saveUrl}
                   placeholder={t('generator.urlPlaceholder')}
                   className='border-border bg-background focus:border-clay'
-                  onChange={e => { setSaveUrl(e.target.value); }}
+                  onChange={e => {
+                    setSaveUrl(e.target.value);
+                  }}
                 />
               </div>
 
@@ -305,7 +341,9 @@ export function PasswordGeneratorPage() {
                   placeholder={t('generator.notesPlaceholder')}
                   rows={3}
                   className='flex w-full resize-none rounded-md border border-border bg-background px-3 py-2 text-sm placeholder:text-text-tertiary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring'
-                  onChange={e => { setSaveNotes(e.target.value); }}
+                  onChange={e => {
+                    setSaveNotes(e.target.value);
+                  }}
                 />
               </div>
 

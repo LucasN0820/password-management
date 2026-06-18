@@ -249,55 +249,72 @@ app.on('will-quit', () => {
 
 // IPC Handlers
 ipcMain.handle('get-passwords', () => {
-  if (!passwordAdapter) {return [];}
+  if (!passwordAdapter) {
+    return [];
+  }
   return passwordAdapter.getPasswords();
 });
 
 ipcMain.handle('get-password-by-id', (_, id: number) => {
-  if (!passwordAdapter) {return null;}
+  if (!passwordAdapter) {
+    return null;
+  }
   return passwordAdapter.getPasswordById(id);
 });
 
 ipcMain.handle('add-password', (_, data: PasswordInput) => {
-  if (!passwordAdapter) {return null;}
+  if (!passwordAdapter) {
+    return null;
+  }
   return passwordAdapter.addPassword(data);
 });
 
 ipcMain.handle('add-passwords', (_, data: PasswordInput[]) => {
-  if (!passwordAdapter) {return null;}
+  if (!passwordAdapter) {
+    return null;
+  }
   return passwordAdapter.addPasswords(data);
 });
 
 ipcMain.handle('update-password', (_, id: number, data: PasswordInput) => {
-  if (!passwordAdapter) {return null;}
+  if (!passwordAdapter) {
+    return null;
+  }
   return passwordAdapter.updatePassword(id, data);
 });
 
 ipcMain.handle('delete-password', (_, id: number) => {
-  if (!passwordAdapter) {return false;}
+  if (!passwordAdapter) {
+    return false;
+  }
   return passwordAdapter.deletePassword(id);
 });
 
 ipcMain.handle('search-passwords', (_, query: string) => {
-  if (!passwordAdapter) {return [];}
+  if (!passwordAdapter) {
+    return [];
+  }
   return passwordAdapter.searchPasswords(query);
 });
 
 ipcMain.handle('get-categories', () => {
-  if (!passwordAdapter) {return [];}
+  if (!passwordAdapter) {
+    return [];
+  }
   return passwordAdapter.getCategories();
 });
 
-ipcMain.handle('get-local-import-model-status', async () => 
+ipcMain.handle('get-local-import-model-status', async () =>
   getLocalModelStatus(getLocalAiImportConfig())
 );
 
-ipcMain.handle('get-local-import-model-library-status', async () => 
+ipcMain.handle('get-local-import-model-library-status', async () =>
   getLocalModelLibraryStatus(getLocalAiImportConfig())
 );
 
-ipcMain.handle('get-local-import-model-download-progress', () => 
-  currentModelDownloadProgress
+ipcMain.handle(
+  'get-local-import-model-download-progress',
+  () => currentModelDownloadProgress
 );
 
 ipcMain.handle('prepare-local-import-model', async (_, modelId?: string) => {
@@ -468,7 +485,9 @@ async function runRemoteImportWorkflow(
   throw new Error('Import was cancelled');
 }
 
-interface InlineInterface { modelId?: string }
+interface InlineInterface {
+  modelId?: string;
+}
 ipcMain.handle(
   'run-import-workflow',
   async (_, files: ImportFileDescriptor[], options?: InlineInterface) => {
@@ -517,19 +536,24 @@ ipcMain.handle('cancel-import-workflow', async () => {
 ipcMain.handle(
   'save-imported-passwords',
   async (_, candidates: ImportPasswordInput[]) => {
-    if (!passwordAdapter) {return { saved: 0 };}
+    if (!passwordAdapter) {
+      return { saved: 0 };
+    }
     const parsedCandidates = importPasswordsSchema.parse(candidates);
     await passwordAdapter.addPasswords(
-      parsedCandidates.map(record => { return {
-        title: record.title,
-        username: record.username,
-        password: record.password,
-        url: record.url,
-        notes: record.notes,
-        category: 'imported',
-        isFavorite: false,
-        icon: null,
-      } })
+      parsedCandidates.map(record => {
+        return {
+          title: record.title,
+          username: record.username,
+          password: record.password,
+          url: record.url,
+          notes: record.notes,
+          category: 'imported',
+          isFavorite: false,
+          icon: null,
+          totp_secret: null,
+        };
+      })
     );
 
     return { saved: parsedCandidates.length };

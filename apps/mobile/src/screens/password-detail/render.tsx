@@ -16,7 +16,7 @@ import {
   User,
 } from 'lucide-react-native';
 import { Edit, Share2, Trash2 } from 'lucide-react-native';
-import { useCallback,useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   Alert,
   Linking,
@@ -31,6 +31,7 @@ import { useTranslation } from '@repo/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
 import { CopyToast } from '@/components/copy-toast';
+import { TotpCard } from '@/components/totp-card';
 import { useSettingsStore } from '@/features/settings/settings-store';
 import { useSecureScreen } from '@/hooks/useSecureScreen';
 import { copySensitive } from '@/lib/clipboard';
@@ -59,8 +60,17 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   // The password can be revealed on this screen — block screenshots while here.
   useSecureScreen('password-detail');
 
-  const { id, title, username, password, url, notes, isFavorite, icon } =
-    passwordItem;
+  const {
+    id,
+    title,
+    username,
+    password,
+    url,
+    notes,
+    isFavorite,
+    icon,
+    totp_secret: totpSecret,
+  } = passwordItem;
   const currentFavorite =
     optimisticFavorite !== null ? optimisticFavorite : isFavorite;
 
@@ -344,6 +354,11 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
             </View>
           </View>
         </View>
+
+        {/* TOTP card */}
+        {totpSecret ? (
+          <TotpCard secret={totpSecret} scheme={scheme} onCopied={showToast} />
+        ) : null}
 
         {/* URL card */}
         {url && (

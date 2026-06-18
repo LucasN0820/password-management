@@ -8,9 +8,10 @@ import { FieldIcon } from './field-icon';
 import { FieldNotes } from './field-notes';
 import { FieldPassword } from './field-password';
 import { FieldTitle } from './field-title';
+import { FieldTotp } from './field-totp';
 import { FieldUrl } from './field-url';
 import { FieldUsername } from './field-username';
-import { defaultValues,FormType } from './form';
+import { defaultValues, FormType } from './form';
 import { useValidatedForm } from './form';
 
 export interface PasswordFormRef {
@@ -41,12 +42,14 @@ export const PasswordForm = forwardRef<PasswordFormRef, PasswordFormProps>(
         form
           .handleSubmit(
             data => {
+              const { totpSecret, ...rest } = data;
               onSubmit?.({
-                ...data,
+                ...rest,
                 category: normalizeCategoryInput(data.category),
                 icon: data.icon ?? null,
                 url: data.url ?? null,
                 notes: data.notes ?? null,
+                totp_secret: totpSecret ? totpSecret.trim() : null,
               });
             },
             errors => {
@@ -65,6 +68,7 @@ export const PasswordForm = forwardRef<PasswordFormRef, PasswordFormProps>(
           <FieldUsername />
           <FieldPassword />
           <FieldUrl />
+          <FieldTotp />
           <FieldCategory />
           <FieldNotes />
         </View>
