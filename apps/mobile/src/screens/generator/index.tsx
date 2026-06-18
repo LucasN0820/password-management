@@ -101,10 +101,15 @@ export function GeneratorScreen() {
     if (/\d/.test(generatedPassword)) score++;
     if (/[^A-Z0-9]/i.test(generatedPassword)) score++;
 
-    if (score <= 2) return { label: 'Weak', color: c.accentRed, ratio: 0.25 };
+    if (score <= 2)
+      return { label: t('generator.weak'), color: c.accentRed, ratio: 0.25 };
     if (score <= 4)
-      return { label: 'Medium', color: c.accentYellow, ratio: 0.6 };
-    return { label: 'Strong', color: c.accentBlue, ratio: 1 };
+      return {
+        label: t('generator.medium'),
+        color: c.accentYellow,
+        ratio: 0.6,
+      };
+    return { label: t('generator.strong'), color: c.accentBlue, ratio: 1 };
   };
 
   const strength = getStrength();

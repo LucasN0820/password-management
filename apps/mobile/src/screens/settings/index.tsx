@@ -1,5 +1,7 @@
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
+import { type Href, useRouter } from 'expo-router';
+import { ChevronRight, ShieldCheck } from 'lucide-react-native';
 import { useMemo } from 'react';
 import {
   Pressable,
@@ -141,6 +143,7 @@ function Row({
 
 export function SettingsScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
 
@@ -150,11 +153,14 @@ export function SettingsScreen() {
   const autoLockMs = useSettingsStore(s => s.autoLockMs);
   const clipboardClearMs = useSettingsStore(s => s.clipboardClearMs);
 
+  const fetchFavicons = useSettingsStore(s => s.fetchFavicons);
+
   const setThemeMode = useSettingsStore(s => s.setThemeMode);
   const setLanguage = useSettingsStore(s => s.setLanguage);
   const setAppLockEnabled = useSettingsStore(s => s.setAppLockEnabled);
   const setAutoLockMs = useSettingsStore(s => s.setAutoLockMs);
   const setClipboardClearMs = useSettingsStore(s => s.setClipboardClearMs);
+  const setFetchFavicons = useSettingsStore(s => s.setFetchFavicons);
 
   const formatDuration = (ms: number, zeroLabel: string) => {
     if (ms === 0) return zeroLabel;
@@ -204,6 +210,29 @@ export function SettingsScreen() {
       contentInsetAdjustmentBehavior="automatic"
       showsVerticalScrollIndicator={false}
     >
+      <Section title={t('health.title')} colors={c}>
+        <Pressable
+          onPress={() => {
+            selection();
+            router.push('/health' as Href);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t('health.entry')}
+          style={styles.navRow}
+        >
+          <ShieldCheck size={20} color={c.accentGreen} />
+          <View style={styles.rowText}>
+            <Text style={[styles.rowLabel, { color: c.foreground, fontFamily: fonts.body }]}>
+              {t('health.entry')}
+            </Text>
+            <Text style={[styles.rowHint, { color: c.mutedForeground, fontFamily: fonts.caption }]}>
+              {t('health.entryHint')}
+            </Text>
+          </View>
+          <ChevronRight size={18} color={c.textTertiary} />
+        </Pressable>
+      </Section>
+
       <Section title={t('settings.appearance')} colors={c}>
         <View style={[styles.controlRow, styles.controlRowFirst]}>
           <Segmented options={themeOptions} selected={themeMode} onSelect={setThemeMode} colors={c} />
@@ -257,6 +286,25 @@ export function SettingsScreen() {
         </View>
       </Section>
 
+      <Section title={t('list.title')} colors={c}>
+        <Row
+          label={t('list.fetchFavicons')}
+          hint={t('list.fetchFaviconsHint')}
+          colors={c}
+          last
+        >
+          <Switch
+            value={fetchFavicons}
+            onValueChange={value => {
+              selection();
+              setFetchFavicons(value);
+            }}
+            trackColor={{ false: c.border, true: c.accentBlue }}
+            thumbColor="#FFFFFF"
+          />
+        </Row>
+      </Section>
+
       <Section title={t('settings.about')} colors={c}>
         <Row label={t('settings.version')} colors={c} last>
           <Text style={[styles.value, { color: c.mutedForeground, fontFamily: fonts.mono }]}>
@@ -286,6 +334,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
+    minHeight: 56,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  navRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 12,
     minHeight: 56,
     paddingHorizontal: 16,

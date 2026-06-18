@@ -1,6 +1,7 @@
 // Import defaults from pure constant modules (no native deps) so this file —
 // and the pure logic that imports it — stays unit-testable under Node/vitest.
 import { DEFAULT_CLIPBOARD_CLEAR_MS } from '../../lib/clipboard-config';
+import type { SortKey } from '../../lib/sort-passwords';
 import { DEFAULT_AUTO_LOCK_MS } from '../app-lock/constants';
 
 /** Appearance preference. `system` follows the OS setting. */
@@ -15,6 +16,10 @@ export interface Settings {
   appLockEnabled: boolean;
   autoLockMs: number;
   clipboardClearMs: number;
+  /** Vault list sort order. */
+  sortBy: SortKey;
+  /** Fetch website favicons for entries with a URL (opt-in; network request). */
+  fetchFavicons: boolean;
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -23,6 +28,8 @@ export const DEFAULT_SETTINGS: Settings = {
   appLockEnabled: true,
   autoLockMs: DEFAULT_AUTO_LOCK_MS,
   clipboardClearMs: DEFAULT_CLIPBOARD_CLEAR_MS,
+  sortBy: 'updated',
+  fetchFavicons: false,
 };
 
 /** Selectable auto-lock windows, in milliseconds. */

@@ -10,6 +10,7 @@ import {
   useColorScheme,
   View,
 } from 'react-native';
+import { useTranslation } from '@repo/i18n';
 import { deriveCategories, UNCATEGORIZED } from '@/lib/categories';
 import { usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
@@ -22,6 +23,7 @@ import { FormType } from './form';
  */
 export function FieldCategory() {
   const { control } = useFormContext<FormType>();
+  const { t } = useTranslation();
   const { field } = useController({ control, name: 'category' });
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
@@ -44,7 +46,7 @@ export function FieldCategory() {
             { color: c.mutedForeground, fontFamily: fonts.bodySemiBold },
           ]}
         >
-          CATEGORY
+          {t('form.category')}
         </Text>
       </View>
       <ScrollView
@@ -55,7 +57,8 @@ export function FieldCategory() {
       >
         {chips.map(category => {
           const active = value === category;
-          const label = category === UNCATEGORIZED ? 'Uncategorized' : category;
+          const label =
+            category === UNCATEGORIZED ? t('form.uncategorized') : category;
           return (
             <Pressable
               key={category}
@@ -90,7 +93,7 @@ export function FieldCategory() {
       <TextInput
         value={customText}
         onChangeText={text => field.onChange(text.length ? text : UNCATEGORIZED)}
-        placeholder="New category…"
+        placeholder={t('form.newCategory')}
         placeholderTextColor={c.textTertiary}
         autoCapitalize="words"
         style={[

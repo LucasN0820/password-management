@@ -1,7 +1,14 @@
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { type Href, useRouter } from 'expo-router';
-import { FileUp, Plus, Search, Settings } from 'lucide-react-native';
+import {
+  ArrowDownUp,
+  Check,
+  Plus,
+  Search,
+  Settings,
+  Sparkles,
+} from 'lucide-react-native';
 import { ClipboardCopy, Copy, Edit, Star, Trash2 } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -11,6 +18,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   useColorScheme,
   View,
 } from 'react-native';
@@ -19,8 +27,10 @@ import { FlashList } from '@shopify/flash-list';
 import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
 import { CopyToast } from '@/components/copy-toast';
 import { PasswordItem } from '@/components/password-item';
+import { useSettingsStore } from '@/features/settings/settings-store';
 import { deriveCategories, VIRTUAL_CATEGORIES } from '@/lib/categories';
 import { copySensitive } from '@/lib/clipboard';
+import { SORT_KEYS, type SortKey, sortPasswords } from '@/lib/sort-passwords';
 import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
@@ -57,6 +67,10 @@ export function Render() {
   );
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [sortSheetVisible, setSortSheetVisible] = useState(false);
+
+  const sortBy = useSettingsStore(s => s.sortBy);
+  const setSortBy = useSettingsStore(s => s.setSortBy);
 
   const setModal = useStore(s => s.setModal);
   const {
@@ -94,6 +108,24 @@ export function Render() {
     return category;
   };
 
+  // Re-sort the (already category-filtered) list per the persisted preference.
+  const sortedPasswords = useMemo(
+    () => sortPasswords(filteredPasswords, sortBy),
+    [filteredPasswords, sortBy]
+  );
+
+  const sortLabel = (key: SortKey) => {
+    if (key === 'name') return t('list.sortByName');
+    if (key === 'created') return t('list.sortByCreated');
+    return t('list.sortByUpdated');
+  };
+
+  const sortOptions: ActionSheetOption[] = SORT_KEYS.map(key => ({
+    label: sortLabel(key),
+    icon: key === sortBy ? Check : undefined,
+    onPress: () => setSortBy(key),
+  }));
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadPasswords();
@@ -112,64 +144,64 @@ export function Render() {
 
   const actionSheetOptions: ActionSheetOption[] = selectedPassword
     ? [
-        {
-          label: t('passwords.copyPassword'),
-          icon: Copy,
-          onPress: async () => {
-            if (selectedPassword) {
-              await copySensitive(selectedPassword.password);
-              notify(Haptics.NotificationFeedbackType.Success);
-              showToast(t('passwords.passwordCopied'));
-            }
-          },
+      {
+        label: t('passwords.copyPassword'),
+        icon: Copy,
+        onPress: async () => {
+          if (selectedPassword) {
+            await copySensitive(selectedPassword.password);
+            notify(Haptics.NotificationFeedbackType.Success);
+            showToast(t('passwords.passwordCopied'));
+          }
         },
-        {
-          label: t('passwords.copyUsername'),
-          icon: ClipboardCopy,
-          onPress: async () => {
-            if (selectedPassword) {
-              await Clipboard.setStringAsync(selectedPassword.username);
-              notify(Haptics.NotificationFeedbackType.Success);
-              showToast(t('passwords.usernameCopied'));
-            }
-          },
+      },
+      {
+        label: t('passwords.copyUsername'),
+        icon: ClipboardCopy,
+        onPress: async () => {
+          if (selectedPassword) {
+            await Clipboard.setStringAsync(selectedPassword.username);
+            notify(Haptics.NotificationFeedbackType.Success);
+            showToast(t('passwords.usernameCopied'));
+          }
         },
-        {
-          label: t('passwords.edit'),
-          icon: Edit,
-          onPress: () => {
-            if (selectedPassword) {
-              setModal({ type: 'edit-password', id: selectedPassword.id });
-            }
-          },
+      },
+      {
+        label: t('passwords.edit'),
+        icon: Edit,
+        onPress: () => {
+          if (selectedPassword) {
+            setModal({ type: 'edit-password', id: selectedPassword.id });
+          }
         },
-        {
-          label: selectedPassword.isFavorite
-            ? t('passwords.removeFromFavorites')
-            : t('passwords.addToFavorites'),
-          icon: Star,
-          onPress: async () => {
-            if (selectedPassword) {
-              await toggleFavorite(selectedPassword);
-              impact(Haptics.ImpactFeedbackStyle.Light);
-            }
-          },
+      },
+      {
+        label: selectedPassword.isFavorite
+          ? t('passwords.removeFromFavorites')
+          : t('passwords.addToFavorites'),
+        icon: Star,
+        onPress: async () => {
+          if (selectedPassword) {
+            await toggleFavorite(selectedPassword);
+            impact(Haptics.ImpactFeedbackStyle.Light);
+          }
         },
-        {
-          label: t('passwords.delete'),
-          icon: Trash2,
-          destructive: true,
-          onPress: () => {
-            if (selectedPassword) {
-              setModal({
-                type: 'delete-password',
-                id: selectedPassword.id,
-                title: selectedPassword.title,
-              });
-            }
-          },
+      },
+      {
+        label: t('passwords.delete'),
+        icon: Trash2,
+        destructive: true,
+        onPress: () => {
+          if (selectedPassword) {
+            setModal({
+              type: 'delete-password',
+              id: selectedPassword.id,
+              title: selectedPassword.title,
+            });
+          }
         },
-      ]
+      },
+    ]
     : [];
 
   const renderPassword = useCallback(
@@ -195,12 +227,12 @@ export function Render() {
         {isFavorites ? (
           <Star size={32} color={c.textTertiary} />
         ) : (
-          <Pressable
+          <TouchableOpacity
             onPress={() => setModal({ type: 'add-password' })}
             style={[styles.emptyIconButton, { backgroundColor: c.foreground }]}
           >
             <Plus size={24} color={c.background} />
-          </Pressable>
+          </TouchableOpacity>
         )}
         <Text
           style={[
@@ -208,7 +240,9 @@ export function Render() {
             { color: c.foreground, fontFamily: fonts.heading },
           ]}
         >
-          {isFavorites ? 'No favorites yet' : 'No passwords yet'}
+          {isFavorites
+            ? t('passwords.noFavoritesYet')
+            : t('passwords.noPasswordsYet')}
         </Text>
         <Text
           style={[
@@ -217,8 +251,8 @@ export function Render() {
           ]}
         >
           {isFavorites
-            ? 'Tap the star on any password to add it here'
-            : 'Tap + to add your first password'}
+            ? t('passwords.emptyFavoritesSubtitle')
+            : t('passwords.emptySubtitle')}
         </Text>
       </View>
     );
@@ -229,6 +263,7 @@ export function Render() {
     c.mutedForeground,
     c.textTertiary,
     setModal,
+    t,
   ]);
 
   return (
@@ -237,6 +272,7 @@ export function Render() {
         {/* Header */}
         <View style={styles.header}>
           <Text
+            numberOfLines={1}
             style={[
               styles.pageTitle,
               { color: c.foreground, fontFamily: fonts.heading },
@@ -245,80 +281,38 @@ export function Render() {
             {t('passwords.myVault')}
           </Text>
           <View style={styles.headerActions}>
-            <Pressable
-              onPress={() => {
-                impact(Haptics.ImpactFeedbackStyle.Light);
-                router.push('/settings' as Href);
-              }}
-              accessibilityRole="button"
-              accessibilityLabel={t('settings.title')}
-              style={[
-                styles.headerIcon,
-                { backgroundColor: c.surface, borderColor: c.border },
-              ]}
-            >
-              <Settings size={18} color={c.mutedForeground} />
-            </Pressable>
-            <Pressable
+            <TouchableOpacity
               onPress={() => {
                 impact(Haptics.ImpactFeedbackStyle.Light);
                 router.push('/ai-import' as Href);
               }}
               accessibilityRole="button"
               accessibilityLabel={t('aiImport.title')}
-              style={[
-                styles.headerIcon,
-                { backgroundColor: c.surface, borderColor: c.border },
-              ]}
+              style={styles.headerIcon}
             >
-              <FileUp size={18} color={c.mutedForeground} />
-            </Pressable>
-            <Pressable
+              <Sparkles size={24} color={c.mutedForeground} />
+            </TouchableOpacity>
+            <TouchableOpacity
               onPress={() => {
                 impact(Haptics.ImpactFeedbackStyle.Light);
-                setSearchVisible(!searchVisible);
+                router.push('/settings' as Href);
               }}
-              style={[
-                styles.headerIcon,
-                { backgroundColor: c.surface, borderColor: c.border },
-              ]}
+              accessibilityRole="button"
+              accessibilityLabel={t('settings.title')}
+              style={styles.headerIcon}
             >
-              <Search size={18} color={c.mutedForeground} />
-            </Pressable>
+              <Settings size={24} color={c.mutedForeground} />
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Search bar */}
-        {searchVisible && (
-          <View style={styles.searchContainer}>
-            <View
-              style={[
-                styles.searchInput,
-                { backgroundColor: c.surface, borderColor: c.border },
-              ]}
-            >
-              <Search size={16} color={c.textTertiary} />
-              <TextInput
-                style={[
-                  styles.searchText,
-                  { color: c.foreground, fontFamily: fonts.body },
-                ]}
-                placeholder={t('passwords.searchPlaceholder')}
-                placeholderTextColor={c.textTertiary}
-                value={searchQuery}
-                onChangeText={text => setSearchQuery(text.trim())}
-                autoFocus
-              />
-            </View>
-          </View>
-        )}
-
-        {/* Category chips */}
+        {/* Category chips + search + sort */}
         <View style={styles.chipContainer}>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.chipRow}
+            style={styles.chipScroll}
             keyboardShouldPersistTaps="handled"
           >
             {categories.map(category => {
@@ -357,13 +351,65 @@ export function Render() {
               );
             })}
           </ScrollView>
+          <Pressable
+            onPress={() => {
+              impact(Haptics.ImpactFeedbackStyle.Light);
+              setSearchVisible(!searchVisible);
+            }}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('passwords.searchPlaceholder')}
+            style={styles.chipAction}
+          >
+            <Search
+              size={18}
+              color={searchVisible ? c.foreground : c.mutedForeground}
+            />
+          </Pressable>
+          <Pressable
+            onPress={() => {
+              impact(Haptics.ImpactFeedbackStyle.Light);
+              setSortSheetVisible(true);
+            }}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={t('list.sort')}
+            style={[styles.chipAction, styles.chipActionLast]}
+          >
+            <ArrowDownUp size={18} color={c.mutedForeground} />
+          </Pressable>
         </View>
 
-        {filteredPasswords.length === 0 ? (
+        {/* Search bar — below the filter row */}
+        {searchVisible && (
+          <View style={styles.searchContainer}>
+            <View
+              style={[
+                styles.searchInput,
+                { backgroundColor: c.surface, borderColor: c.border },
+              ]}
+            >
+              <Search size={16} color={c.textTertiary} />
+              <TextInput
+                style={[
+                  styles.searchText,
+                  { color: c.foreground, fontFamily: fonts.body },
+                ]}
+                placeholder={t('passwords.searchPlaceholder')}
+                placeholderTextColor={c.textTertiary}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoFocus
+              />
+            </View>
+          </View>
+        )}
+
+        {sortedPasswords.length === 0 ? (
           renderEmptyState()
         ) : (
           <FlashList
-            data={filteredPasswords}
+            data={sortedPasswords}
             renderItem={renderPassword}
             keyExtractor={item => String(item.id)}
             style={styles.list}
@@ -386,6 +432,12 @@ export function Render() {
         visible={actionSheetVisible}
         onClose={() => setActionSheetVisible(false)}
         options={actionSheetOptions}
+      />
+
+      <ActionSheet
+        visible={sortSheetVisible}
+        onClose={() => setSortSheetVisible(false)}
+        options={sortOptions}
       />
 
       <CopyToast
@@ -412,17 +464,17 @@ const styles = StyleSheet.create({
   pageTitle: {
     fontSize: 40,
     letterSpacing: -0.2,
+    flexShrink: 1,
+    marginRight: 8,
   },
   headerActions: {
     flexDirection: 'row',
     gap: 10,
+    flexShrink: 0,
   },
   headerIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderCurve: 'continuous',
+    width: 40,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -446,11 +498,26 @@ const styles = StyleSheet.create({
     padding: 0,
   },
   chipContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingBottom: 12,
   },
+  chipScroll: {
+    flex: 1,
+  },
   chipRow: {
-    paddingHorizontal: 20,
+    paddingLeft: 20,
+    paddingRight: 8,
     gap: 8,
+  },
+  chipAction: {
+    width: 36,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chipActionLast: {
+    marginRight: 14,
   },
   chip: {
     minHeight: 40,

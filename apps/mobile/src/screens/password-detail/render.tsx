@@ -31,8 +31,10 @@ import { useTranslation } from '@repo/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
 import { CopyToast } from '@/components/copy-toast';
+import { useSettingsStore } from '@/features/settings/settings-store';
 import { useSecureScreen } from '@/hooks/useSecureScreen';
 import { copySensitive } from '@/lib/clipboard';
+import { faviconUrl } from '@/lib/favicon';
 import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
@@ -62,6 +64,11 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
   const currentFavorite =
     optimisticFavorite !== null ? optimisticFavorite : isFavorite;
 
+  // Optional, opt-in website favicon (falls back to the letter on failure).
+  const fetchFavicons = useSettingsStore(s => s.fetchFavicons);
+  const [faviconFailed, setFaviconFailed] = useState(false);
+  const favicon = fetchFavicons && !icon ? faviconUrl(url) : null;
+
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
     setToastVisible(true);
@@ -76,7 +83,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
     if (process.env.EXPO_OS === 'ios') {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    showToast(`${label} copied`);
+    showToast(t('passwords.copied', { label }));
   };
 
   const handleToggleFavorite = async () => {
@@ -148,17 +155,17 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
 
   const overflowOptions: ActionSheetOption[] = [
     {
-      label: 'Edit',
+      label: t('passwords.edit'),
       icon: Edit,
       onPress: handleEdit,
     },
     {
-      label: 'Share',
+      label: t('passwords.share'),
       icon: Share2,
       onPress: confirmShare,
     },
     {
-      label: 'Delete',
+      label: t('passwords.delete'),
       icon: Trash2,
       destructive: true,
       onPress: handleDelete,
@@ -208,6 +215,15 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
                 cachePolicy="memory-disk"
                 transition={120}
               />
+            ) : favicon && !faviconFailed ? (
+              <Image
+                source={{ uri: favicon }}
+                style={styles.heroIconImage}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+                transition={120}
+                onError={() => setFaviconFailed(true)}
+              />
             ) : (
               <Text
                 style={[
@@ -255,7 +271,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
                 { color: c.textTertiary, fontFamily: fonts.bodySemiBold },
               ]}
             >
-              USERNAME
+              {t('form.username')}
             </Text>
           </View>
           <View style={styles.cardContent}>
@@ -269,7 +285,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
               {username}
             </Text>
             <Pressable
-              onPress={() => handleCopy(username, 'Username')}
+              onPress={() => handleCopy(username, t('form.username'))}
               style={[styles.copyBtn, { backgroundColor: c.surface }]}
             >
               <Copy size={16} color={c.accentBlue} />
@@ -292,7 +308,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
                 { color: c.textTertiary, fontFamily: fonts.bodySemiBold },
               ]}
             >
-              PASSWORD
+              {t('form.password')}
             </Text>
           </View>
           <View style={styles.cardContent}>
@@ -320,7 +336,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
                 )}
               </Pressable>
               <Pressable
-                onPress={() => handleCopy(password, 'Password', true)}
+                onPress={() => handleCopy(password, t('form.password'), true)}
                 style={[styles.copyBtn, { backgroundColor: c.surface }]}
               >
                 <Copy size={16} color={c.accentBlue} />
@@ -345,7 +361,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
                   { color: c.textTertiary, fontFamily: fonts.bodySemiBold },
                 ]}
               >
-                URL
+                {t('form.url')}
               </Text>
             </View>
             <Pressable
@@ -356,7 +372,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
                     : `https://${url}`;
                 Linking.canOpenURL(target).then(supported => {
                   if (supported) Linking.openURL(target);
-                  else Alert.alert('Invalid URL');
+                  else Alert.alert(t('passwords.invalidUrl'));
                 });
               }}
               style={styles.cardContent}
@@ -393,7 +409,7 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
                   { color: c.textTertiary, fontFamily: fonts.bodySemiBold },
                 ]}
               >
-                NOTES
+                {t('form.notes')}
               </Text>
             </View>
             <Text

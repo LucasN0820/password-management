@@ -2,6 +2,39 @@
   "app": {
     "name": "Vault"
   },
+  "list": {
+    "title": "列表",
+    "deleted": "已删除 {{title}}",
+    "undo": "撤销",
+    "sort": "排序",
+    "sortByUpdated": "最近更新",
+    "sortByCreated": "最近创建",
+    "sortByName": "名称 (A–Z)",
+    "fetchFavicons": "显示网站图标",
+    "fetchFaviconsHint": "为带网址的条目联网下载站点图标。需要网络连接。"
+  },
+  "health": {
+    "title": "安全检查",
+    "entry": "安全检查",
+    "entryHint": "检测保险箱中的弱密码、重复密码与久未更新的密码",
+    "summary": "总览",
+    "total": "密码总数",
+    "favorites": "收藏",
+    "issues": "发现问题",
+    "allClear": "一切正常",
+    "allClearHint": "保险箱中未发现弱密码、重复密码或久未更新的密码。",
+    "empty": "保险箱为空",
+    "emptyHint": "添加密码后即可运行安全检查。",
+    "weak": "弱密码",
+    "weakHint": "长度不足或字符多样性较低",
+    "reused": "重复密码",
+    "reusedHint": "多个条目使用了相同的密码",
+    "old": "久未更新",
+    "oldHint": "超过一年未更新",
+    "count": "{{count}} 个受影响",
+    "noTitle": "未命名",
+    "privacyNote": "所有检查均在本机完成,数据不会离开你的手机。"
+  },
   "nav": {
     "home": "首页",
     "passwords": "密码",
@@ -76,8 +109,36 @@
     "addToFavorites": "添加到收藏",
     "removeFromFavorites": "从收藏中移除",
     "delete": "删除",
+    "share": "分享",
     "passwordCopied": "密码已复制",
-    "usernameCopied": "用户名已复制"
+    "usernameCopied": "用户名已复制",
+    "copied": "{{label}}已复制",
+    "invalidUrl": "无效的网址",
+    "noPasswordsYet": "暂无密码",
+    "noFavoritesYet": "暂无收藏",
+    "emptySubtitle": "点击 + 添加您的第一个密码",
+    "emptyFavoritesSubtitle": "点击任意密码上的星标即可添加到此处"
+  },
+  "form": {
+    "title": "标题",
+    "username": "用户名",
+    "password": "密码",
+    "url": "网址",
+    "notes": "备注",
+    "category": "分类",
+    "uncategorized": "未分类",
+    "newCategory": "新建分类…",
+    "urlPlaceholder": "例如：github.com",
+    "notesPlaceholder": "添加备注..."
+  },
+  "modal": {
+    "cancel": "取消",
+    "save": "保存",
+    "saving": "保存中...",
+    "addPassword": "添加密码",
+    "editPassword": "编辑密码",
+    "saveFailed": "保存密码失败，请重试。",
+    "updateFailed": "更新密码失败，请重试。"
   },
   "aiImport": {
     "title": "AI 导入",

@@ -2,6 +2,39 @@
   "app": {
     "name": "Vault"
   },
+  "list": {
+    "title": "List",
+    "deleted": "Deleted {{title}}",
+    "undo": "Undo",
+    "sort": "Sort",
+    "sortByUpdated": "Recently updated",
+    "sortByCreated": "Recently created",
+    "sortByName": "Name (A–Z)",
+    "fetchFavicons": "Show website icons",
+    "fetchFaviconsHint": "Download favicons for entries with a URL. Requires a network connection."
+  },
+  "health": {
+    "title": "Security Check",
+    "entry": "Security Check",
+    "entryHint": "Audit your vault for weak, reused and stale passwords",
+    "summary": "Overview",
+    "total": "Total Passwords",
+    "favorites": "Favorites",
+    "issues": "Issues Found",
+    "allClear": "Everything looks good",
+    "allClearHint": "No weak, reused or stale passwords found in your vault.",
+    "empty": "Your vault is empty",
+    "emptyHint": "Add a password to run a security check.",
+    "weak": "Weak Passwords",
+    "weakHint": "Too short or low character variety",
+    "reused": "Reused Passwords",
+    "reusedHint": "The same password is used by multiple entries",
+    "old": "Stale Passwords",
+    "oldHint": "Not updated in over a year",
+    "count": "{{count}} affected",
+    "noTitle": "Untitled",
+    "privacyNote": "All checks run on-device. Nothing leaves your phone."
+  },
   "nav": {
     "home": "Home",
     "passwords": "Passwords",
@@ -76,8 +109,36 @@
     "addToFavorites": "Add to Favorites",
     "removeFromFavorites": "Remove from Favorites",
     "delete": "Delete",
+    "share": "Share",
     "passwordCopied": "Password copied",
-    "usernameCopied": "Username copied"
+    "usernameCopied": "Username copied",
+    "copied": "{{label}} copied",
+    "invalidUrl": "Invalid URL",
+    "noPasswordsYet": "No passwords yet",
+    "noFavoritesYet": "No favorites yet",
+    "emptySubtitle": "Tap + to add your first password",
+    "emptyFavoritesSubtitle": "Tap the star on any password to add it here"
+  },
+  "form": {
+    "title": "Title",
+    "username": "Username",
+    "password": "Password",
+    "url": "URL",
+    "notes": "Notes",
+    "category": "Category",
+    "uncategorized": "Uncategorized",
+    "newCategory": "New category…",
+    "urlPlaceholder": "e.g. github.com",
+    "notesPlaceholder": "Add any notes..."
+  },
+  "modal": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "addPassword": "Add Password",
+    "editPassword": "Edit Password",
+    "saveFailed": "Failed to save password. Please try again.",
+    "updateFailed": "Failed to update password. Please try again."
   },
   "aiImport": {
     "title": "AI Import",
