@@ -1,6 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { DeleteDialog } from '@/components/delete-dialog';
-import { usePasswordStore } from '@/store/passwordStore';
+import { useDeleteWithUndo } from '@/features/undo-delete';
 import { ModalDataDeletePassword,useStore } from './context';
 
 export function ModalDeletePassword({
@@ -9,11 +9,11 @@ export function ModalDeletePassword({
   modal: ModalDataDeletePassword;
 }) {
   const setModal = useStore(s => s.setModal);
-  const { deletePassword } = usePasswordStore();
+  const deleteWithUndo = useDeleteWithUndo();
 
   const { mutate } = useMutation({
     mutationFn: async () => {
-      await deletePassword(modal.id);
+      await deleteWithUndo(modal.id);
     },
     onSuccess: () => {
       setModal(null);

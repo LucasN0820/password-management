@@ -153,11 +153,14 @@ export function SettingsScreen() {
   const autoLockMs = useSettingsStore(s => s.autoLockMs);
   const clipboardClearMs = useSettingsStore(s => s.clipboardClearMs);
 
+  const fetchFavicons = useSettingsStore(s => s.fetchFavicons);
+
   const setThemeMode = useSettingsStore(s => s.setThemeMode);
   const setLanguage = useSettingsStore(s => s.setLanguage);
   const setAppLockEnabled = useSettingsStore(s => s.setAppLockEnabled);
   const setAutoLockMs = useSettingsStore(s => s.setAutoLockMs);
   const setClipboardClearMs = useSettingsStore(s => s.setClipboardClearMs);
+  const setFetchFavicons = useSettingsStore(s => s.setFetchFavicons);
 
   const formatDuration = (ms: number, zeroLabel: string) => {
     if (ms === 0) return zeroLabel;
@@ -281,6 +284,25 @@ export function SettingsScreen() {
             colors={c}
           />
         </View>
+      </Section>
+
+      <Section title={t('list.title')} colors={c}>
+        <Row
+          label={t('list.fetchFavicons')}
+          hint={t('list.fetchFaviconsHint')}
+          colors={c}
+          last
+        >
+          <Switch
+            value={fetchFavicons}
+            onValueChange={value => {
+              selection();
+              setFetchFavicons(value);
+            }}
+            trackColor={{ false: c.border, true: c.accentBlue }}
+            thumbColor="#FFFFFF"
+          />
+        </Row>
       </Section>
 
       <Section title={t('settings.about')} colors={c}>

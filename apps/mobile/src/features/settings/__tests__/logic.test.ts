@@ -20,6 +20,8 @@ describe('mergeStoredSettings', () => {
       appLockEnabled: false,
       autoLockMs: 5000,
       clipboardClearMs: 0,
+      sortBy: 'name',
+      fetchFavicons: true,
     });
     expect(merged).toEqual({
       themeMode: 'dark',
@@ -27,6 +29,8 @@ describe('mergeStoredSettings', () => {
       appLockEnabled: false,
       autoLockMs: 5000,
       clipboardClearMs: 0,
+      sortBy: 'name',
+      fetchFavicons: true,
     });
   });
 
@@ -37,6 +41,8 @@ describe('mergeStoredSettings', () => {
       appLockEnabled: 'yes',
       autoLockMs: -1,
       clipboardClearMs: 'soon',
+      sortBy: 'random',
+      fetchFavicons: 'maybe',
     });
     expect(merged).toEqual(DEFAULT_SETTINGS);
   });

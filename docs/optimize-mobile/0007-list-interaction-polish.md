@@ -2,7 +2,7 @@
 
 - **优先级**:🟡 中(体验)
 - **类型**:体验 / 交互
-- **状态**:⬜ 未开始
+- **状态**:✅ 已完成(2026-06-18,待真机回归)
 - **预估工作量**:M(1–1.5 天)
 
 ## 背景与问题
@@ -16,25 +16,27 @@
 
 ## 任务详情
 ### 7.1 删除撤销
-- [ ] 删除后弹 Snackbar/Toast「已删除 · 撤销」,N 秒内可恢复。
-- [ ] 实现:软删除缓冲(延迟真正落库),或先暂存被删记录、撤销时 re-insert。
+- [x] 新增 `features/undo-delete/`:`useDeleteWithUndo`(删除前 `findPassword` 留存整条记录,再删)+ 根部挂载的 `UndoDeleteSnackbar`(底部「已删除 X · 撤销」,5s 内点「撤销」即 `addPassword` 重插)。两处删除弹窗(列表 + 详情)统一改用它。
+- [x] 实现方式:先删后存,撤销时 re-insert(新 id,内容一致)。
 
 ### 7.2 搜索修复
-- [ ] 改为输入时不 trim、仅在查询逻辑里 trim(保留中间空格的输入能力)。
+- [x] 列表搜索框去掉输入时 `.trim()`(`onChangeText={setSearchQuery}`),可正常输入含空格查询。
 
 ### 7.3 排序
-- [ ] 列表加排序入口(名称 A→Z / 最近创建 / 最近更新),持久化用户选择(可接 0004 settings store)。
+- [x] 排序入口(名称 A→Z / 最近创建 / 最近更新),经 ActionSheet 选择;偏好持久化进 **settings store**(`sortBy`,接 0004);纯排序逻辑 `lib/sort-passwords.ts`(Hermes 安全,无 `toSorted`)。
 
-### 7.4 favicon 自动获取(可独立)
-- [ ] 有 URL 时按域名拉取站点图标(如 Google favicon 服务或解析 `/favicon.ico`),缓存到 `icon` 字段或本地缓存。
-- [ ] 失败回退到现有首字母占位(`getDomainIcon`)。
-- [ ] 注意隐私定位:favicon 拉取会产生网络请求,建议在设置中可关闭,默认行为需明确。
+### 7.4 favicon 自动获取
+- [x] `lib/favicon.ts` 纯函数按域名生成图标 URL(Google favicon 服务);列表项 + 详情页 hero 在开启时用 favicon,`onError` 回退首字母占位。
+- [x] 隐私:**默认关闭**,在设置「列表」分区提供开关(`fetchFavicons`),文案标注需联网。
+
+### UI 调整(用户反馈)
+- [x] 排序按钮移到列表筛选行右侧、无背景;搜索按钮移到排序左侧、无背景,搜索框展开在筛选行下方。
+- [x] 头部仅保留 AI Import + 设置两个图标(顺序:AI Import 在左、设置在右),均**去背景**;AI Import 图标改为 `Sparkles`(AI 星标)。
 
 ## 验收 / 测试标准
-- [ ] 删除后出现「撤销」,点击可恢复;超时后真正删除。
-- [ ] 搜索可输入含空格的查询且能命中。
-- [ ] 切换排序方式,列表顺序正确并在重启后保留。
-- [ ] 有 URL 的条目能显示站点图标,无 URL / 拉取失败回退首字母。
+- [x] 纯逻辑单测:`favicon`(5)+ `sort-passwords`(5)+ settings 合并(含 `sortBy`/`fetchFavicons`)。全量 `vitest run apps/mobile/src` → 58 passed。
+- [x] `tsc`/`eslint` 通过;en/zh i18n key 一致(新增 `list.*` 9 个)。
+- [ ] 真机回归:① 删除后出现「撤销」可恢复、超时真正删除;② 搜索可输入含空格并命中;③ 切换排序顺序正确且重启保留;④ 开启 favicon 后有 URL 条目显示站点图标、失败回退首字母。
 
 ## 涉及文件
 - `apps/mobile/src/screens/password/render.tsx`
@@ -46,4 +48,9 @@
 - 无强依赖;排序/favicon 的开关可接 [0004](./0004-settings-screen.md)。四个子项可分别独立测试。
 
 ## 进度记录
-- _(待填写)_
+- 2026-06-18 完成实现 + 纯逻辑单测。
+  - 四个子项 + 用户的 UI 调整(排序/搜索移至筛选行右侧并去背景、搜索框下移、头部图标去背景与重排、AI Import 换 `Sparkles`)。
+  - 排序/favicon 偏好接入 0004 的 settings store(`sortBy` / `fetchFavicons`),持久化 + 校验。
+  - Hermes 安全:`sort-passwords` 用 `[...].sort` + `eslint-disable`,无 `toSorted`。
+  - 验证:`vitest run apps/mobile/src` → 58 passed;`tsc`/`eslint` 通过;en/zh key 一致。
+- 待办:真机回归(撤销、搜索空格、排序持久化、favicon 开关)。

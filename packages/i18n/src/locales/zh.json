@@ -2,6 +2,17 @@
   "app": {
     "name": "Vault"
   },
+  "list": {
+    "title": "列表",
+    "deleted": "已删除 {{title}}",
+    "undo": "撤销",
+    "sort": "排序",
+    "sortByUpdated": "最近更新",
+    "sortByCreated": "最近创建",
+    "sortByName": "名称 (A–Z)",
+    "fetchFavicons": "显示网站图标",
+    "fetchFaviconsHint": "为带网址的条目联网下载站点图标。需要网络连接。"
+  },
   "health": {
     "title": "安全检查",
     "entry": "安全检查",

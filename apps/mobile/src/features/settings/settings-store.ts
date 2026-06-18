@@ -3,6 +3,7 @@ import { create } from 'zustand';
 import { changeLanguage } from '@repo/i18n';
 import { useAppLockStore } from '@/features/app-lock';
 import { setClipboardClearMs } from '@/lib/clipboard';
+import type { SortKey } from '@/lib/sort-passwords';
 import { appearanceColorScheme } from './logic';
 import { loadStoredSettings, persistSettings } from './storage';
 import {
@@ -22,18 +23,29 @@ interface SettingsState extends Settings {
   setAppLockEnabled: (enabled: boolean) => void;
   setAutoLockMs: (ms: number) => void;
   setClipboardClearMs: (ms: number) => void;
+  setSortBy: (sortBy: SortKey) => void;
+  setFetchFavicons: (fetchFavicons: boolean) => void;
 }
 
 /** Persist the current settings slice without blocking the caller. */
 function save(get: () => SettingsState) {
-  const { themeMode, language, appLockEnabled, autoLockMs, clipboardClearMs } =
-    get();
+  const {
+    themeMode,
+    language,
+    appLockEnabled,
+    autoLockMs,
+    clipboardClearMs,
+    sortBy,
+    fetchFavicons,
+  } = get();
   void persistSettings({
     themeMode,
     language,
     appLockEnabled,
     autoLockMs,
     clipboardClearMs,
+    sortBy,
+    fetchFavicons,
   });
 }
 
@@ -81,6 +93,16 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   setClipboardClearMs: ms => {
     setClipboardClearMs(ms);
     set({ clipboardClearMs: ms });
+    save(get);
+  },
+
+  setSortBy: sortBy => {
+    set({ sortBy });
+    save(get);
+  },
+
+  setFetchFavicons: fetchFavicons => {
+    set({ fetchFavicons });
     save(get);
   },
 }));

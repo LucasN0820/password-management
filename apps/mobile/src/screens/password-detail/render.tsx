@@ -31,8 +31,10 @@ import { useTranslation } from '@repo/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
 import { CopyToast } from '@/components/copy-toast';
+import { useSettingsStore } from '@/features/settings/settings-store';
 import { useSecureScreen } from '@/hooks/useSecureScreen';
 import { copySensitive } from '@/lib/clipboard';
+import { faviconUrl } from '@/lib/favicon';
 import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
@@ -61,6 +63,11 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
     passwordItem;
   const currentFavorite =
     optimisticFavorite !== null ? optimisticFavorite : isFavorite;
+
+  // Optional, opt-in website favicon (falls back to the letter on failure).
+  const fetchFavicons = useSettingsStore(s => s.fetchFavicons);
+  const [faviconFailed, setFaviconFailed] = useState(false);
+  const favicon = fetchFavicons && !icon ? faviconUrl(url) : null;
 
   const showToast = useCallback((msg: string) => {
     setToastMessage(msg);
@@ -207,6 +214,15 @@ export function Render({ passwordItem }: { passwordItem: Password }) {
                 contentFit="cover"
                 cachePolicy="memory-disk"
                 transition={120}
+              />
+            ) : favicon && !faviconFailed ? (
+              <Image
+                source={{ uri: favicon }}
+                style={styles.heroIconImage}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+                transition={120}
+                onError={() => setFaviconFailed(true)}
               />
             ) : (
               <Text

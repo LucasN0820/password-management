@@ -2,6 +2,17 @@
   "app": {
     "name": "Vault"
   },
+  "list": {
+    "title": "List",
+    "deleted": "Deleted {{title}}",
+    "undo": "Undo",
+    "sort": "Sort",
+    "sortByUpdated": "Recently updated",
+    "sortByCreated": "Recently created",
+    "sortByName": "Name (A–Z)",
+    "fetchFavicons": "Show website icons",
+    "fetchFaviconsHint": "Download favicons for entries with a URL. Requires a network connection."
+  },
   "health": {
     "title": "Security Check",
     "entry": "Security Check",

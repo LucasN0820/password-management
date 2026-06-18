@@ -3,6 +3,7 @@
  * and preference resolution can be unit tested in isolation.
  */
 import type { ColorSchemeName } from 'react-native';
+import { SORT_KEYS,type SortKey } from '../../lib/sort-passwords';
 import { DEFAULT_SETTINGS, type Settings, type ThemeMode } from './types';
 
 const THEME_MODES: ThemeMode[] = ['system', 'light', 'dark'];
@@ -36,6 +37,13 @@ export function mergeStoredSettings(raw: unknown): Settings {
       typeof value.clipboardClearMs === 'number' && value.clipboardClearMs >= 0
         ? value.clipboardClearMs
         : DEFAULT_SETTINGS.clipboardClearMs,
+    sortBy: SORT_KEYS.includes(value.sortBy as SortKey)
+      ? (value.sortBy as SortKey)
+      : DEFAULT_SETTINGS.sortBy,
+    fetchFavicons:
+      typeof value.fetchFavicons === 'boolean'
+        ? value.fetchFavicons
+        : DEFAULT_SETTINGS.fetchFavicons,
   };
 }
 

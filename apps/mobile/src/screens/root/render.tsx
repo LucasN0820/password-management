@@ -2,6 +2,7 @@ import { Stack } from 'expo-router';
 import { GlobalModelDownloadBanner } from '@/components/model-download-banner';
 import { Toast } from '@/components/toast';
 import { ModelDownloadProvider } from '@/features/model-download/download-provider';
+import { UndoDeleteSnackbar } from '@/features/undo-delete';
 
 export function Render() {
   return (
@@ -15,6 +16,7 @@ export function Render() {
       </Stack>
       <GlobalModelDownloadBanner />
       <Toast />
+      <UndoDeleteSnackbar />
     </ModelDownloadProvider>
   );
 }

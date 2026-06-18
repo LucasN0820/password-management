@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import { Edit, Globe, Star, Trash2 } from 'lucide-react-native';
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, useColorScheme, View } from 'react-native';
 import {
   Gesture,
@@ -17,7 +17,9 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useMutation } from '@tanstack/react-query';
+import { useSettingsStore } from '@/features/settings/settings-store';
 import { isCustomCategory } from '@/lib/categories';
+import { faviconUrl } from '@/lib/favicon';
 import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
@@ -52,6 +54,15 @@ export function PasswordItem({
   const itemScale = useSharedValue(1);
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
+
+  // Optional, opt-in website favicon (falls back to the letter on failure).
+  const fetchFavicons = useSettingsStore(s => s.fetchFavicons);
+  const [faviconFailed, setFaviconFailed] = useState(false);
+  useEffect(() => {
+    setFaviconFailed(false);
+  }, [password.id]);
+  const favicon =
+    fetchFavicons && !password.icon ? faviconUrl(password.url) : null;
 
   const { mutate: favoriteMutate } = useMutation({
     mutationFn: async () => {
@@ -199,6 +210,16 @@ export function PasswordItem({
                 cachePolicy="memory-disk"
                 recyclingKey={String(password.id)}
                 transition={120}
+              />
+            ) : favicon && !faviconFailed ? (
+              <Image
+                source={{ uri: favicon }}
+                style={styles.iconImage}
+                contentFit="contain"
+                cachePolicy="memory-disk"
+                recyclingKey={String(password.id)}
+                transition={120}
+                onError={() => setFaviconFailed(true)}
               />
             ) : (
               <Text
