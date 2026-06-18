@@ -76,8 +76,36 @@
     "addToFavorites": "添加到收藏",
     "removeFromFavorites": "从收藏中移除",
     "delete": "删除",
+    "share": "分享",
     "passwordCopied": "密码已复制",
-    "usernameCopied": "用户名已复制"
+    "usernameCopied": "用户名已复制",
+    "copied": "{{label}}已复制",
+    "invalidUrl": "无效的网址",
+    "noPasswordsYet": "暂无密码",
+    "noFavoritesYet": "暂无收藏",
+    "emptySubtitle": "点击 + 添加您的第一个密码",
+    "emptyFavoritesSubtitle": "点击任意密码上的星标即可添加到此处"
+  },
+  "form": {
+    "title": "标题",
+    "username": "用户名",
+    "password": "密码",
+    "url": "网址",
+    "notes": "备注",
+    "category": "分类",
+    "uncategorized": "未分类",
+    "newCategory": "新建分类…",
+    "urlPlaceholder": "例如：github.com",
+    "notesPlaceholder": "添加备注..."
+  },
+  "modal": {
+    "cancel": "取消",
+    "save": "保存",
+    "saving": "保存中...",
+    "addPassword": "添加密码",
+    "editPassword": "编辑密码",
+    "saveFailed": "保存密码失败，请重试。",
+    "updateFailed": "更新密码失败，请重试。"
   },
   "aiImport": {
     "title": "AI 导入",

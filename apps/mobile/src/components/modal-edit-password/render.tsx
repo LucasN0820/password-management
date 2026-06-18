@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from '@repo/i18n';
 import { useMutation } from '@tanstack/react-query';
 import {
   FormType,
@@ -31,6 +32,7 @@ export function Render({
   onClose: () => void;
   id: number;
 }) {
+  const { t } = useTranslation();
   const { updatePassword } = usePasswordStore();
   const [visible, setVisible] = useState(true);
   const formRef = useRef<PasswordFormRef>(null);
@@ -59,7 +61,7 @@ export function Render({
       if (process.env.EXPO_OS === 'ios') {
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-      Alert.alert('Error', 'Failed to update password. Please try again.');
+      Alert.alert(t('toast.error'), t('modal.updateFailed'));
     },
   });
 
@@ -95,7 +97,7 @@ export function Render({
                 { color: c.accentBlue, fontFamily: fonts.body },
               ]}
             >
-              Cancel
+              {t('modal.cancel')}
             </Text>
           </Pressable>
           <Text
@@ -104,7 +106,7 @@ export function Render({
               { color: c.foreground, fontFamily: fonts.heading },
             ]}
           >
-            Edit Password
+            {t('modal.editPassword')}
           </Text>
           <Pressable
             onPress={() => formRef.current?.requestSubmit()}
@@ -117,7 +119,7 @@ export function Render({
                 isPending ? { color: c.textTertiary } : { color: c.accentBlue },
               ]}
             >
-              {isPending ? 'Saving...' : 'Save'}
+              {isPending ? t('modal.saving') : t('modal.save')}
             </Text>
           </Pressable>
         </View>

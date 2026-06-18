@@ -76,8 +76,36 @@
     "addToFavorites": "Add to Favorites",
     "removeFromFavorites": "Remove from Favorites",
     "delete": "Delete",
+    "share": "Share",
     "passwordCopied": "Password copied",
-    "usernameCopied": "Username copied"
+    "usernameCopied": "Username copied",
+    "copied": "{{label}} copied",
+    "invalidUrl": "Invalid URL",
+    "noPasswordsYet": "No passwords yet",
+    "noFavoritesYet": "No favorites yet",
+    "emptySubtitle": "Tap + to add your first password",
+    "emptyFavoritesSubtitle": "Tap the star on any password to add it here"
+  },
+  "form": {
+    "title": "Title",
+    "username": "Username",
+    "password": "Password",
+    "url": "URL",
+    "notes": "Notes",
+    "category": "Category",
+    "uncategorized": "Uncategorized",
+    "newCategory": "New category…",
+    "urlPlaceholder": "e.g. github.com",
+    "notesPlaceholder": "Add any notes..."
+  },
+  "modal": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "saving": "Saving...",
+    "addPassword": "Add Password",
+    "editPassword": "Edit Password",
+    "saveFailed": "Failed to save password. Please try again.",
+    "updateFailed": "Failed to update password. Please try again."
   },
   "aiImport": {
     "title": "AI Import",

@@ -208,7 +208,9 @@ export function Render() {
             { color: c.foreground, fontFamily: fonts.heading },
           ]}
         >
-          {isFavorites ? 'No favorites yet' : 'No passwords yet'}
+          {isFavorites
+            ? t('passwords.noFavoritesYet')
+            : t('passwords.noPasswordsYet')}
         </Text>
         <Text
           style={[
@@ -217,8 +219,8 @@ export function Render() {
           ]}
         >
           {isFavorites
-            ? 'Tap the star on any password to add it here'
-            : 'Tap + to add your first password'}
+            ? t('passwords.emptyFavoritesSubtitle')
+            : t('passwords.emptySubtitle')}
         </Text>
       </View>
     );
@@ -229,6 +231,7 @@ export function Render() {
     c.mutedForeground,
     c.textTertiary,
     setModal,
+    t,
   ]);
 
   return (

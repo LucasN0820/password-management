@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from '@repo/i18n';
 import { useMutation } from '@tanstack/react-query';
 import { PasswordForm, PasswordFormRef } from '@/components/password-form';
 import { Password, usePasswordStore } from '@/store/passwordStore';
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function ModalAddPassword({ onClose, initialPassword }: Props) {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(true);
   const { addPassword } = usePasswordStore();
   const formRef = useRef<PasswordFormRef>(null);
@@ -52,7 +54,7 @@ export function ModalAddPassword({ onClose, initialPassword }: Props) {
       if (process.env.EXPO_OS === 'ios') {
         void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-      Alert.alert('Error', 'Failed to save password. Please try again.');
+      Alert.alert(t('toast.error'), t('modal.saveFailed'));
     },
   });
 
@@ -87,7 +89,7 @@ export function ModalAddPassword({ onClose, initialPassword }: Props) {
                 { color: c.accentBlue, fontFamily: fonts.body },
               ]}
             >
-              Cancel
+              {t('modal.cancel')}
             </Text>
           </Pressable>
           <Text
@@ -96,7 +98,7 @@ export function ModalAddPassword({ onClose, initialPassword }: Props) {
               { color: c.foreground, fontFamily: fonts.heading },
             ]}
           >
-            Add Password
+            {t('modal.addPassword')}
           </Text>
           <Pressable
             onPress={() => formRef.current?.requestSubmit()}
@@ -109,7 +111,7 @@ export function ModalAddPassword({ onClose, initialPassword }: Props) {
                 isPending ? { color: c.textTertiary } : { color: c.accentBlue },
               ]}
             >
-              {isPending ? 'Saving...' : 'Save'}
+              {isPending ? t('modal.saving') : t('modal.save')}
             </Text>
           </Pressable>
         </View>
