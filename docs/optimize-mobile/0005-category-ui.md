@@ -2,7 +2,7 @@
 
 - **优先级**:🟠 中高(性价比最高:后端已现成)
 - **类型**:功能
-- **状态**:✅ 已完成(2026-06-18,待真机回归)
+- **状态**:✅ 已完成并验证(2026-06-18)
 - **预估工作量**:M(1 天)
 
 ## 背景与问题
@@ -24,7 +24,7 @@
 ## 验收 / 测试标准
 - [x] 纯逻辑单测(`categories.test.ts`,7 个):派生(去重/排序/排除虚拟分类与空值)、`isCustomCategory`、输入归一。
 - [x] `tsc`/`eslint` 通过;全量 `vitest run apps/mobile/src` → 33 passed。
-- [ ] 真机回归:① 新建/编辑可指定分类,列表按分类正确过滤;② chips 与 `all`/`favorites` 切换无冲突;③ 既有无分类数据归入 `all` 正常;④ 编辑分类后持久化、刷新保留;⑤ 列表项分类标签显示正常。
+- [x] 真机回归(2026-06-18 用户验证通过):① 新建/编辑可指定分类,列表按分类正确过滤;② chips 与 `all`/`favorites` 切换无冲突;③ 既有无分类数据归入 `all` 正常;④ 编辑分类后持久化、刷新保留;⑤ 列表项分类标签显示正常。
 
 ## 涉及文件
 **新增**
@@ -48,5 +48,6 @@
   - 过滤收口:删除 render 的本地 `activeTab`,统一走 store 的 `selectedCategory` + `applyFilters`;搜索时仍由 `searchPasswords` 接管。
   - 纯逻辑抽到 `lib/categories.ts`,render/表单/列表项共用,vitest 直接可测。
   - 验证:`vitest run apps/mobile/src` → 33 passed;`tsc`/`eslint` 通过。
-- 待办:真机回归(增删改分类、过滤、标签、持久化)。
+- 2026-06-18 修复运行时崩溃:`deriveCategories` 原用 `Array#toSorted`(ESLint `unicorn` autofix 引入),但 **Hermes 不支持该 ES2023 方法**,真机报 `undefined is not a function`。改回 `Array#sort`(`[...new Set()]` 已是新数组,原地排序安全)并注释禁用该 lint 规则。教训:unicorn 的 `toSorted/toReversed/findLast` 类 autofix 在 Node 端 CI 能过、Hermes 会崩。
+- 2026-06-18 用户已真机验证全部通过。**任务全部完成。**
 - 备注:`FieldCategory` 的「CATEGORY / Uncategorized / New category…」与既有表单字段一样为硬编码英文,留待 [0006](./0006-i18n-completion.md) 统一 i18n(已在该任务记一笔)。
