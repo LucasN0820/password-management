@@ -10,6 +10,7 @@ export function Render() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="ai-import" />
         <Stack.Screen name="settings" />
+        <Stack.Screen name="health" />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
       <GlobalModelDownloadBanner />

@@ -2,6 +2,28 @@
   "app": {
     "name": "Vault"
   },
+  "health": {
+    "title": "Security Check",
+    "entry": "Security Check",
+    "entryHint": "Audit your vault for weak, reused and stale passwords",
+    "summary": "Overview",
+    "total": "Total Passwords",
+    "favorites": "Favorites",
+    "issues": "Issues Found",
+    "allClear": "Everything looks good",
+    "allClearHint": "No weak, reused or stale passwords found in your vault.",
+    "empty": "Your vault is empty",
+    "emptyHint": "Add a password to run a security check.",
+    "weak": "Weak Passwords",
+    "weakHint": "Too short or low character variety",
+    "reused": "Reused Passwords",
+    "reusedHint": "The same password is used by multiple entries",
+    "old": "Stale Passwords",
+    "oldHint": "Not updated in over a year",
+    "count": "{{count}} affected",
+    "noTitle": "Untitled",
+    "privacyNote": "All checks run on-device. Nothing leaves your phone."
+  },
   "nav": {
     "home": "Home",
     "passwords": "Passwords",
