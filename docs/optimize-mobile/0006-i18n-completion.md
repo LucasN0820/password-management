@@ -19,6 +19,10 @@
   —— `password-detail/render.tsx:68`、`238`、`289`
 - `'Invalid URL'` —— `password-detail/render.tsx:325`
 - ActionSheet 项:`'Edit'` / `'Share'` / `'Delete'` —— `password-detail/render.tsx:111-131`
+- 表单字段标签(整组):`'TITLE'` / `'USERNAME'` / `'PASSWORD'` / `'URL'` / `'NOTES'` / `'CATEGORY'` 及 `'Uncategorized'` / `'New category…'`
+  —— `apps/mobile/src/components/password-form/field-*.tsx`(其中 `field-category.tsx` 为 0005 新增)
+- 增/改/删密码弹窗:`'Cancel'` / `'Save'` / `'Add Password'` / `'Edit Password'` / `'Saving...'`
+  —— `apps/mobile/src/components/modal-add-password`、`modal-edit-password/render.tsx`
 
 ## 任务详情
 - [ ] 梳理上述硬编码字符串,补齐 `packages/i18n/src/locales/en.json` 与 `zh.json` 中缺失的 key。
