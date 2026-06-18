@@ -19,7 +19,10 @@ export function deriveCategories(
   const custom = passwords
     .map(p => p.category)
     .filter(category => isCustomCategory(category));
-  return [...new Set(custom)].toSorted((a, b) => a.localeCompare(b));
+  // `[...new Set()]` is already a fresh array, so sorting it in place is safe.
+  // Hermes (React Native's engine) does not implement `Array#toSorted`.
+  // eslint-disable-next-line unicorn/no-array-sort
+  return [...new Set(custom)].sort((a, b) => a.localeCompare(b));
 }
 
 /** Trim free-text category input, falling back to uncategorized when empty. */
