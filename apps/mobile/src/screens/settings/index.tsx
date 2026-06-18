@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import { type Href, useRouter } from 'expo-router';
-import { ChevronRight, ShieldCheck } from 'lucide-react-native';
+import { Archive, ChevronRight, ShieldCheck } from 'lucide-react-native';
 import { useMemo } from 'react';
 import {
   Pressable,
@@ -303,6 +303,29 @@ export function SettingsScreen() {
             thumbColor="#FFFFFF"
           />
         </Row>
+      </Section>
+
+      <Section title={t('backup.sectionTitle')} colors={c}>
+        <Pressable
+          onPress={() => {
+            selection();
+            router.push('/backup' as Href);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={t('backup.entry')}
+          style={styles.navRow}
+        >
+          <Archive size={20} color={c.accentBlue} />
+          <View style={styles.rowText}>
+            <Text style={[styles.rowLabel, { color: c.foreground, fontFamily: fonts.body }]}>
+              {t('backup.entry')}
+            </Text>
+            <Text style={[styles.rowHint, { color: c.mutedForeground, fontFamily: fonts.caption }]}>
+              {t('backup.entryHint')}
+            </Text>
+          </View>
+          <ChevronRight size={18} color={c.textTertiary} />
+        </Pressable>
       </Section>
 
       <Section title={t('settings.about')} colors={c}>
