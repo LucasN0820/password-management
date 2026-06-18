@@ -1,4 +1,3 @@
-import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { Check, Copy, Minus, Plus,RefreshCw, Save } from 'lucide-react-native';
 import { useCallback,useState } from 'react';
@@ -14,6 +13,10 @@ import {
 import { useTranslation } from '@repo/i18n';
 import { CopyToast } from '@/components/copy-toast';
 import { ModalAddPassword } from '@/components/modal-add-password';
+import { useSecureScreen } from '@/hooks/useSecureScreen';
+import { copySensitive } from '@/lib/clipboard';
+import { generateSecurePassword } from '@/lib/secure-random';
+import { getMobileRandomBytes } from '@/store/vaultKey';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
 
@@ -50,30 +53,25 @@ export function GeneratorScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
 
-  const generatePassword = useCallback(() => {
-    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const lowercase = 'abcdefghijklmnopqrstuvwxyz';
-    const numbers = '0123456789';
-    const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+  // The generated secret is on screen — block screenshots while here.
+  useSecureScreen('generator');
 
-    let chars = '';
-    if (includeUppercase) chars = chars + uppercase;
-    if (includeLowercase) chars = chars + lowercase;
-    if (includeNumbers) chars = chars + numbers;
-    if (includeSymbols) chars = chars + symbols;
-
-    if (chars === '') {
-      setGeneratedPassword('');
-      return;
-    }
-
-    let pw = '';
-    for (let i = 0; i < length; i++) {
-      pw = pw + chars.charAt(Math.floor(Math.random() * chars.length));
-    }
+  const generatePassword = useCallback(async () => {
+    const pw = await generateSecurePassword(
+      {
+        length,
+        includeUppercase,
+        includeLowercase,
+        includeNumbers,
+        includeSymbols,
+      },
+      getMobileRandomBytes
+    );
     setGeneratedPassword(pw);
     setCopied(false);
-    impact(Haptics.ImpactFeedbackStyle.Medium);
+    if (pw) {
+      impact(Haptics.ImpactFeedbackStyle.Medium);
+    }
   }, [
     length,
     includeUppercase,
@@ -84,7 +82,7 @@ export function GeneratorScreen() {
 
   const copyToClipboard = async () => {
     if (generatedPassword) {
-      await Clipboard.setStringAsync(generatedPassword);
+      await copySensitive(generatedPassword);
       setCopied(true);
       notify(Haptics.NotificationFeedbackType.Success);
       setToastVisible(true);
@@ -183,7 +181,7 @@ export function GeneratorScreen() {
           {/* Action buttons */}
           <View style={styles.passwordActions}>
             <Pressable
-              onPress={generatePassword}
+              onPress={() => void generatePassword()}
               style={[styles.regenerateBtn, { borderColor: c.foreground }]}
             >
               <RefreshCw size={16} color={c.foreground} />

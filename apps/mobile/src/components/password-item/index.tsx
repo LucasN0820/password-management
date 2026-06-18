@@ -17,6 +17,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { useMutation } from '@tanstack/react-query';
+import { isCustomCategory } from '@/lib/categories';
 import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
@@ -245,6 +246,24 @@ export function PasswordItem({
                 </Text>
               </View>
             )}
+            {isCustomCategory(password.category) && (
+              <View
+                style={[
+                  styles.categoryTag,
+                  { backgroundColor: c.surface, borderColor: c.border },
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.categoryTagText,
+                    { color: c.mutedForeground, fontFamily: fonts.body },
+                  ]}
+                  numberOfLines={1}
+                >
+                  {password.category}
+                </Text>
+              </View>
+            )}
           </View>
 
           {/* Spacer for favorite button area */}
@@ -343,6 +362,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     flex: 1,
+  },
+  categoryTag: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    marginTop: 2,
+  },
+  categoryTagText: {
+    fontSize: 11,
+    lineHeight: 15,
   },
   favoriteButton: {
     width: 34,

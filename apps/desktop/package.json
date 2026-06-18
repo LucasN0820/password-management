@@ -20,6 +20,7 @@
     "rebuild": "electron-rebuild",
     "preview": "vite preview",
     "tsc": "tsc --noEmit",
+    "test": "vitest run",
     "lint": "eslint src electron"
   },
   "dependencies": {

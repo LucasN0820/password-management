@@ -1,41 +1,27 @@
-import * as Localization from 'expo-localization';
 import type { ReactNode } from 'react';
 import { useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import { changeLanguage,i18n, supportedLanguages } from '@repo/i18n';
+import { changeLanguage, i18n, supportedLanguages } from '@repo/i18n';
+import { getDeviceLanguage } from '@/features/settings/device-language';
+import { resolveInitialLanguage } from '@/features/settings/logic';
+import { useSettingsStore } from '@/features/settings/settings-store';
 import { LanguageLoader } from './LanguageLoader';
 
 interface I18nProviderProps {
   children: ReactNode;
 }
 
-/**
- * Get the device's primary language code using expo-localization.
- * Returns 'en' or 'zh' based on supported languages.
- */
-const getDeviceLanguage = (): string => {
-  const locales = Localization.getLocales();
-  const primaryLocale = locales[0];
-
-  if (primaryLocale?.languageCode) {
-    const langCode = primaryLocale.languageCode.toLowerCase();
-    // Map to supported languages
-    if (supportedLanguages.includes(langCode as typeof supportedLanguages[number])) {
-      return langCode;
-    }
-  }
-
-  return 'en';
-};
-
 export function I18nProvider({ children }: I18nProviderProps) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const deviceLang = getDeviceLanguage();
-    changeLanguage(deviceLang)
+    // SettingsProvider mounts above this one and has already hydrated, so the
+    // stored language preference (if any) wins; otherwise fall back to device.
+    const preference = useSettingsStore.getState().language;
+    const lang = resolveInitialLanguage(preference, getDeviceLanguage());
+    changeLanguage(lang)
       .then(() => setReady(true))
-      .catch((error) => {
+      .catch(error => {
         console.error('Failed to change language:', error);
         setReady(true); // Ensure app renders even if language fails
       });

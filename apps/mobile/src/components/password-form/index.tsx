@@ -1,7 +1,9 @@
 import { forwardRef, useImperativeHandle } from 'react';
 import { FormProvider } from 'react-hook-form';
 import { View } from 'react-native';
+import { normalizeCategoryInput } from '@/lib/categories';
 import { Password } from '@/store/passwordStore';
+import { FieldCategory } from './field-category';
 import { FieldIcon } from './field-icon';
 import { FieldNotes } from './field-notes';
 import { FieldPassword } from './field-password';
@@ -41,6 +43,7 @@ export const PasswordForm = forwardRef<PasswordFormRef, PasswordFormProps>(
             data => {
               onSubmit?.({
                 ...data,
+                category: normalizeCategoryInput(data.category),
                 icon: data.icon ?? null,
                 url: data.url ?? null,
                 notes: data.notes ?? null,
@@ -62,6 +65,7 @@ export const PasswordForm = forwardRef<PasswordFormRef, PasswordFormProps>(
           <FieldUsername />
           <FieldPassword />
           <FieldUrl />
+          <FieldCategory />
           <FieldNotes />
         </View>
       </FormProvider>

@@ -128,6 +128,44 @@
       "notes": "Notes"
     }
   },
+  "settings": {
+    "title": "Settings",
+    "appearance": "Appearance",
+    "theme": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark",
+    "language": "Language",
+    "security": "Security",
+    "appLock": "App lock",
+    "appLockHint": "Require Face ID, fingerprint, or device passcode to open the vault.",
+    "autoLock": "Auto-lock",
+    "autoLockHint": "Lock again after the app has been in the background this long.",
+    "clipboardClear": "Clear clipboard",
+    "clipboardClearHint": "Automatically wipe a copied password after this long.",
+    "immediately": "Immediately",
+    "never": "Never",
+    "seconds": "{{count}}s",
+    "minutes": "{{count}}m",
+    "about": "About",
+    "version": "Version",
+    "privacyNote": "Your passwords never leave this device."
+  },
+  "share": {
+    "title": "Share credential",
+    "message": "Including the password shares it as plain text. Anyone with the message can read it.",
+    "withoutPassword": "Share without password",
+    "includePassword": "Include password",
+    "cancel": "Cancel"
+  },
+  "appLock": {
+    "title": "Vault locked",
+    "subtitle": "Unlock with Face ID, fingerprint, or your device passcode to view your passwords.",
+    "unlock": "Unlock",
+    "promptMessage": "Unlock your vault",
+    "cancel": "Cancel",
+    "failed": "Authentication failed. Please try again."
+  },
   "tabs": {
     "myVault": "My Vault",
     "generate": "Generate"

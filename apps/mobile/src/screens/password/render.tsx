@@ -1,12 +1,13 @@
 import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { type Href, useRouter } from 'expo-router';
-import { FileUp, Plus, Search } from 'lucide-react-native';
+import { FileUp, Plus, Search, Settings } from 'lucide-react-native';
 import { ClipboardCopy, Copy, Edit, Star, Trash2 } from 'lucide-react-native';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -18,12 +19,12 @@ import { FlashList } from '@shopify/flash-list';
 import { ActionSheet, ActionSheetOption } from '@/components/action-sheet';
 import { CopyToast } from '@/components/copy-toast';
 import { PasswordItem } from '@/components/password-item';
+import { deriveCategories, VIRTUAL_CATEGORIES } from '@/lib/categories';
+import { copySensitive } from '@/lib/clipboard';
 import { Password, usePasswordStore } from '@/store/passwordStore';
 import { Colors } from '@/theme/colors';
 import { fonts } from '@/theme/globals';
 import { useStore } from './context';
-
-type Tab = 'all' | 'favorites';
 
 // FlashList's contentContainerStyle does not support `gap`; the inter-item
 /**
@@ -49,7 +50,6 @@ export function Render() {
   const { t } = useTranslation();
   const router = useRouter();
   const [searchVisible, setSearchVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>('all');
   const [refreshing, setRefreshing] = useState(false);
   const [actionSheetVisible, setActionSheetVisible] = useState(false);
   const [selectedPassword, setSelectedPassword] = useState<Password | null>(
@@ -60,18 +60,39 @@ export function Render() {
 
   const setModal = useStore(s => s.setModal);
   const {
+    passwords,
     filteredPasswords,
     searchQuery,
     setSearchQuery,
     loadPasswords,
     toggleFavorite,
+    selectedCategory,
+    setSelectedCategory,
   } = usePasswordStore();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
-  const activePasswords =
-    activeTab === 'all'
-      ? filteredPasswords
-      : filteredPasswords.filter(p => p.isFavorite);
+
+  // Category chips are derived from the loaded passwords so they always stay in
+  // sync after add/edit/delete, without an extra DB round-trip. `all` and
+  // `favorites` are virtual filters handled by the store's `applyFilters`.
+  const categories = useMemo(
+    () => [...VIRTUAL_CATEGORIES, ...deriveCategories(passwords)],
+    [passwords]
+  );
+
+  // If the active custom category disappears (its last item was deleted or
+  // recategorized), fall back to `all` so nothing looks stuck on an empty view.
+  useEffect(() => {
+    if (!categories.includes(selectedCategory)) {
+      setSelectedCategory('all');
+    }
+  }, [categories, selectedCategory, setSelectedCategory]);
+
+  const categoryLabel = (category: string) => {
+    if (category === 'all') return t('passwords.all');
+    if (category === 'favorites') return t('passwords.favorites');
+    return category;
+  };
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -96,7 +117,7 @@ export function Render() {
           icon: Copy,
           onPress: async () => {
             if (selectedPassword) {
-              await Clipboard.setStringAsync(selectedPassword.password);
+              await copySensitive(selectedPassword.password);
               notify(Haptics.NotificationFeedbackType.Success);
               showToast(t('passwords.passwordCopied'));
             }
@@ -168,7 +189,7 @@ export function Render() {
   );
 
   const renderEmptyState = useCallback(() => {
-    const isFavorites = activeTab === 'favorites';
+    const isFavorites = selectedCategory === 'favorites';
     return (
       <View style={styles.emptyState}>
         {isFavorites ? (
@@ -202,7 +223,7 @@ export function Render() {
       </View>
     );
   }, [
-    activeTab,
+    selectedCategory,
     c.background,
     c.foreground,
     c.mutedForeground,
@@ -224,6 +245,20 @@ export function Render() {
             {t('passwords.myVault')}
           </Text>
           <View style={styles.headerActions}>
+            <Pressable
+              onPress={() => {
+                impact(Haptics.ImpactFeedbackStyle.Light);
+                router.push('/settings' as Href);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel={t('settings.title')}
+              style={[
+                styles.headerIcon,
+                { backgroundColor: c.surface, borderColor: c.border },
+              ]}
+            >
+              <Settings size={18} color={c.mutedForeground} />
+            </Pressable>
             <Pressable
               onPress={() => {
                 impact(Haptics.ImpactFeedbackStyle.Light);
@@ -278,84 +313,57 @@ export function Render() {
           </View>
         )}
 
-        {/* Segmented tabs */}
-        <View style={styles.tabContainer}>
-          <View
-            style={[
-              styles.tabPill,
-              { backgroundColor: c.surface, borderColor: c.border },
-            ]}
+        {/* Category chips */}
+        <View style={styles.chipContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chipRow}
+            keyboardShouldPersistTaps="handled"
           >
-            <Pressable
-              onPress={() => {
-                impact(Haptics.ImpactFeedbackStyle.Light);
-                setActiveTab('all');
-              }}
-              style={[
-                styles.tab,
-                activeTab === 'all' && [
-                  styles.tabActive,
-                  { backgroundColor: c.background },
-                ],
-              ]}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  {
-                    fontFamily:
-                      activeTab === 'all' ? fonts.bodySemiBold : fonts.body,
-                  },
-                  {
-                    color:
-                      activeTab === 'all' ? c.foreground : c.mutedForeground,
-                  },
-                ]}
-              >
-                {t('passwords.all')}
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => {
-                impact(Haptics.ImpactFeedbackStyle.Light);
-                setActiveTab('favorites');
-              }}
-              style={[
-                styles.tab,
-                activeTab === 'favorites' && [
-                  styles.tabActive,
-                  { backgroundColor: c.background },
-                ],
-              ]}
-            >
-              <Text
-                style={[
-                  styles.tabText,
-                  {
-                    fontFamily:
-                      activeTab === 'favorites'
-                        ? fonts.bodySemiBold
-                        : fonts.body,
-                  },
-                  {
-                    color:
-                      activeTab === 'favorites'
-                        ? c.foreground
-                        : c.mutedForeground,
-                  },
-                ]}
-              >
-                {t('passwords.favorites')}
-              </Text>
-            </Pressable>
-          </View>
+            {categories.map(category => {
+              const active = category === selectedCategory;
+              return (
+                <Pressable
+                  key={category}
+                  onPress={() => {
+                    impact(Haptics.ImpactFeedbackStyle.Light);
+                    setSelectedCategory(category);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: active }}
+                  accessibilityLabel={categoryLabel(category)}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor: active ? c.foreground : c.surface,
+                      borderColor: active ? c.foreground : c.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    numberOfLines={1}
+                    style={[
+                      styles.chipText,
+                      {
+                        color: active ? c.background : c.mutedForeground,
+                        fontFamily: active ? fonts.bodySemiBold : fonts.body,
+                      },
+                    ]}
+                  >
+                    {categoryLabel(category)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
         </View>
 
-        {activePasswords.length === 0 ? (
+        {filteredPasswords.length === 0 ? (
           renderEmptyState()
         ) : (
           <FlashList
-            data={activePasswords}
+            data={filteredPasswords}
             renderItem={renderPassword}
             keyExtractor={item => String(item.id)}
             style={styles.list}
@@ -437,29 +445,22 @@ const styles = StyleSheet.create({
     fontSize: 15,
     padding: 0,
   },
-  tabContainer: {
-    paddingHorizontal: 20,
+  chipContainer: {
     paddingBottom: 12,
   },
-  tabPill: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    borderCurve: 'continuous',
-    borderWidth: 1,
-    padding: 4,
+  chipRow: {
+    paddingHorizontal: 20,
+    gap: 8,
   },
-  tab: {
-    flex: 1,
+  chip: {
     minHeight: 40,
     justifyContent: 'center',
-    alignItems: 'center',
-    borderRadius: 9,
+    paddingHorizontal: 16,
+    borderRadius: 10,
     borderCurve: 'continuous',
+    borderWidth: 1,
   },
-  tabActive: {
-    boxShadow: '0 1px 2px rgba(31, 30, 27, 0.08)',
-  },
-  tabText: {
+  chipText: {
     fontSize: 14,
   },
   list: {
