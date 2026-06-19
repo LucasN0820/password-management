@@ -109,6 +109,9 @@ async function encryptPasswordInput(
     notes: data.notes
       ? await encryptSecret(data.notes, vaultKey, randomBytes)
       : null,
+    totp_secret: data.totp_secret
+      ? await encryptSecret(data.totp_secret, vaultKey, randomBytes)
+      : null,
   };
 }
 
@@ -117,13 +120,18 @@ function decryptPassword(password: Password, vaultKey: string): Password {
     ...password,
     password: decryptSecret(password.password, vaultKey),
     notes: password.notes ? decryptSecret(password.notes, vaultKey) : null,
+    totp_secret: password.totp_secret
+      ? decryptSecret(password.totp_secret, vaultKey)
+      : null,
   };
 }
 
 function isLegacyPlaintextPassword(stored: Password) {
   return (
     !isEncryptedSecret(stored.password) ||
-    (Boolean(stored.notes) && !isEncryptedSecret(stored.notes as string))
+    (Boolean(stored.notes) && !isEncryptedSecret(stored.notes as string)) ||
+    (Boolean(stored.totp_secret) &&
+      !isEncryptedSecret(stored.totp_secret as string))
   );
 }
 

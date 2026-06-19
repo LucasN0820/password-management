@@ -29,6 +29,7 @@ export function EditPasswordModal({
     category: 'all',
     isFavorite: false,
     icon: '',
+    totp_secret: null as string | null,
   });
   const [isClosing, setIsClosing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -43,6 +44,7 @@ export function EditPasswordModal({
       category: password.category || 'all',
       isFavorite: password.isFavorite,
       icon: password.icon || '',
+      totp_secret: password.totp_secret ?? null,
     });
   }, [password]);
 
@@ -63,7 +65,9 @@ export function EditPasswordModal({
 
   const removeIcon = () => {
     setFormData({ ...formData, icon: '' });
-    if (fileInputRef.current) {fileInputRef.current.value = '';}
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleClose = () => {
@@ -176,9 +180,9 @@ export function EditPasswordModal({
               value={formData.title}
               placeholder='e.g., GitHub'
               className='border-border bg-surface focus:border-clay focus:bg-background'
-              onChange={e =>
-                { setFormData({ ...formData, title: e.target.value }); }
-              }
+              onChange={e => {
+                setFormData({ ...formData, title: e.target.value });
+              }}
             />
           </div>
 
@@ -195,9 +199,9 @@ export function EditPasswordModal({
               value={formData.username}
               placeholder='Username or email'
               className='border-border bg-surface focus:border-clay focus:bg-background'
-              onChange={e =>
-                { setFormData({ ...formData, username: e.target.value }); }
-              }
+              onChange={e => {
+                setFormData({ ...formData, username: e.target.value });
+              }}
             />
           </div>
 
@@ -216,9 +220,9 @@ export function EditPasswordModal({
               value={formData.password}
               placeholder='Enter password'
               className='border-border bg-surface font-mono focus:border-clay focus:bg-background'
-              onChange={e =>
-                { setFormData({ ...formData, password: e.target.value }); }
-              }
+              onChange={e => {
+                setFormData({ ...formData, password: e.target.value });
+              }}
             />
           </div>
 
@@ -236,7 +240,9 @@ export function EditPasswordModal({
               value={formData.url}
               placeholder='https://...'
               className='border-border bg-surface focus:border-clay focus:bg-background'
-              onChange={e => { setFormData({ ...formData, url: e.target.value }); }}
+              onChange={e => {
+                setFormData({ ...formData, url: e.target.value });
+              }}
             />
           </div>
 
@@ -254,9 +260,9 @@ export function EditPasswordModal({
               value={formData.notes}
               placeholder='Optional notes...'
               rows={3}
-              onChange={e =>
-                { setFormData({ ...formData, notes: e.target.value }); }
-              }
+              onChange={e => {
+                setFormData({ ...formData, notes: e.target.value });
+              }}
             />
           </div>
 
@@ -267,9 +273,9 @@ export function EditPasswordModal({
               id='isFavorite'
               checked={formData.isFavorite}
               className='h-4 w-4 rounded border border-border'
-              onChange={e =>
-                { setFormData({ ...formData, isFavorite: e.target.checked }); }
-              }
+              onChange={e => {
+                setFormData({ ...formData, isFavorite: e.target.checked });
+              }}
             />
             <Label
               htmlFor='isFavorite'

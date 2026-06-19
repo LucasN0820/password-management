@@ -279,6 +279,7 @@ export const useMobileImportStore = create<MobileImportState>((set, get) => ({
           category: 'all',
           isFavorite: false,
           icon: null,
+          totp_secret: null,
         }))
       );
       await cleanupFiles(get().files);

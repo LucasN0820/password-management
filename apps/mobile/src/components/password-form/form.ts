@@ -1,6 +1,11 @@
-import { useForm, type UseFormProps, type UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod"
+import {
+  useForm,
+  type UseFormProps,
+  type UseFormReturn,
+} from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { isValidBase32Secret } from '@/lib/totp';
 
 export const formSchema = z.object({
   title: z.string().min(1),
@@ -9,11 +14,18 @@ export const formSchema = z.object({
   url: z.string().url().optional(),
   notes: z.string().optional(),
   icon: z.string().optional(), // base 64 string
+  totpSecret: z
+    .string()
+    .optional()
+    // Empty is allowed (field is optional); otherwise it must be valid Base32.
+    .refine(value => !value || isValidBase32Secret(value), {
+      message: 'totp.invalidSecret',
+    }),
   category: z.string().min(1).default('all'),
-  isFavorite: z.boolean().default(false)
-})
+  isFavorite: z.boolean().default(false),
+});
 
-export type FormType = z.infer<typeof formSchema>
+export type FormType = z.infer<typeof formSchema>;
 
 export const defaultValues: FormType = {
   title: '',
@@ -22,13 +34,16 @@ export const defaultValues: FormType = {
   url: undefined,
   notes: undefined,
   icon: undefined,
+  totpSecret: undefined,
   category: 'all',
   isFavorite: false,
-}
+};
 
-export function useValidatedForm(args: Omit<UseFormProps<FormType>, "resolver">): UseFormReturn<FormType> {
+export function useValidatedForm(
+  args: Omit<UseFormProps<FormType>, 'resolver'>
+): UseFormReturn<FormType> {
   return useForm<FormType>({
     resolver: zodResolver(formSchema),
     ...args,
-  })
+  });
 }

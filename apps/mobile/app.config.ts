@@ -69,6 +69,13 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           'Allow $(PRODUCT_NAME) to use Face ID to unlock your vault.',
       },
     ],
+    [
+      'expo-camera',
+      {
+        cameraPermission:
+          'Allow $(PRODUCT_NAME) to scan two-factor (2FA) QR codes.',
+      },
+    ],
     'expo-web-browser',
     [
       'llama.rn',
