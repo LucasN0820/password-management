@@ -2,7 +2,7 @@
 
 - **优先级**:🟢 低(功能,可选;需联网)
 - **类型**:功能
-- **状态**:✅ 已完成(2026-06-18,待真机回归)
+- **状态**:✅ 已完成并验证(2026-06-19)
 - **预估工作量**:S–M(1 天)
 
 ## 背景与问题
@@ -35,4 +35,5 @@
   - **默认关闭、仅 opt-in**:开关以本特性自有键 `password-management.breach-check.v1` 持久化于 `expo-secure-store`(未触碰设置 store/类型),UI 以附加 `<Section>` 加在 `screens/health/index.tsx`。
   - **隐私**:仅向 `api.pwnedpasswords.com/range/<前 5 位>` 发送 SHA-1 哈希的前 5 位十六进制,绝不发送完整密码或完整哈希(并带 `Add-Padding` 头);单元测试对此断言。
   - i18n:新增 `breach` 顶级命名空间(en/zh 键对齐,含 `count_one`/`count_other`)。
-  - 校验:`vitest` 全绿(77 passed,新增 19 个 breach-check 用例);`tsc --noEmit` 通过;`eslint` 通过。待真机回归(联网抓包确认 + Hermes 运行)。
+  - 校验:`vitest` 全绿(77 passed,新增 19 个 breach-check 用例);`tsc --noEmit` 通过;`eslint` 通过。
+  - 2026-06-19 用户真机回归通过:默认关、开启后扫描、已泄露密码检出、离线优雅降级,仅发送 5 位哈希前缀均确认正常。**任务全部完成。**

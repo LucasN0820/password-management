@@ -2,7 +2,7 @@
 
 - **优先级**:🟢 中低(功能)
 - **类型**:功能
-- **状态**:✅ 已完成(2026-06-18,待真机回归)
+- **状态**:✅ 已完成并验证(2026-06-19)
 - **预估工作量**:M(1.5–2 天)
 
 ## 背景与问题
@@ -47,4 +47,5 @@
   - **测试**:`__tests__/totp.test.ts` 覆盖 RFC 6238(SHA-1,6/8 位)与 RFC 4226 HOTP 测试向量、Base32 解码、周期边界,共 23 例全绿。
   - **UI**:详情页新增 `components/totp-card`(每秒刷新、倒计时圆环、≥44pt 复制按钮、`copySensitive`);表单新增 `field-totp`(Base32 校验,错误经 i18n)。i18n 新增 `totp` 命名空间(en/zh 键对齐)。
   - **校验**:`packages/db`、`apps/mobile`、`apps/desktop` 三处 `tsc --noEmit` 全绿;`vitest` 93 例全绿;改动文件 eslint 通过。desktop 侧因共享 `PasswordInput` 类型变更,对 4 处构造点补 `totp_secret: null`(additive)。
-  - **待办**:`otpauth://` 二维码扫描、备份导入导出对该字段的端到端同步(随 0009),以及真机回归。
+  - **二维码扫描(已补)**:新增 `lib/totp.ts` 的 `parseOtpauthUri`/`extractTotpSecret`(纯函数 + 单测)+ `components/totp-scanner`(expo-camera 扫 QR)+ `field-totp` 内联扫码图标;`app.config.ts` 注册 `expo-camera` 插件与相机权限。
+  - 2026-06-19 用户真机回归通过:验证码与官方 Authenticator 一致、倒计时、复制、**扫码录入**、迁移升级均正常。备份对 `totp_secret` 的端到端同步已由 0009 加密备份覆盖(`BackupEntry` 可选 `totp_secret`)。**任务全部完成。**
