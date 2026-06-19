@@ -270,8 +270,7 @@
   },
   "totp": {
     "label": "两步验证码",
-    "secretLabel": "验证器密钥",
-    "secretPlaceholder": "输入 Base32 密钥",
+    "secretPlaceholder": "验证器密钥(Base32)",
     "secretHint": "粘贴验证器提供的密钥(Base32)。",
     "invalidSecret": "密钥格式无效。",
     "copied": "已复制一次性验证码",

@@ -270,8 +270,7 @@
   },
   "totp": {
     "label": "Two-factor code",
-    "secretLabel": "Authenticator key",
-    "secretPlaceholder": "Enter the Base32 key",
+    "secretPlaceholder": "Authenticator key (Base32)",
     "secretHint": "Paste the secret from your authenticator (Base32).",
     "invalidSecret": "That doesn't look like a valid key.",
     "copied": "One-time code copied",
