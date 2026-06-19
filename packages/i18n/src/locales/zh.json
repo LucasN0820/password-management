@@ -275,7 +275,13 @@
     "secretHint": "粘贴验证器提供的密钥(Base32)。",
     "invalidSecret": "密钥格式无效。",
     "copied": "已复制一次性验证码",
-    "expiresIn": "{{seconds}} 秒后过期"
+    "expiresIn": "{{seconds}} 秒后过期",
+    "scan": "扫描二维码",
+    "scanHint": "将相机对准网站的两步验证二维码。",
+    "invalidQr": "该二维码不包含有效的两步验证密钥。",
+    "cameraDenied": "扫描二维码需要相机权限。",
+    "grantCamera": "允许使用相机",
+    "close": "关闭"
   },
   "backup": {
     "title": "备份",

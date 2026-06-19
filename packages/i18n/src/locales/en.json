@@ -275,7 +275,13 @@
     "secretHint": "Paste the secret from your authenticator (Base32).",
     "invalidSecret": "That doesn't look like a valid key.",
     "copied": "One-time code copied",
-    "expiresIn": "Expires in {{seconds}}s"
+    "expiresIn": "Expires in {{seconds}}s",
+    "scan": "Scan QR code",
+    "scanHint": "Point the camera at the two-factor QR code from the website.",
+    "invalidQr": "That QR code doesn't contain a valid 2FA key.",
+    "cameraDenied": "Camera access is needed to scan QR codes.",
+    "grantCamera": "Allow camera",
+    "close": "Close"
   },
   "backup": {
     "title": "Backup",

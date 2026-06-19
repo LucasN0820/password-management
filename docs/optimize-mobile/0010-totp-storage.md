@@ -13,7 +13,14 @@
   - 在 `packages/db/src/schema.ts` 加列;迁移采用 drizzle bundle 新增条目 `m0002`(`ALTER TABLE passwords ADD totp_secret text`)+ `repairLegacyPasswordsTable` 防御式 `ADD COLUMN`(对齐 `icon` 既有先例),两端 `expo-sqlite` / `better-sqlite3` 平滑升级。
 - [x] 实现 TOTP 生成:Base32 解码 + 纯 JS HMAC-SHA1 + 动态截断,默认 30s 周期、6 位(`apps/mobile/src/lib/totp.ts`,无原生依赖、Hermes 安全:仅用 `Uint8Array`/`DataView`,不使用 `BigInt`)。
 - [x] 详情页展示当前验证码 + 倒计时圆环(复用 `components/circular-progress`),一键复制(走 0003 的 `copySensitive`)。
-- [x] 录入方式:手动输入种子(表单新增 `FieldTotp`,Base32 校验);扫描 `otpauth://` 二维码暂列为后续可选项,未实现。
+- [x] 录入方式:手动输入种子(表单新增 `FieldTotp`,Base32 校验)。
+- [x] **二维码扫描录入(本次补充)**:用相机扫网站绑定两步验证时给的二维码,自动解析出密钥填入表单。
+  - **做法**:
+    1. 纯解析逻辑放 `lib/totp.ts`:`parseOtpauthUri(uri)` 解析 `otpauth://totp/<label>?secret=...&issuer=...&period=...&digits=...`,取出 `secret`(并顺带解析 issuer/period/digits);`extractTotpSecret(scanned)` 兼容两种二维码内容——标准 `otpauth://` URI 或「裸 Base32 密钥」。均为纯函数、加单测(含畸形输入、非 totp scheme、缺 secret、非法 Base32)。
+    2. 相机:新增依赖 `expo-camera`,组件 `components/totp-scanner/` 用 `CameraView` + `barcodeScannerSettings={{ barcodeTypes:['qr'] }}` + `onBarcodeScanned`;`useCameraPermissions` 处理授权(未授权显示「允许使用相机」引导,拒绝可重试);扫到后 `extractTotpSecret` 解析,成功回填、失败提示「无效二维码」并允许继续扫。
+    3. 入口:`FieldTotp` 在密钥输入框旁加「扫描二维码」按钮,打开全屏扫码 Modal,结果经 Controller 的 `onChange` 写入 `totpSecret`。
+    4. 配置:`app.config.ts` 注册 `expo-camera` 插件并写入 `NSCameraUsageDescription`(`cameraPermission`)。
+  - **取舍**:仍只存 `secret`(Base32),period/digits/algorithm 用默认(30s / 6 位 / SHA-1),覆盖绝大多数站点;非默认参数暂不持久化(需扩 schema,后续再说)。一次扫描只触发一次(防抖)。
 - [~] AI 导入 / 备份导入导出同步:DB/类型层已支持该字段(默认 `null`);AI 导入暂不抽取 TOTP 种子,备份导出由 0009 负责对齐。
 
 ## 验收 / 测试标准

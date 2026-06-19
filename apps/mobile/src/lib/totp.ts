@@ -75,6 +75,103 @@ export function isValidBase32Secret(secret: string): boolean {
   return /^[A-Z2-7]+$/i.test(cleaned);
 }
 
+/** Normalize a Base32 secret: strip whitespace/padding, upper-case. */
+function normalizeSecret(secret: string): string {
+  return secret.replaceAll(/[\s=]/g, '').toUpperCase();
+}
+
+// ---------------------------------------------------------------------------
+// otpauth:// URI parsing (the payload encoded in 2FA setup QR codes)
+// ---------------------------------------------------------------------------
+
+export interface OtpauthParams {
+  /** Normalized Base32 shared secret. */
+  secret: string;
+  /** Issuer (service name), if present. */
+  issuer?: string;
+  /** Account label from the URI path, if present. */
+  label?: string;
+  /** Requested digit count, if the URI overrides the default. */
+  digits?: number;
+  /** Requested period in seconds, if the URI overrides the default. */
+  period?: number;
+  /** Requested HMAC algorithm (e.g. `SHA1`), if present. */
+  algorithm?: string;
+}
+
+/**
+ * Parse an `otpauth://totp/<label>?secret=...&issuer=...` URI (the content of a
+ * 2FA enrollment QR code) into its parameters. Returns null when it is not a
+ * valid TOTP otpauth URI or carries no usable Base32 secret.
+ *
+ * Pure string parsing (no `new URL`) so it is deterministic on Hermes and Node.
+ */
+export function parseOtpauthUri(uri: string): OtpauthParams | null {
+  const match = /^otpauth:\/\/totp\/([^?]*)(?:\?(.*))?$/i.exec(uri.trim());
+  if (!match) {
+    return null;
+  }
+
+  const params = new Map<string, string>();
+  for (const part of (match[2] ?? '').split('&')) {
+    if (!part) {
+      continue;
+    }
+    const eq = part.indexOf('=');
+    const key = (eq === -1 ? part : part.slice(0, eq)).toLowerCase();
+    const rawValue = eq === -1 ? '' : part.slice(eq + 1).replaceAll('+', ' ');
+    let value = rawValue;
+    try {
+      value = decodeURIComponent(rawValue);
+    } catch {
+      // Keep the raw value if it is not valid percent-encoding.
+    }
+    params.set(key, value);
+  }
+
+  const secret = params.get('secret');
+  if (!secret || !isValidBase32Secret(secret)) {
+    return null;
+  }
+
+  const toNumber = (raw: string | undefined): number | undefined => {
+    if (raw === undefined) {
+      return undefined;
+    }
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) ? parsed : undefined;
+  };
+
+  let label: string | undefined;
+  try {
+    label = decodeURIComponent(match[1] ?? '') || undefined;
+  } catch {
+    label = (match[1] ?? '') || undefined;
+  }
+
+  return {
+    secret: normalizeSecret(secret),
+    issuer: params.get('issuer') || undefined,
+    label,
+    digits: toNumber(params.get('digits')),
+    period: toNumber(params.get('period')),
+    algorithm: params.get('algorithm') || undefined,
+  };
+}
+
+/**
+ * Extract a usable Base32 secret from scanned QR content. Accepts either a full
+ * `otpauth://` URI or a bare Base32 secret (some services encode just the key).
+ * Returns null when nothing usable is found.
+ */
+export function extractTotpSecret(scanned: string): string | null {
+  const trimmed = scanned.trim();
+  if (/^otpauth:\/\//i.test(trimmed)) {
+    return parseOtpauthUri(trimmed)?.secret ?? null;
+  }
+  return isValidBase32Secret(trimmed) ? normalizeSecret(trimmed) : null;
+}
+
 // ---------------------------------------------------------------------------
 // SHA-1 (FIPS 180-4) over Uint8Array — no BigInt
 // ---------------------------------------------------------------------------
