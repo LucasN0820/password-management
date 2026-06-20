@@ -4,6 +4,11 @@ import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
 import * as Updates from 'expo-updates';
 import { Platform } from 'react-native';
+import SpInAppUpdates, {
+  IAUInstallStatus,
+  IAUUpdateKind,
+  type StatusUpdateEvent,
+} from 'sp-react-native-in-app-updates';
 import {
   compareVersions,
   latestMobileRelease,
@@ -17,14 +22,69 @@ const FLAG_GRANT_READ_URI_PERMISSION = 1;
 // Only builds distributed as a sideloaded APK (the `direct` EAS Update channel)
 // may self-update from GitHub Releases. Play Store installs are signed with a
 // different key, so prompting them to sideload would fail to install — they
-// receive native updates through Google Play instead.
+// receive native updates through Google Play In-App Updates instead.
 const DIRECT_INSTALL_CHANNEL = 'direct';
+const PLAY_CHANNEL = 'production';
 
 export type AppUpdateResult =
   | { type: 'ota' }
   | { type: 'binary'; release: MobileRelease }
+  | { type: 'play' }
   | { type: 'none' }
   | { type: 'unavailable' };
+
+let inAppUpdates: SpInAppUpdates | null = null;
+
+/**
+ * Constructed lazily and only on the Play path so the native module is never
+ * touched on iOS or sideloaded builds.
+ */
+function getInAppUpdates() {
+  if (!inAppUpdates) {
+    inAppUpdates = new SpInAppUpdates(false);
+  }
+  return inAppUpdates;
+}
+
+function currentAppVersion(): string {
+  const nativeVersion = Constants.nativeAppVersion as string | null;
+  return nativeVersion ?? Constants.expoConfig?.version ?? '0.0.0';
+}
+
+async function checkPlayNeedsUpdate() {
+  const result = await getInAppUpdates().checkNeedsUpdate({
+    curVersion: currentAppVersion(),
+  });
+  return result.shouldUpdate;
+}
+
+/**
+ * Run Google Play's flexible in-app update: Play shows its own consent sheet
+ * and downloads in the background, then `onDownloaded` fires so the caller can
+ * prompt the user to restart. The actual install happens in {@link completePlayUpdate}.
+ */
+export async function startPlayFlexibleUpdate(onDownloaded: () => void) {
+  const updates = getInAppUpdates();
+
+  const listener = (event: StatusUpdateEvent) => {
+    if (event.status === IAUInstallStatus.DOWNLOADED) {
+      updates.removeStatusUpdateListener(listener);
+      onDownloaded();
+    }
+  };
+  updates.addStatusUpdateListener(listener);
+
+  try {
+    await updates.startUpdate({ updateType: IAUUpdateKind.FLEXIBLE });
+  } catch (error) {
+    updates.removeStatusUpdateListener(listener);
+    throw error;
+  }
+}
+
+export function completePlayUpdate() {
+  getInAppUpdates().installUpdate();
+}
 
 let activeCheck: Promise<AppUpdateResult> | null = null;
 
@@ -71,14 +131,21 @@ async function performCheck(): Promise<AppUpdateResult> {
     otaError = error;
   }
 
-  if (Platform.OS === 'android' && Updates.channel === DIRECT_INSTALL_CHANNEL) {
+  if (Platform.OS === 'android') {
     try {
-      const release = await fetchLatestBinaryRelease();
-      const currentVersion =
-        Constants.nativeAppVersion ?? Constants.expoConfig?.version ?? '0.0.0';
-
-      if (release && compareVersions(release.version, currentVersion) > 0) {
-        return { type: 'binary', release };
+      if (Updates.channel === DIRECT_INSTALL_CHANNEL) {
+        const release = await fetchLatestBinaryRelease();
+        if (
+          release &&
+          compareVersions(release.version, currentAppVersion()) > 0
+        ) {
+          return { type: 'binary', release };
+        }
+      } else if (
+        Updates.channel === PLAY_CHANNEL &&
+        (await checkPlayNeedsUpdate())
+      ) {
+        return { type: 'play' };
       }
     } catch (error) {
       if (!otaError) throw error;

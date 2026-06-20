@@ -6,7 +6,9 @@ import {
   applyOtaUpdate,
   type AppUpdateResult,
   checkForAppUpdate,
+  completePlayUpdate,
   downloadAndInstallApk,
+  startPlayFlexibleUpdate,
 } from './service';
 
 interface CheckOptions {
@@ -30,7 +32,10 @@ function useUpdatePrompts() {
 
   return useCallback(
     (result: AppUpdateResult, interactive: boolean) => {
-      const actionable = result.type === 'ota' || result.type === 'binary';
+      const actionable =
+        result.type === 'ota' ||
+        result.type === 'binary' ||
+        result.type === 'play';
       if (actionable && !interactive) {
         const signature = resultSignature(result);
         if (signature === lastAutoPromptedSignature) return;
@@ -73,6 +78,25 @@ function useUpdatePrompts() {
             },
           ]
         );
+        return;
+      }
+
+      if (result.type === 'play') {
+        // Google Play shows its own consent sheet and download progress; we just
+        // prompt to restart once the flexible update has finished downloading.
+        void startPlayFlexibleUpdate(() => {
+          Alert.alert(t('update.downloaded'), t('update.otaReadyHint'), [
+            { text: t('update.later'), style: 'cancel' },
+            {
+              text: t('update.restartToInstall'),
+              onPress: () => {
+                completePlayUpdate();
+              },
+            },
+          ]);
+        }).catch(() => {
+          // User dismissed Play's update sheet, or Play reported an error.
+        });
         return;
       }
 

@@ -10,12 +10,23 @@
 移动端已完成两层更新能力:
 
 - **OTA 热更**:`expo-updates` 已配置 EAS Update URL、`fingerprint` runtime。更新由代码**手动**检查/下载（启动一次 + 设置页手动），下载后提示重启;`checkAutomatically` 设为 `ON_ERROR_RECOVERY`，避免 SDK 后台自动拉取与手动检查竞争。
-- **Android 直装更新**:从 GitHub Releases 查询最新稳定的 `mobile-v*` APK，比较版本后带进度下载，并通过系统安装器打开 APK。**仅对 `direct` EAS Update channel 的侧载构建启用**(`Updates.channel === 'direct'`):Google Play 安装包由 Play 重签名,签名与 GitHub APK 不一致,直接侧载会安装失败,故 Play 渠道(channel `production`)不走此路径,改由 Play 自身更新。
-- **发布入口**:`update-mobile.yml` 手动触发 OTA,**同时发布到 `production` 与 `direct` 两个 branch**,使 Play 与侧载用户都能收到热更;侧载 APK 由 `release-mobile.yml` 以 `--profile direct` 构建发布。
+- **Android 直装更新(侧载)**:从 GitHub Releases 查询最新稳定的 `mobile-v*` APK，比较版本后带进度下载，并通过系统安装器打开 APK。**仅对 `direct` EAS Update channel 的侧载构建启用**(`Updates.channel === 'direct'`):Google Play 安装包由 Play 重签名,签名与 GitHub APK 不一致,直接侧载会安装失败。
+- **Play In-App Updates(Play 安装)**:**仅对 `production` channel 启用**(`Updates.channel === 'production'`)。用 `sp-react-native-in-app-updates`(封装 Play Core `app-update`)做 **flexible** 更新:Play 自己弹同意框、后台下载(Play 签名,合规),下载完成后提示用户重启安装(`installUpdate()`)。这是 Play 渠道唯一合规的原生更新方式(政策禁止 Play 应用以非 Play 机制自更新)。
+- **发布入口**:`update-mobile.yml` 手动触发 OTA,**同时发布到 `production` 与 `direct` 两个 branch**,使 Play 与侧载用户都能收到热更;侧载 APK 由 `release-mobile.yml` 以 `--profile direct` 构建发布;Play 二进制由 `eas:android`(production)提交。
 
 iOS 当前尚未上架，因此只启用 OTA；等 App Store 分发落地后再补商店版本检查。
 
-> **渠道隔离(关键)**:`eas.json` 新增 `direct` profile(`extends: production` + `channel: direct`)。侧载 APK 走 `direct` channel、Play 走 `production` channel,二者以 `Updates.channel`(原生构建属性,OTA 后仍稳定)区分,从而把"侧载自更新"只开给真正侧载的用户。
+> **渠道隔离(关键)**:`eas.json` 新增 `direct` profile(`extends: production` + `channel: direct`)。侧载 APK 走 `direct` channel、Play 走 `production` channel,二者以 `Updates.channel`(原生构建属性,OTA 后仍稳定)区分,据此**三向路由**原生更新:
+>
+> | channel | 安装来源 | 原生更新方式 |
+> |---------|---------|------------|
+> | `direct` | 侧载(GitHub/官网 APK) | 下载 `mobile-v*` APK → 系统安装器 |
+> | `production` | Google Play | Play In-App Updates(flexible) |
+> | `null` | dev / Expo Go | 不启用(`__DEV__` 短路) |
+>
+> OTA 热更对三者通用,与原生更新方式无关。
+>
+> ⚠️ **验证限制**:Play In-App Updates 必须在 **Play internal track 的真机**上、且有更高 `versionCode` 完成 rollout 才能触发,本地/侧载构建测不出来。另需关注 `sp-react-native-in-app-updates@1.5.0` 与 RN 0.85 新架构的兼容性,首次 prebuild 后需在真机回归构建。
 
 当前分发渠道(决定方案):
 
