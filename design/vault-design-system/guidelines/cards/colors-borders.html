@@ -1,0 +1,25 @@
+<!-- @dsCard group="Colors" viewport="700x140" name="Borders & sand" subtitle="Warm hairlines do most structural work; shadows only lift floating surfaces" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--paper-2); padding: 24px; }
+  .row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .demo { background: var(--paper-0); border-radius: var(--radius-lg); padding: 16px; }
+  .b1 { border: 1px solid var(--border-color); }
+  .b2 { border: 1px solid var(--border-strong); }
+  .b3 { border: 1px solid var(--border-soft); }
+  .name { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+  .hex { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); margin-top: 3px; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="demo b1"><div class="name">border</div><div class="hex">#dfddd5</div></div>
+    <div class="demo b2"><div class="name">sand · strong</div><div class="hex">#d9d2c5</div></div>
+    <div class="demo b3"><div class="name">border-soft</div><div class="hex">#ddd8cc</div></div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,26 @@
+/* ============================================================
+   VAULT — ELEVATION
+   Shadows are soft, warm and low-contrast — paper resting on
+   paper, never harsh drop-shadows. Borders do most of the
+   structural work; shadows only lift floating surfaces.
+   ============================================================ */
+
+:root {
+  /* shadcn "xs" used on inputs/buttons */
+  --shadow-xs:    0 1px 2px rgb(0 0 0 / 0.04);
+  --shadow-sm:    0 1px 3px rgb(0 0 0 / 0.05);
+
+  /* Marketing-grade elevations (from landing globals) */
+  --shadow-vault:   0 4px 20px rgb(0 0 0 / 0.05), 0 1px 3px rgb(0 0 0 / 0.04); /* resting vault cards */
+  --shadow-feature: 0 6px 28px rgb(0 0 0 / 0.06);   /* hover lift on cards */
+  --shadow-price:   0 8px 40px rgb(0 0 0 / 0.15);   /* dark featured plan */
+  --shadow-toast:   0 4px 16px rgb(0 0 0 / 0.18);   /* floating toasts/pills */
+
+  /* Spotlight / command palette */
+  --shadow-overlay: 0 24px 60px rgb(0 0 0 / 0.18);
+
+  /* Semantic */
+  --elevation-rest:    var(--shadow-vault);
+  --elevation-hover:   var(--shadow-feature);
+  --elevation-overlay: var(--shadow-overlay);
+}

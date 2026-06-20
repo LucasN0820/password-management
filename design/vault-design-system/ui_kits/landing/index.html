@@ -1,0 +1,279 @@
+<!-- @dsCard group="Landing Site" viewport="1200x900" name="Vault Marketing — landing page" subtitle="Hero, trust bar, feature grid, dark security beat, pricing." -->
+<!-- @startingPoint section="Vault Site" subtitle="Marketing landing — hero, features, security, pricing" viewport="1200x900" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vault — 记住一个密码，掌管所有安全</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font-family: var(--font-body); background: var(--surface-cream); color: var(--ink-2); -webkit-font-smoothing: antialiased; }
+  .font-heading { font-family: var(--font-display); }
+  .font-mono { font-family: var(--font-mono); }
+  a { text-decoration: none; color: inherit; }
+  ::selection { background: var(--clay-mid); color: var(--surface-cream); }
+  #root { min-height: 100vh; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/lucide@0.456.0/dist/umd/lucide.min.js"></script>
+  <script src="../../_ds_bundle.js"></script>
+  <script>
+    window.__ICONS = (function () {
+      const names = ['lock','eye','phone','zap','monitor','check','arrow-right','star','shield','smartphone'];
+      const holder = document.createElement('div'); holder.style.display = 'none';
+      holder.innerHTML = names.map(n => `<i data-lucide="${n}"></i>`).join('');
+      document.body.appendChild(holder);
+      lucide.createIcons({ attrs: { 'stroke-width': 1.8 } });
+      const map = {}; holder.querySelectorAll('svg').forEach((svg, i) => { map[names[i]] = svg.outerHTML; });
+      holder.remove(); return map;
+    })();
+  </script>
+  <script type="text/babel" data-presets="react">
+    const { Button, Card, Badge, Avatar } = window.VaultDesignSystem_ad3078;
+    function Icon({ name, size = 18, color = 'currentColor', style = {} }) {
+      let html = (window.__ICONS[name] || '').replace('<svg ', `<svg width="${size}" height="${size}" `);
+      return <span style={{ display: 'inline-flex', width: size, height: size, color, lineHeight: 0, flex: 'none', ...style }} dangerouslySetInnerHTML={{ __html: html }} />;
+    }
+
+    const CONTAINER = { maxWidth: 1100, margin: '0 auto', padding: '0 32px' };
+    const EYEBROW = { fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--clay-mid)' };
+
+    function Header() {
+      const nav = ['产品', '安全', '价格', '企业'];
+      return (
+        <header style={{ position: 'sticky', top: 0, zIndex: 50, borderBottom: '1px solid var(--paper-5)', background: 'color-mix(in srgb, var(--surface-cream) 88%, transparent)', backdropFilter: 'blur(20px)' }}>
+          <nav style={{ ...CONTAINER, height: 60, display: 'flex', alignItems: 'center', gap: 40 }}>
+            <a href="#" style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+              <img src="../../assets/logo/vault-mark.svg" style={{ width: 28, height: 28, borderRadius: 7 }} />
+              <span className="font-heading" style={{ fontSize: 18, fontWeight: 600 }}>Vault</span>
+            </a>
+            <div style={{ display: 'flex', gap: 28, flex: 1 }}>
+              {nav.map(n => <a key={n} href="#" style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink-5)' }}>{n}</a>)}
+            </div>
+            <Button size="sm">免费开始</Button>
+          </nav>
+        </header>
+      );
+    }
+
+    function Hero() {
+      return (
+        <section style={{ ...CONTAINER, textAlign: 'center', padding: '100px 32px 80px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, padding: '7px 14px', borderRadius: 999, border: '1px solid #edd5cb', background: 'var(--clay-tint)', fontSize: 12, fontWeight: 500, color: 'var(--clay-mid)', marginBottom: 32 }}>
+            <Icon name="lock" size={14} /> 军用级加密 · AES-256
+          </span>
+          <h1 className="font-heading" style={{ fontSize: 72, fontWeight: 400, lineHeight: 1.08, letterSpacing: '-0.02em', margin: 0, maxWidth: 720 }}>
+            记住一个密码，<br /><em style={{ color: 'var(--ink-3)', fontStyle: 'italic' }}>掌管所有安全</em>
+          </h1>
+          <p style={{ fontSize: 18, lineHeight: 1.7, color: 'var(--ink-5)', maxWidth: 500, margin: '24px 0 40px' }}>
+            Vault 以极简的方式保管你的数字身份。无需记忆，无需妥协，只需信任。
+          </p>
+          <div style={{ display: 'flex', gap: 12, marginBottom: 16 }}>
+            <Button size="lg">免费使用 <Icon name="arrow-right" size={16} color="#fff" /></Button>
+            <Button size="lg" variant="outline">了解更多</Button>
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--ink-5)' }}>免费版永久可用 · 无需信用卡</p>
+          <VaultPreview />
+        </section>
+      );
+    }
+
+    function VaultPreview() {
+      const cards = [
+        { name: 'Google', letter: 'G', tone: '#E8F0FE', offset: false },
+        { name: 'Netflix', letter: 'N', tone: '#FDE8E7', offset: true },
+      ];
+      return (
+        <div style={{ position: 'relative', width: '100%', maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 12, paddingBottom: 40, marginTop: 64, textAlign: 'left' }}>
+          {cards.map(c => (
+            <article key={c.name} style={{ borderRadius: 14, border: '1px solid var(--paper-5)', background: 'var(--paper-0)', padding: '16px 20px', boxShadow: 'var(--shadow-vault)', transform: c.offset ? 'scale(0.97)' : 'none', opacity: c.offset ? 0.75 : 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                <Avatar letter={c.letter} tone={c.tone} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>{c.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--ink-5)', marginTop: 1 }}>hello@example.com</div>
+                </div>
+                <Icon name="eye" size={18} color="var(--ink-5)" />
+              </div>
+              <div className="font-mono" style={{ fontSize: 18, color: 'var(--ink-5)', letterSpacing: '0.1em' }}>••••••••••••</div>
+            </article>
+          ))}
+          <div style={{ position: 'absolute', bottom: 10, right: 0, display: 'flex', alignItems: 'center', gap: 7, borderRadius: 999, background: 'var(--ink-1)', padding: '8px 14px', fontSize: 12, fontWeight: 500, color: 'var(--text-on-dark)', boxShadow: 'var(--shadow-toast)' }}>
+            <Icon name="lock" size={14} color="#faf9f7" /> 已自动填充 <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#7fc99a' }} />
+          </div>
+        </div>
+      );
+    }
+
+    function TrustBar() {
+      const brands = ['Notion', 'Figma', 'Linear', 'Vercel', 'Stripe'];
+      return (
+        <section style={{ borderTop: '1px solid var(--paper-5)', borderBottom: '1px solid var(--paper-5)', background: 'var(--paper-3)', padding: '32px 0', textAlign: 'center' }}>
+          <p style={{ fontSize: 12, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--ink-5)', marginBottom: 20 }}>全球 200 万用户的选择</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 48 }}>
+            {brands.map(b => <span key={b} className="font-heading" style={{ fontSize: 20, fontWeight: 600, color: 'var(--sand)' }}>{b}</span>)}
+          </div>
+        </section>
+      );
+    }
+
+    function Features() {
+      const items = [
+        { title: '零知识加密', large: true, icon: 'lock', desc: '你的数据在离开设备前已被加密。我们的服务器看不到你的任何密码，即使在极端情况下，你的信息也永远属于你。', tags: ['AES-256-GCM', 'PBKDF2', '本地加密'] },
+        { title: '一键自动填充', icon: 'eye', desc: '识别当前页面，精准匹配凭据，无需思考。' },
+        { title: '全平台同步', icon: 'phone', desc: 'iOS、Android、桌面、浏览器，实时同步，无缝切换。' },
+        { title: '强密码生成', icon: 'zap', desc: '为每个账号生成唯一的强密码，告别 123456。' },
+        { title: '泄漏监控', icon: 'monitor', desc: '持续监测暗网数据库，一旦发现泄漏立即提醒。' },
+      ];
+      return (
+        <section style={{ ...CONTAINER, padding: '100px 32px' }}>
+          <p style={EYEBROW}>功能</p>
+          <h2 className="font-heading" style={{ fontSize: 46, fontWeight: 400, lineHeight: 1.15, letterSpacing: '-0.01em', margin: '16px 0 12px' }}>少，但更好</h2>
+          <p style={{ fontSize: 17, color: 'var(--ink-5)', maxWidth: 480, marginBottom: 48 }}>我们只做密码管理该做的事，不多也不少</p>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+            {items.map(f => (
+              <Card key={f.title} hoverable tone={f.large ? 'cream' : 'card'} style={{ gridColumn: f.large ? 'span 2' : 'span 1', padding: 32, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <span style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: 10, border: '1px solid var(--paper-5)', background: 'var(--surface-cream)' }}>
+                  <Icon name={f.icon} size={20} color="var(--ink-3)" />
+                </span>
+                <h3 className="font-heading" style={{ fontSize: 20, fontWeight: 500, margin: 0 }}>{f.title}</h3>
+                <p style={{ fontSize: 15, lineHeight: 1.65, color: 'var(--ink-5)', margin: 0, flex: 1 }}>{f.desc}</p>
+                {f.tags && <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{f.tags.map(t => <Badge key={t} tone="mono">{t}</Badge>)}</div>}
+              </Card>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    function Security() {
+      const items = ['主密钥永不离开你的设备', '开源审计，代码透明可查', '符合 SOC 2 Type II 标准', '定期第三方渗透测试'];
+      return (
+        <section style={{ background: 'var(--surface-dark)', padding: '100px 0' }}>
+          <div style={{ ...CONTAINER, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 80, alignItems: 'center' }}>
+            <div>
+              <p style={{ ...EYEBROW, color: 'var(--clay-haze)' }}>安全架构</p>
+              <h2 className="font-heading" style={{ fontSize: 44, fontWeight: 400, lineHeight: 1.2, letterSpacing: '-0.01em', color: 'var(--text-on-dark)', margin: '16px 0 20px' }}>
+                我们看不到你的密码，<br /><em style={{ color: 'var(--sand)', fontStyle: 'italic' }}>这是设计，不是承诺</em>
+              </h2>
+              <p style={{ fontSize: 16, lineHeight: 1.7, color: 'rgba(255,255,255,0.55)', marginBottom: 32 }}>
+                Vault 采用端对端加密架构。主密钥从不上传服务器，加密在你的设备本地完成。即便 Vault 被攻击，攻击者得到的也只是无法解密的密文。
+              </p>
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                {items.map(i => (
+                  <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, fontSize: 15, color: 'rgba(255,255,255,0.75)' }}>
+                    <Icon name="check" size={16} color="var(--clay-haze)" /> {i}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 20 }}>
+              <div style={{ width: 200, height: 200, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: 150, height: 150, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={{ width: 88, height: 88, borderRadius: '50%', border: '1px solid rgba(255,255,255,0.15)', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon name="lock" size={34} color="rgba(255,255,255,0.75)" />
+                  </div>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--clay-haze)' }}>端对端加密</p>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    function Pricing() {
+      const plans = [
+        { name: '个人免费版', price: '0', period: '/ 永久', cta: '免费开始', feats: ['无限密码存储', '自动填充', '强密码生成', '跨设备同步（2台）'] },
+        { name: '个人高级版', price: '18', period: '/ 月', cta: '立即升级', featured: true, badge: '最受欢迎', feats: ['免费版全部功能', '无限设备同步', '泄漏监控报警', '优先客服支持', '加密文件存储（1GB）'] },
+        { name: '团队版', price: '36', period: '/ 人/月', cta: '联系销售', feats: ['高级版全部功能', '团队共享密码库', '成员权限管理', '审计日志', 'SSO 集成'] },
+      ];
+      return (
+        <section style={{ borderTop: '1px solid var(--paper-5)', borderBottom: '1px solid var(--paper-5)', background: 'var(--paper-3)', padding: '100px 0', textAlign: 'center' }}>
+          <p style={EYEBROW}>定价</p>
+          <h2 className="font-heading" style={{ fontSize: 46, fontWeight: 400, margin: '16px 0 0' }}>简单透明</h2>
+          <div style={{ ...CONTAINER, marginTop: 56, display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16, alignItems: 'stretch', textAlign: 'left' }}>
+            {plans.map(p => (
+              <Card key={p.name} tone={p.featured ? 'dark' : 'card'} style={{ padding: 32, display: 'flex', flexDirection: 'column', boxShadow: p.featured ? 'var(--shadow-price)' : 'var(--shadow-vault)' }}>
+                {p.badge && <span style={{ alignSelf: 'flex-start', marginBottom: 16, padding: '5px 11px', borderRadius: 999, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.06)', fontSize: 11, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--clay-haze)' }}>{p.badge}</span>}
+                <h3 className="font-heading" style={{ fontSize: 18, fontWeight: 500, margin: '0 0 12px', color: p.featured ? 'var(--text-on-dark)' : 'var(--ink-2)' }}>{p.name}</h3>
+                <div className="font-heading" style={{ display: 'flex', alignItems: 'baseline', gap: 2, fontSize: 44, lineHeight: 1, color: p.featured ? '#fff' : 'var(--ink-2)' }}>
+                  <span style={{ fontSize: 22, alignSelf: 'flex-start', paddingTop: 8 }}>¥</span>{p.price}
+                  <span style={{ fontFamily: 'var(--font-body)', fontSize: 14, color: p.featured ? 'rgba(255,255,255,0.45)' : 'var(--ink-5)' }}>{p.period}</span>
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: '24px 0', flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {p.feats.map(f => (
+                    <li key={f} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14, color: p.featured ? 'rgba(255,255,255,0.65)' : 'var(--ink-5)' }}>
+                      <Icon name="check" size={15} color={p.featured ? 'var(--clay-haze)' : 'var(--clay)'} /> {f}
+                    </li>
+                  ))}
+                </ul>
+                {p.featured
+                  ? <button style={{ width: '100%', height: 42, border: 'none', borderRadius: 'var(--radius-md)', background: '#fff', color: 'var(--ink-2)', fontSize: 14, fontWeight: 500, cursor: 'pointer', fontFamily: 'var(--font-body)' }}>{p.cta}</button>
+                  : <Button variant="outline" style={{ width: '100%', height: 42 }}>{p.cta}</Button>}
+              </Card>
+            ))}
+          </div>
+        </section>
+      );
+    }
+
+    function CTA() {
+      return (
+        <section style={{ ...CONTAINER, textAlign: 'center', padding: '120px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <h2 className="font-heading" style={{ fontSize: 62, fontWeight: 400, lineHeight: 1.12, letterSpacing: '-0.02em', margin: 0, maxWidth: 700 }}>
+            今天就开始，<br /><em style={{ color: 'var(--ink-3)', fontStyle: 'italic' }}>把安全交给 Vault</em>
+          </h2>
+          <p style={{ fontSize: 17, color: 'var(--ink-5)', margin: '20px 0 36px', maxWidth: 400 }}>加入 200 万用户，让数字生活更简单、更安全</p>
+          <Button size="lg" style={{ height: 52, padding: '0 32px', fontSize: 16 }}>免费开始使用 <Icon name="arrow-right" size={16} color="#fff" /></Button>
+          <p style={{ fontSize: 13, color: 'var(--ink-5)', marginTop: 16 }}>无需信用卡 · 随时取消 · 数据始终属于你</p>
+        </section>
+      );
+    }
+
+    function Footer() {
+      return (
+        <footer style={{ borderTop: '1px solid var(--paper-5)', background: 'var(--paper-3)', padding: '48px 0 28px' }}>
+          <div style={{ ...CONTAINER, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 40, marginBottom: 40 }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 12 }}>
+                <img src="../../assets/logo/vault-mark.svg" style={{ width: 28, height: 28, borderRadius: 7 }} />
+                <span className="font-heading" style={{ fontSize: 18, fontWeight: 600 }}>Vault</span>
+              </div>
+              <p className="font-heading" style={{ fontSize: 14, fontStyle: 'italic', color: 'var(--ink-5)', maxWidth: 200, margin: 0 }}>让每一个密码都有归处</p>
+            </div>
+            <div style={{ display: 'flex', gap: 64 }}>
+              {[['产品', ['功能介绍', '安全白皮书', '更新日志']], ['支持', ['帮助中心', '联系我们', '系统状态']], ['法律', ['隐私政策', '服务条款', 'Cookie 设置']]].map(([title, links]) => (
+                <div key={title} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--ink-5)', marginBottom: 2 }}>{title}</span>
+                  {links.map(l => <a key={l} href="#" style={{ fontSize: 14, color: 'var(--ink-5)' }}>{l}</a>)}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div style={{ ...CONTAINER, borderTop: '1px solid var(--paper-5)', paddingTop: 24, display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, fontSize: 13, color: 'var(--ink-5)' }}>
+            <span>© 2025 Vault Inc. All rights reserved.</span>
+            <span>以 ♥ 构建于安全之上</span>
+          </div>
+        </footer>
+      );
+    }
+
+    function App() {
+      return (
+        <div>
+          <Header /><Hero /><TrustBar /><Features /><Security /><Pricing /><CTA /><Footer />
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

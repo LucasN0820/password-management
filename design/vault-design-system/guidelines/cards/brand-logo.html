@@ -1,0 +1,26 @@
+<!-- @dsCard group="Brand" viewport="700x220" name="Logo — the Vault mark" subtitle="A terracotta folded V cradling a keyhole. Clear space = ¼ mark height." -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--paper-1); padding: 0; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; height: 220px; }
+  .cell { display:flex; align-items:center; justify-content:center; gap: 14px; }
+  .light { background: var(--paper-1); }
+  .dark { background: var(--surface-dark); }
+  .mark { width: 64px; height: 64px; border-radius: 14px; }
+  .word { font-family: var(--font-display); font-weight: 600; font-size: 32px; letter-spacing: var(--tracking-tight); }
+  .word.l { color: var(--ink-1); }
+  .word.d { color: var(--text-on-dark); }
+  .cap { position:absolute; bottom: 12px; font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); }
+</style>
+</head>
+<body>
+  <div class="grid">
+    <div class="cell light"><img class="mark" src="../../assets/logo/vault-mark.svg" alt="Vault mark"><span class="word l">Vault</span></div>
+    <div class="cell dark"><img class="mark" src="../../assets/logo/vault-mark.svg" alt="Vault mark"><span class="word d">Vault</span></div>
+  </div>
+</body>
+</html>

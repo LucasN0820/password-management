@@ -1,0 +1,27 @@
+<!-- @dsCard group="Spacing" viewport="700x170" name="Radii" subtitle="Derived from --radius (8px). Pills for badges & avatars." -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--paper-2); padding: 24px; }
+  .row { display: flex; gap: 16px; align-items: flex-end; }
+  .item { text-align: center; }
+  .box { width: 76px; height: 60px; background: var(--clay-soft); border: 1px solid var(--clay-haze); }
+  .name { font-size: 11px; font-weight: 600; color: var(--text-primary); margin-top: 8px; }
+  .val { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); }
+  .pill { width: 76px; height: 38px; border-radius: var(--radius-full); }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="item"><div class="box" style="border-radius:var(--radius-sm)"></div><div class="name">sm</div><div class="val">4px</div></div>
+    <div class="item"><div class="box" style="border-radius:var(--radius-md)"></div><div class="name">md</div><div class="val">6px</div></div>
+    <div class="item"><div class="box" style="border-radius:var(--radius-lg)"></div><div class="name">lg</div><div class="val">8px</div></div>
+    <div class="item"><div class="box" style="border-radius:var(--radius-xl)"></div><div class="name">xl · cards</div><div class="val">12px</div></div>
+    <div class="item"><div class="box" style="border-radius:var(--radius-2xl)"></div><div class="name">2xl</div><div class="val">16px</div></div>
+    <div class="item"><div class="box pill" style="background:var(--clay); border-color:var(--clay)"></div><div class="name">full · pill</div><div class="val">9999px</div></div>
+  </div>
+</body>
+</html>

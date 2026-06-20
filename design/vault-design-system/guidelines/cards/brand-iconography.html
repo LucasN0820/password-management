@@ -1,0 +1,43 @@
+<!-- @dsCard group="Brand" viewport="700x230" name="Iconography — Lucide, 1.8 stroke" subtitle="Lucide stroke icons at 1.8 width; Star=favorite fills clay. No emoji." -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--paper-1); padding: 24px 28px; color: var(--text-primary); }
+  .lbl { font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-tertiary); margin: 0 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 12px; }
+  .cell { display:flex; flex-direction:column; align-items:center; gap:7px; }
+  .tile { width: 44px; height: 44px; display:flex; align-items:center; justify-content:center; border:1px solid var(--border-color); background: var(--paper-0); border-radius: var(--radius-md); color: var(--text-secondary); }
+  .cell span { font-size: 10px; color: var(--text-tertiary); }
+  .tile.accent { color: var(--clay); background: var(--clay-soft); border-color: transparent; }
+  svg { width: 20px; height: 20px; }
+</style>
+</head>
+<body>
+  <p class="lbl">Core glyphs — stroke 1.8, rounded caps</p>
+  <div class="grid">
+    <div class="cell"><span class="tile"><i data-lucide="lock"></i></span><span>lock</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="key"></i></span><span>key</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="shield"></i></span><span>shield</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="eye"></i></span><span>eye</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="eye-off"></i></span><span>eye-off</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="globe"></i></span><span>globe</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="search"></i></span><span>search</span></div>
+    <div class="cell"><span class="tile accent"><i data-lucide="star" fill="currentColor"></i></span><span>star · fav</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="plus"></i></span><span>plus</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="settings"></i></span><span>settings</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="refresh-cw"></i></span><span>refresh</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="copy"></i></span><span>copy</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="check"></i></span><span>check</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="bot"></i></span><span>bot · AI</span></div>
+    <div class="cell"><span class="tile accent"><i data-lucide="zap"></i></span><span>zap · gen</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="trash-2"></i></span><span>trash</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="external-link"></i></span><span>link</span></div>
+    <div class="cell"><span class="tile"><i data-lucide="user"></i></span><span>user</span></div>
+  </div>
+  <script src="https://unpkg.com/lucide@0.456.0/dist/umd/lucide.min.js"></script>
+  <script>lucide.createIcons({ attrs: { 'stroke-width': 1.8 } });</script>
+</body>
+</html>

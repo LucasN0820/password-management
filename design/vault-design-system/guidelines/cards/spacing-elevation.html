@@ -1,0 +1,23 @@
+<!-- @dsCard group="Spacing" viewport="700x200" name="Elevation" subtitle="Soft, warm, low-contrast. Paper resting on paper." -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--paper-3); padding: 28px 24px; }
+  .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .card { background: var(--paper-0); border: 1px solid var(--border-color); border-radius: var(--radius-xl); height: 72px; display:flex; align-items:flex-end; padding: 10px 12px; }
+  .name { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+  .val { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div><div class="card" style="box-shadow:var(--shadow-xs)"></div><div class="name" style="margin-top:10px">xs</div><div class="val">inputs · buttons</div></div>
+    <div><div class="card" style="box-shadow:var(--shadow-vault)"></div><div class="name" style="margin-top:10px">vault</div><div class="val">resting cards</div></div>
+    <div><div class="card" style="box-shadow:var(--shadow-feature)"></div><div class="name" style="margin-top:10px">feature</div><div class="val">hover lift</div></div>
+    <div><div class="card" style="box-shadow:var(--shadow-overlay)"></div><div class="name" style="margin-top:10px">overlay</div><div class="val">spotlight · modals</div></div>
+  </div>
+</body>
+</html>

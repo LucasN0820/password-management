@@ -1,0 +1,436 @@
+<!-- @dsCard group="Desktop App" viewport="1200x760" name="Vault Desktop — Electron app" subtitle="Sidebar → list → detail. Home, vault, and the password generator." -->
+<!-- @startingPoint section="Vault App" subtitle="Full Electron vault app — home, list+detail, generator" viewport="1200x760" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vault — Desktop</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: var(--font-body); background: var(--background); color: var(--text-primary); overflow: hidden; }
+  #root { height: 100vh; }
+  .font-heading { font-family: var(--font-display); }
+  .font-mono { font-family: var(--font-mono); }
+  ::-webkit-scrollbar { width: 7px; height: 7px; }
+  ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  button { font-family: inherit; }
+  .scroll { overflow-y: auto; }
+</style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/lucide@0.456.0/dist/umd/lucide.min.js"></script>
+  <script src="../../_ds_bundle.js"></script>
+
+  <script>
+    // Pre-render every Lucide glyph we use into an SVG string map — reliable,
+    // re-render-safe icons without re-scanning the DOM.
+    window.__ICONS = (function () {
+      const names = ['lock','key','shield','eye','eye-off','globe','search','star','plus',
+        'settings','refresh-cw','copy','check','bot','zap','trash-2','external-link','user',
+        'home','file-text','arrow-right','chevron-right'];
+      const holder = document.createElement('div');
+      holder.style.display = 'none';
+      holder.innerHTML = names.map(n => `<i data-lucide="${n}"></i>`).join('');
+      document.body.appendChild(holder);
+      lucide.createIcons({ attrs: { 'stroke-width': 1.8 } });
+      const map = {};
+      holder.querySelectorAll('svg').forEach((svg, i) => { map[names[i]] = svg.outerHTML; });
+      holder.remove();
+      return map;
+    })();
+  </script>
+
+  <script type="text/babel" data-presets="react">
+    const { Button, Input, Switch, Slider, Card, Badge, Avatar, StrengthMeter, PasswordRow, Keycap } = window.VaultDesignSystem_ad3078;
+
+    function Icon({ name, size = 18, color = 'currentColor', fill, style = {} }) {
+      let html = window.__ICONS[name] || '';
+      html = html.replace('<svg ', `<svg width="${size}" height="${size}" ${fill ? `fill="${fill}"` : ''} `);
+      return <span style={{ display: 'inline-flex', width: size, height: size, color, lineHeight: 0, flex: 'none', ...style }}
+        dangerouslySetInnerHTML={{ __html: html }} />;
+    }
+
+    // ---- mock data ----
+    const ENTRIES = [
+      { id: 1, title: 'Google', username: 'lucas@example.com', letter: 'G', tone: '#E8F0FE', timeAgo: '2h', favorite: true,
+        password: 'k7$Rm9!qXz2vBn4w', url: 'https://accounts.google.com', strength: 92, notes: '主账户 · 已开启两步验证' },
+      { id: 2, title: 'Netflix', username: 'lucas@example.com', letter: 'N', tone: '#FDE8E7', timeAgo: '1d', favorite: false,
+        password: 'Wq3#tLp8sZ', url: 'https://netflix.com', strength: 64, notes: '' },
+      { id: 3, title: 'Figma', username: 'design@studio.co', letter: 'F', tone: '#EAE6FF', timeAgo: '3d', favorite: true,
+        password: 'fG9!kd72@MnZqLr5', url: 'https://figma.com', strength: 88, notes: '团队工作区' },
+      { id: 4, title: 'GitHub', username: 'lucasn', letter: 'G', tone: '#EAEAEA', timeAgo: '5d', favorite: false,
+        password: 'h2$Vc91!', url: 'https://github.com', strength: 38, notes: '需要更新为更强的密码' },
+      { id: 5, title: 'Stripe', username: 'billing@studio.co', letter: 'S', tone: '#E7EEFD', timeAgo: '1w', favorite: false,
+        password: 'pR7&xQ2mNb9!Vd', url: 'https://dashboard.stripe.com', strength: 86, notes: '' },
+      { id: 6, title: 'Notion', username: 'lucas@example.com', letter: 'N', tone: '#F0EFEC', timeAgo: '2w', favorite: false,
+        password: 'nT4!wMs6@KpLx', url: 'https://notion.so', strength: 80, notes: '' },
+    ];
+
+    // ---- title bar (Electron drag region) ----
+    function TitleBar() {
+      return (
+        <div style={{ height: 25, flex: 'none', display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 12,
+          background: 'var(--surface-sidebar)', borderBottom: '1px solid var(--border-color)' }}>
+          <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#e0857a' }} />
+          <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#e7c06b' }} />
+          <span style={{ width: 11, height: 11, borderRadius: '50%', background: '#a9bd86' }} />
+          <span style={{ margin: '0 auto', fontSize: 11, color: 'var(--text-tertiary)', paddingRight: 60 }}>Vault</span>
+        </div>
+      );
+    }
+
+    // ---- sidebar ----
+    function Sidebar({ route, setRoute }) {
+      const items = [
+        { id: 'home', label: '首页', icon: 'home' },
+        { id: 'passwords', label: '密码库', icon: 'key' },
+        { id: 'generator', label: '生成器', icon: 'shield' },
+        { id: 'import', label: 'AI 导入', icon: 'bot' },
+      ];
+      const Row = ({ id, label, icon, active }) => {
+        const [h, setH] = React.useState(false);
+        return (
+          <button onClick={() => setRoute(id)} onMouseEnter={() => setH(true)} onMouseLeave={() => setH(false)}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', height: 40, padding: '0 12px',
+              border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', textAlign: 'left',
+              background: active ? 'var(--surface-selected)' : (h ? 'var(--paper-5)' : 'transparent'),
+              color: active ? 'var(--text-primary)' : 'var(--text-secondary)', transition: 'background 150ms' }}>
+            <Icon name={icon} size={17} color={active ? 'var(--ink-2)' : 'var(--text-secondary)'} />
+            <span style={{ fontSize: 14, fontWeight: active ? 600 : 500 }}>{label}</span>
+          </button>
+        );
+      };
+      return (
+        <div style={{ width: 256, flex: 'none', display: 'flex', flexDirection: 'column',
+          background: 'var(--surface-sidebar)', borderRight: '1px solid var(--border-color)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '18px 18px 16px' }}>
+            <img src="../../assets/logo/vault-mark.svg" alt="" style={{ width: 34, height: 34, borderRadius: 9 }} />
+            <span className="font-heading" style={{ fontSize: 23, fontWeight: 600, letterSpacing: '-0.02em' }}>Vault</span>
+          </div>
+          <div style={{ padding: '0 10px', display: 'flex', flexDirection: 'column', gap: 3 }}>
+            {items.map(i => <Row key={i.id} {...i} active={route === i.id} />)}
+          </div>
+          <div style={{ marginTop: 'auto', padding: 10, display: 'flex', flexDirection: 'column', gap: 3 }}>
+            <button style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', height: 38, padding: '0 12px',
+              border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer', background: 'transparent', color: 'var(--text-secondary)' }}>
+              <Icon name="search" size={17} color="var(--text-secondary)" />
+              <span style={{ fontSize: 14 }}>快速搜索</span>
+              <Keycap style={{ marginLeft: 'auto' }}>⌘⇧P</Keycap>
+            </button>
+            <button onClick={() => setRoute('settings')}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%', height: 38, padding: '0 12px',
+              border: 'none', borderRadius: 'var(--radius-md)', cursor: 'pointer',
+              background: route === 'settings' ? 'var(--surface-selected)' : 'transparent', color: 'var(--text-secondary)' }}>
+              <Icon name="settings" size={17} color="var(--text-secondary)" />
+              <span style={{ fontSize: 14 }}>设置</span>
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // ---- home ----
+    function StatCell({ icon, value, label }) {
+      return (
+        <div style={{ padding: '20px 24px' }}>
+          <Icon name={icon} size={20} color="var(--clay)" style={{ marginBottom: 14 }} />
+          <div className="font-heading" style={{ fontSize: 34, fontWeight: 500 }}>{value}</div>
+          <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 2 }}>{label}</div>
+        </div>
+      );
+    }
+    function HomeScreen({ setRoute, openEntry }) {
+      const strong = ENTRIES.filter(e => e.strength >= 80).length;
+      const favs = ENTRIES.filter(e => e.favorite).length;
+      const actions = [
+        { label: '添加密码', icon: 'plus', go: 'passwords' },
+        { label: '快速搜索', icon: 'search', kbd: 'Ctrl+Shift+P', go: 'passwords' },
+        { label: '生成密码', icon: 'zap', go: 'generator' },
+        { label: 'AI 导入', icon: 'bot', go: 'import' },
+      ];
+      const shortcuts = [['Ctrl+Shift+P', '快速搜索'], ['Ctrl+N', '新建密码'], ['Ctrl+G', '生成器'], ['Esc', '关闭浮层'], ['↑ / ↓', '浏览列表'], ['Enter', '选择 / 复制']];
+      return (
+        <div className="scroll" style={{ flex: 1, background: 'var(--background)' }}>
+          <div style={{ maxWidth: 880, margin: '0 auto', padding: '40px 40px 56px' }}>
+            <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: 30, marginBottom: 36 }}>
+              <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--clay)' }}>Vault</p>
+              <h1 className="font-heading" style={{ margin: '10px 0 0', fontSize: 46, fontWeight: 500, letterSpacing: '-0.02em', lineHeight: 1.1 }}>晚上好，Lucas</h1>
+              <p style={{ margin: '12px 0 0', fontSize: 16, lineHeight: 1.7, color: 'var(--text-secondary)', maxWidth: 520 }}>你的数字身份，井然有序。一切都加密保管在本地。</p>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 36 }}>
+              <StatCell icon="key" value={ENTRIES.length} label="总密码数" />
+              <div style={{ borderLeft: '1px solid var(--border-color)' }}><StatCell icon="star" value={favs} label="收藏" /></div>
+              <div style={{ borderLeft: '1px solid var(--border-color)' }}><StatCell icon="shield" value={strong} label="强密码" /></div>
+            </div>
+
+            <h2 className="font-heading" style={{ fontSize: 22, fontWeight: 500, margin: '0 0 16px' }}>快捷操作</h2>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, marginBottom: 40 }}>
+              {actions.map(a => (
+                <button key={a.label} onClick={() => setRoute(a.go)}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', background: 'var(--surface-card)',
+                    border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', cursor: 'pointer', boxShadow: 'var(--shadow-xs)' }}>
+                  <Icon name={a.icon} size={16} color="var(--text-secondary)" />
+                  <span style={{ fontSize: 14, fontWeight: 600 }}>{a.label}</span>
+                  {a.kbd && <Keycap style={{ marginLeft: 4 }}>{a.kbd}</Keycap>}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 280px', gap: 40 }}>
+              <div>
+                <h2 className="font-heading" style={{ fontSize: 22, fontWeight: 500, margin: '0 0 16px' }}>最近密码</h2>
+                <div style={{ borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)', padding: '8px 0' }}>
+                  {ENTRIES.slice(0, 5).map(e => (
+                    <PasswordRow key={e.id} title={e.title} username={e.username} letter={e.letter} tone={e.tone}
+                      favorite={e.favorite} timeAgo={e.timeAgo} onClick={() => openEntry(e.id)} />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h2 className="font-heading" style={{ fontSize: 22, fontWeight: 500, margin: '0 0 16px' }}>键盘快捷键</h2>
+                <Card style={{ padding: 18, borderRadius: 'var(--radius-lg)', boxShadow: 'none' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    {shortcuts.map(([k, d]) => (
+                      <div key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+                        <Keycap style={{ minWidth: 64 }}>{k}</Keycap>
+                        <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{d}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ---- passwords (list + detail) ----
+    function PasswordsScreen({ selected, setSelected }) {
+      const [q, setQ] = React.useState('');
+      const [favs, setFavs] = React.useState(() => Object.fromEntries(ENTRIES.map(e => [e.id, e.favorite])));
+      const [show, setShow] = React.useState(false);
+      const [copied, setCopied] = React.useState('');
+      const list = ENTRIES.filter(e => e.title.toLowerCase().includes(q.toLowerCase()) || e.username.toLowerCase().includes(q.toLowerCase()));
+      const e = ENTRIES.find(x => x.id === selected);
+      const copy = (k) => { setCopied(k); setTimeout(() => setCopied(''), 1200); };
+
+      return (
+        <div style={{ flex: 1, display: 'flex', minWidth: 0, background: 'var(--background)' }}>
+          {/* list */}
+          <div style={{ width: 320, flex: 'none', display: 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-color)', background: 'color-mix(in srgb, var(--surface-sidebar) 45%, white)' }}>
+            <div style={{ padding: 16, borderBottom: '1px solid var(--border-color)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+                <h2 className="font-heading" style={{ fontSize: 22, fontWeight: 500, margin: 0 }}>密码库</h2>
+                <Button size="icon-sm" variant="default"><Icon name="plus" size={16} color="#fff" /></Button>
+              </div>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: 11, top: '50%', transform: 'translateY(-50%)' }}><Icon name="search" size={15} color="var(--text-tertiary)" /></span>
+                <Input placeholder="搜索密码..." value={q} onChange={ev => setQ(ev.target.value)} style={{ paddingLeft: 33 }} />
+              </div>
+              <div style={{ marginTop: 12, fontSize: 12, fontWeight: 500, color: 'var(--text-secondary)' }}>{list.length} 个密码</div>
+            </div>
+            <div className="scroll" style={{ flex: 1, padding: 8 }}>
+              {list.map(p => (
+                <PasswordRow key={p.id} title={p.title} username={p.username} letter={p.letter} tone={p.tone}
+                  favorite={!!favs[p.id]} selected={selected === p.id}
+                  onClick={() => setSelected(p.id)} onToggleFavorite={() => setFavs(f => ({ ...f, [p.id]: !f[p.id] }))} />
+              ))}
+            </div>
+          </div>
+
+          {/* detail */}
+          {e ? (
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '26px 32px', borderBottom: '1px solid var(--border-color)', background: 'color-mix(in srgb, var(--surface-sidebar) 45%, white)' }}>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+                  <Avatar letter={e.letter} tone={e.tone} size={56} style={{ borderRadius: 'var(--radius-lg)', fontSize: 22 }} />
+                  <div>
+                    <h1 className="font-heading" style={{ margin: 0, fontSize: 34, fontWeight: 500, letterSpacing: '-0.02em' }}>{e.title}</h1>
+                    <a href={e.url} target="_blank" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 4, fontSize: 14, fontWeight: 500, color: 'var(--clay)', textDecoration: 'none' }}>
+                      {e.url.replace('https://', '')} <Icon name="external-link" size={13} color="var(--clay)" />
+                    </a>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button variant="outline" size="sm"><Icon name="settings" size={14} /> 编辑</Button>
+                  <Button variant="outline" size="icon-sm" style={{ color: 'var(--red)' }}><Icon name="trash-2" size={14} color="var(--red)" /></Button>
+                </div>
+              </div>
+
+              <div className="scroll" style={{ flex: 1, padding: '30px 32px' }}>
+                <div style={{ maxWidth: 620, display: 'flex', flexDirection: 'column', gap: 24 }}>
+                  <Field icon="user" label="用户名">
+                    <FieldValue>{e.username}</FieldValue>
+                    <Button variant="outline" size="sm" onClick={() => copy('u')}>{copied === 'u' ? '已复制' : '复制'}</Button>
+                  </Field>
+                  <Field icon="lock" label="密码">
+                    <FieldValue mono>{show ? e.password : '••••••••••••'}</FieldValue>
+                    <Button variant="outline" size="icon-sm" onClick={() => setShow(s => !s)}><Icon name={show ? 'eye-off' : 'eye'} size={14} /></Button>
+                    <Button variant="outline" size="sm" onClick={() => copy('p')}>{copied === 'p' ? '已复制' : '复制'}</Button>
+                  </Field>
+                  <div>
+                    <FieldLabel icon="shield" label="强度" />
+                    <div style={{ maxWidth: 260, marginTop: 4 }}><StrengthMeter value={e.strength} /></div>
+                  </div>
+                  <Field icon="globe" label="网址">
+                    <FieldValue><a href={e.url} target="_blank" style={{ color: 'var(--clay)', textDecoration: 'none' }}>{e.url}</a></FieldValue>
+                  </Field>
+                  {e.notes && (
+                    <Field icon="file-text" label="备注">
+                      <FieldValue>{e.notes}</FieldValue>
+                    </Field>
+                  )}
+                  <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: 22, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                    <Meta label="创建于" value="2025 / 03 / 14" />
+                    <Meta label="更新于" value="2025 / 11 / 02" />
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: 18, padding: '10px 32px', borderTop: '1px solid var(--border-color)', background: 'color-mix(in srgb, var(--surface-sidebar) 45%, white)' }} className="font-mono">
+                <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>↑↓ 浏览</span>
+                <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>↵ 复制</span>
+                <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>Esc 关闭</span>
+              </div>
+            </div>
+          ) : (
+            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: 'var(--text-tertiary)' }}>
+              <Icon name="lock" size={48} color="var(--ink-7)" />
+              <p className="font-heading" style={{ fontSize: 22, fontWeight: 500, margin: 0, color: 'var(--text-secondary)' }}>选择一个密码查看</p>
+            </div>
+          )}
+        </div>
+      );
+    }
+    const FieldLabel = ({ icon, label }) => (
+      <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>
+        <Icon name={icon} size={13} color="var(--text-secondary)" /> {label}
+      </label>
+    );
+    const Field = ({ icon, label, children }) => (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <FieldLabel icon={icon} label={label} />
+        <div style={{ display: 'flex', gap: 8 }}>{children}</div>
+      </div>
+    );
+    const FieldValue = ({ mono, children }) => (
+      <div className={mono ? 'font-mono' : ''} style={{ flex: 1, padding: '10px 14px', background: 'var(--surface-card)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', fontSize: 14, color: 'var(--text-primary)' }}>{children}</div>
+    );
+    const Meta = ({ label, value }) => (
+      <div><span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{label}</span><p className="font-mono" style={{ margin: '3px 0 0', fontSize: 13 }}>{value}</p></div>
+    );
+
+    // ---- generator ----
+    function GeneratorScreen() {
+      const CH = { upper: 'ABCDEFGHJKLMNPQRSTUVWXYZ', lower: 'abcdefghijkmnpqrstuvwxyz', num: '23456789', sym: '!@#$%^&*?' };
+      const [opt, setOpt] = React.useState({ upper: true, lower: true, num: true, sym: true });
+      const [len, setLen] = React.useState(16);
+      const [pw, setPw] = React.useState('');
+      const [copied, setCopied] = React.useState(false);
+      const gen = React.useCallback(() => {
+        let pool = ''; Object.keys(CH).forEach(k => { if (opt[k]) pool += CH[k]; });
+        if (!pool) { setPw(''); return; }
+        let s = ''; for (let i = 0; i < len; i++) s += pool[Math.floor(Math.random() * pool.length)];
+        setPw(s);
+      }, [opt, len]);
+      React.useEffect(() => { gen(); }, [gen]);
+      const score = Math.min(100, Math.round((len / 24) * 60 + Object.values(opt).filter(Boolean).length * 10));
+      const toggle = (k) => setOpt(o => ({ ...o, [k]: !o[k] }));
+
+      return (
+        <div className="scroll" style={{ flex: 1, background: 'var(--background)' }}>
+          <div style={{ maxWidth: 880, margin: '0 auto', padding: '40px 40px 56px' }}>
+            <p style={{ margin: 0, fontSize: 14, fontWeight: 600, color: 'var(--clay)' }}>生成器</p>
+            <h1 className="font-heading" style={{ margin: '10px 0 8px', fontSize: 46, fontWeight: 500, letterSpacing: '-0.02em' }}>生成强密码</h1>
+            <p style={{ margin: '0 0 32px', fontSize: 16, lineHeight: 1.7, color: 'var(--text-secondary)', maxWidth: 520 }}>为每个账号生成唯一、不可预测的密码。一切都在本地完成。</p>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 32, alignItems: 'start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                <Card style={{ padding: 24, borderRadius: 'var(--radius-lg)', boxShadow: 'none' }}>
+                  <div className="font-mono" style={{ fontSize: 26, fontWeight: 500, letterSpacing: '0.04em', wordBreak: 'break-all', lineHeight: 1.4, marginBottom: 18 }}>{pw}</div>
+                  <StrengthMeter value={score} />
+                </Card>
+                <div style={{ display: 'flex', gap: 12 }}>
+                  <Button onClick={() => { navigator.clipboard?.writeText(pw); setCopied(true); setTimeout(() => setCopied(false), 1200); }}>
+                    <Icon name={copied ? 'check' : 'copy'} size={16} color="#fff" /> {copied ? '已复制' : '复制'}
+                  </Button>
+                  <Button variant="outline" onClick={gen}><Icon name="refresh-cw" size={16} /> 重新生成</Button>
+                  <Button variant="outline"><Icon name="key" size={16} /> 保存到密码库</Button>
+                </div>
+
+                <Card style={{ padding: 24, borderRadius: 'var(--radius-lg)', boxShadow: 'none' }}>
+                  <h2 className="font-heading" style={{ fontSize: 20, fontWeight: 500, margin: '0 0 18px' }}>设置</h2>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                    <span style={{ fontSize: 14, fontWeight: 600 }}>密码长度</span>
+                    <span className="font-mono" style={{ fontSize: 14, color: 'var(--clay)', fontWeight: 500 }}>{len}</span>
+                  </div>
+                  <Slider value={len} min={4} max={64} onValueChange={setLen} />
+                  <div className="font-mono" style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: 'var(--text-tertiary)', marginTop: 6, marginBottom: 18 }}><span>4</span><span>64</span></div>
+                  {[['upper', '大写字母 A–Z'], ['lower', '小写字母 a–z'], ['num', '数字 0–9'], ['sym', '符号 !@#$']].map(([k, label]) => (
+                    <div key={k} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '8px 0' }}>
+                      <span style={{ fontSize: 14 }}>{label}</span>
+                      <Switch checked={opt[k]} onCheckedChange={() => toggle(k)} />
+                    </div>
+                  ))}
+                </Card>
+              </div>
+
+              <Card style={{ padding: 24, borderRadius: 'var(--radius-lg)', boxShadow: 'none' }}>
+                <h2 className="font-heading" style={{ fontSize: 20, fontWeight: 500, margin: '0 0 4px' }}>安全提示</h2>
+                <p style={{ margin: '0 0 16px', fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>好的密码无需记忆——交给 Vault。</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {[['每个账号都用唯一密码', 'check'], ['长度优先于复杂度', 'check'], ['开启两步验证', 'check']].map(([t, ic]) => (
+                    <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <Icon name={ic} size={16} color="var(--green)" />
+                      <span style={{ fontSize: 14, color: 'var(--text-primary)' }}>{t}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: 20, display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+                  <Badge tone="mono">AES-256-GCM</Badge>
+                  <Badge tone="mono">本地生成</Badge>
+                  <Badge tone="mono">CSPRNG</Badge>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [route, setRoute] = React.useState('home');
+      const [selected, setSelected] = React.useState(1);
+      const openEntry = (id) => { setSelected(id); setRoute('passwords'); };
+      return (
+        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+          <TitleBar />
+          <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
+            <Sidebar route={route} setRoute={setRoute} />
+            {route === 'home' && <HomeScreen setRoute={setRoute} openEntry={openEntry} />}
+            {route === 'passwords' && <PasswordsScreen selected={selected} setSelected={setSelected} />}
+            {route === 'generator' && <GeneratorScreen />}
+            {(route === 'import' || route === 'settings') && (
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, color: 'var(--text-tertiary)', background: 'var(--background)' }}>
+                <Icon name={route === 'import' ? 'bot' : 'settings'} size={44} color="var(--ink-7)" />
+                <p className="font-heading" style={{ fontSize: 20, fontWeight: 500, margin: 0, color: 'var(--text-secondary)' }}>{route === 'import' ? 'AI 导入' : '设置'}</p>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

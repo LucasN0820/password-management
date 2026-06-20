@@ -1,0 +1,86 @@
+/* ============================================================
+   VAULT — COLOR SYSTEM
+   A warm, Claude-inspired palette: ivory paper, ink text,
+   and a single terracotta "clay" accent. No blues, no purple
+   gradients — warmth carries the whole brand.
+   ============================================================ */
+
+:root {
+  /* ---- Paper / surfaces (warm ivory ramp, light → deep) ---- */
+  --paper-0:  #ffffff;   /* pure white — cards, inputs on cream */
+  --paper-1:  #faf9f7;   /* cream — primary marketing bg */
+  --paper-2:  #f8f7f2;   /* app background */
+  --paper-3:  #f4f1ec;   /* cream-2 — alt sections */
+  --paper-4:  #f2efe7;   /* warm — sidebars, secondary, muted */
+  --paper-5:  #ede9e0;   /* cream-3 — hairline fills */
+  --paper-6:  #eee9dd;   /* accent surface */
+  --paper-7:  #efe5d7;   /* selected-bg — active rows */
+
+  /* ---- Ink (warm near-black → muted clay-grey) ---- */
+  --ink-0:    #171614;   /* primary / true ink */
+  --ink-1:    #1a1916;   /* charcoal — marketing text */
+  --ink-2:    #1f1e1b;   /* foreground */
+  --ink-3:    #3a3834;   /* charcoal-2 — emphasis */
+  --ink-4:    #44423d;   /* charcoal */
+  --ink-5:    #6b6860;   /* charcoal-3 — secondary text */
+  --ink-6:    #78736b;   /* muted-foreground */
+  --ink-7:    #b6b0a5;   /* tertiary — timestamps, hints */
+
+  /* ---- Sand (warm borders) ---- */
+  --sand:        #d9d2c5;
+  --border:      #dfddd5;
+  --border-soft: #ddd8cc;
+
+  /* ---- Clay (the one accent — terracotta) ---- */
+  --clay:        #d97757;   /* primary accent / ring (app) */
+  --clay-brand:  #c96442;   /* logo terracotta */
+  --clay-mid:    #c26b4a;   /* terra — marketing accent text */
+  --clay-dark:   #b45d44;   /* pressed / hover-darken */
+  --clay-soft:   #fff1eb;   /* tint fill behind clay icons */
+  --clay-tint:   #f9ede8;   /* terra-light — badge bg */
+  --clay-haze:   #e8a88e;   /* terra-mid — accent on dark */
+
+  /* ---- Functional accents (muted, earthy — never neon) ---- */
+  --green: #6e7d5a;   /* success / strong */
+  --yellow:#c5894b;   /* warning / medium strength */
+  --red:   #b84d3d;   /* destructive / weak strength */
+  --olive: #8b6f5a;   /* misc earthy accent */
+
+  /* ============================================================
+     SEMANTIC ALIASES — reference these in product code
+     ============================================================ */
+
+  /* Backgrounds */
+  --background:       var(--paper-2);
+  --surface-cream:    var(--paper-1);
+  --surface-card:     var(--paper-0);
+  --surface-sidebar:  var(--paper-4);
+  --surface-muted:    var(--paper-4);
+  --surface-selected: var(--paper-7);
+  --surface-dark:     var(--ink-1);   /* dark security/CTA sections */
+
+  /* Text */
+  --text-primary:   var(--ink-2);
+  --text-strong:    var(--ink-0);
+  --text-secondary: var(--ink-6);
+  --text-tertiary:  var(--ink-7);
+  --text-accent:    var(--clay);
+  --text-on-dark:   #faf9f7;
+
+  /* Lines */
+  --border-color:   var(--border);
+  --border-strong:  var(--sand);
+
+  /* Accent / interactive */
+  --accent:         var(--clay);
+  --accent-hover:   var(--clay-dark);
+  --accent-ring:    var(--clay);
+  --accent-fill:    var(--clay-soft);
+
+  /* Strength + status semantic */
+  --strength-strong: var(--clay);
+  --strength-medium: var(--yellow);
+  --strength-weak:   var(--red);
+  --status-success:  var(--green);
+  --status-danger:   var(--red);
+}

@@ -1,0 +1,5 @@
+/* Vault webfonts — all available on Google Fonts, no substitution.
+   Noto Serif SC  → display / headings (font-heading)
+   Noto Sans SC   → body / UI
+   JetBrains Mono → passwords, codes, keycaps, tags */
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&display=swap');

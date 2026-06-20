@@ -1,0 +1,26 @@
+<!-- @dsCard group="Colors" viewport="700x150" name="Functional accents" subtitle="Earthy status hues — muted, never neon. Used sparingly." -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  body { margin: 0; font-family: var(--font-body); background: var(--paper-1); padding: 24px; }
+  .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .sw { border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color); background: var(--paper-0); }
+  .chip { height: 52px; }
+  .meta { padding: 8px 9px 9px; }
+  .name { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+  .role { font-size: 10px; color: var(--text-secondary); margin-top:1px; }
+  .hex { font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); margin-top: 2px; }
+</style>
+</head>
+<body>
+  <div class="row">
+    <div class="sw"><div class="chip" style="background:var(--green)"></div><div class="meta"><div class="name">green</div><div class="role">success · strong</div><div class="hex">#6e7d5a</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--yellow)"></div><div class="meta"><div class="name">yellow</div><div class="role">warning · medium</div><div class="hex">#c5894b</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--red)"></div><div class="meta"><div class="name">red</div><div class="role">destructive · weak</div><div class="hex">#b84d3d</div></div></div>
+    <div class="sw"><div class="chip" style="background:var(--olive)"></div><div class="meta"><div class="name">olive</div><div class="role">misc earthy</div><div class="hex">#8b6f5a</div></div></div>
+  </div>
+</body>
+</html>

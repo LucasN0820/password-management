@@ -1,0 +1,40 @@
+/* ============================================================
+   VAULT — SPACING, RADII & SIZING
+   Base unit is 4px. Radius system derives from --radius (0.5rem),
+   matching the shadcn token used across the desktop app.
+   ============================================================ */
+
+:root {
+  /* Spacing scale (4px base) */
+  --space-0:  0;
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-7:  28px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+  --space-25: 100px;  /* marketing section rhythm */
+
+  /* Radii — derived from --radius (0.5rem = 8px) */
+  --radius:    0.5rem;                      /* 8px base */
+  --radius-sm: calc(var(--radius) - 4px);   /* 4px */
+  --radius-md: calc(var(--radius) - 2px);   /* 6px */
+  --radius-lg: var(--radius);               /* 8px */
+  --radius-xl: calc(var(--radius) + 4px);   /* 12px — cards */
+  --radius-2xl:calc(var(--radius) + 8px);   /* 16px — feature cards */
+  --radius-3xl:calc(var(--radius) + 12px);  /* 20px */
+  --radius-full: 9999px;                    /* pills, avatars */
+
+  /* Common sizes */
+  --sidebar-width: 256px;
+  --list-width:    320px;
+  --content-max:   1100px;
+  --hit-target:    44px;
+}

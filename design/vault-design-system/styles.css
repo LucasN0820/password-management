@@ -1,0 +1,11 @@
+/* ============================================================
+   VAULT DESIGN SYSTEM — global entry point.
+   Consumers link THIS file only. Import order matters:
+   fonts → tokens → foundations.
+   ============================================================ */
+
+@import './tokens/fonts.css';
+@import './tokens/colors.css';
+@import './tokens/typography.css';
+@import './tokens/spacing.css';
+@import './tokens/shadows.css';

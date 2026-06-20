@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">Vault app icon</title>
+  <desc id="desc">A terracotta folded V surrounding a keyhole on a warm ivory background.</desc>
+  <defs>
+    <mask id="keyhole-cutout">
+      <rect width="1024" height="1024" fill="white"></rect>
+      <circle cx="512" cy="606" r="52" fill="black"></circle>
+      <path d="M484 640 H540 L564 746 H460 Z" fill="black"></path>
+    </mask>
+  </defs>
+  <rect width="1024" height="1024" fill="#faf9f5"></rect>
+  <path fill="#c96442" mask="url(#keyhole-cutout)" d="&#xA;    M176 206&#xA;    Q176 184 200 184&#xA;    H346&#xA;    Q374 184 386 210&#xA;    L512 596&#xA;    L512 914&#xA;    L372 792&#xA;    Q356 778 350 758&#xA;    Z&#xA;&#xA;    M848 206&#xA;    Q848 184 824 184&#xA;    H678&#xA;    Q650 184 638 210&#xA;    L512 596&#xA;    L512 914&#xA;    L652 792&#xA;    Q668 778 674 758&#xA;    Z"></path>
+  <path d="M183 199 L369 292 L411 421" fill="none" stroke="#faf9f5" stroke-width="7" stroke-linecap="round" opacity="0.75"></path>
+  <path d="M841 199 L655 292 L613 421" fill="none" stroke="#faf9f5" stroke-width="7" stroke-linecap="round" opacity="0.75"></path>
+</svg>

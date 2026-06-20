@@ -1,0 +1,52 @@
+/* ============================================================
+   VAULT — TYPOGRAPHY
+   Three families, sharply role-divided:
+   · Noto Serif SC  — display & headings ("font-heading")
+   · Noto Sans SC   — body & UI
+   · JetBrains Mono — passwords, keycaps, tags, metadata
+   Headings run medium-weight serif with tight tracking; body
+   stays calm and readable. Passwords are ALWAYS monospace.
+   ============================================================ */
+
+:root {
+  /* Families */
+  --font-display: 'Noto Serif SC', Georgia, 'Songti SC', serif;
+  --font-body:    'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Type scale (px) — app + marketing share this ramp */
+  --text-xs:   12px;
+  --text-sm:   13px;
+  --text-base: 15px;
+  --text-md:   17px;
+  --text-lg:   20px;
+  --text-xl:   24px;   /* section headings (app) */
+  --text-2xl:  30px;
+  --text-3xl:  36px;
+  --text-4xl:  46px;   /* page titles */
+  --text-5xl:  56px;
+  --text-6xl:  72px;   /* marketing hero */
+
+  /* Weights */
+  --weight-regular:  400;
+  --weight-medium:   500;
+  --weight-semibold: 600;
+  --weight-bold:     700;
+
+  /* Line-heights */
+  --leading-tight:  1.1;
+  --leading-snug:   1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed:1.65;
+  --leading-loose:  1.7;
+
+  /* Tracking */
+  --tracking-tight:  -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide:   0.08em;   /* uppercase eyebrow labels */
+}
+
+/* Role utilities mirroring the product's classes */
+.font-heading { font-family: var(--font-display); }
+.font-body    { font-family: var(--font-body); }
+.font-mono    { font-family: var(--font-mono); }
