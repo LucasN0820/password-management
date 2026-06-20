@@ -51,8 +51,17 @@ function currentAppVersion(): string {
   return nativeVersion ?? Constants.expoConfig?.version ?? '0.0.0';
 }
 
+/**
+ * Whether Google Play has a newer build available. The decision is deferred to
+ * Play Core's versionCode-based availability via `customVersionComparator`
+ * (returning 1 always) — the library would otherwise semver-compare the store
+ * versionCode integer against our versionName, which is apples-to-oranges.
+ * `curVersion` is still passed so the library doesn't fall back to
+ * react-native-device-info's `getVersion()`, which we otherwise never call.
+ */
 async function checkPlayNeedsUpdate() {
   const result = await getInAppUpdates().checkNeedsUpdate({
+    customVersionComparator: () => 1,
     curVersion: currentAppVersion(),
   });
   return result.shouldUpdate;

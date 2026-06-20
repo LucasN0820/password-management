@@ -72,8 +72,8 @@ export function BackupScreen() {
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
 
-  const {passwords} = usePasswordStore();
-  const {addPasswords} = usePasswordStore();
+  const { passwords } = usePasswordStore();
+  const { addPasswords } = usePasswordStore();
 
   const [busy, setBusy] = useState<null | 'export' | 'import'>(null);
   const [modal, setModal] = useState<PassphraseModalState | null>(null);
@@ -255,7 +255,7 @@ export function BackupScreen() {
     last?: boolean;
     danger?: boolean;
   }) {
-  return <Pressable
+    return <Pressable
       onPress={onPress}
       disabled={busy !== null}
       accessibilityRole="button"
@@ -292,7 +292,7 @@ export function BackupScreen() {
         </Text>
       </View>
     </Pressable>
-}
+  }
 
   return (
     <ScrollView

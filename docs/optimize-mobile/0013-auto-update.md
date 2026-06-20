@@ -26,7 +26,10 @@ iOS 当前尚未上架，因此只启用 OTA；等 App Store 分发落地后再�
 >
 > OTA 热更对三者通用,与原生更新方式无关。
 >
-> ⚠️ **验证限制**:Play In-App Updates 必须在 **Play internal track 的真机**上、且有更高 `versionCode` 完成 rollout 才能触发,本地/侧载构建测不出来。另需关注 `sp-react-native-in-app-updates@1.5.0` 与 RN 0.85 新架构的兼容性,首次 prebuild 后需在真机回归构建。
+> ⚠️ **验证限制 / 注意**:
+> - Play In-App Updates 必须在 **Play internal track 的真机**上、且有更高 `versionCode` 完成 rollout 才能触发,本地/侧载构建测不出来。
+> - `shouldUpdate` 的判断**完全交给 Play Core 的 versionCode 可用性**:调用 `checkNeedsUpdate` 时传 `customVersionComparator: () => 1`,绕开该库默认"拿商店 versionCode 整数当 semver 去比 versionName"的不严谨比较;同时仍传 `curVersion` 以避免库回退去调 `react-native-device-info` 的 `getVersion()`。
+> - `sp-react-native-in-app-updates@1.5.0` **固定依赖原生模块 `react-native-device-info@10.3.0`**(随其自动安装,会被 autolink 编进包),需在首次 prebuild + 真机构建时验证它与 RN 0.85 新架构的兼容性。
 
 当前分发渠道(决定方案):
 
