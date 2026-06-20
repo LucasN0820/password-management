@@ -7,46 +7,49 @@ const {
   readFileSync,
   statSync,
   writeFileSync,
-} = require('fs')
-const { extname, join, resolve } = require('path')
+} = require('fs');
+const { extname, join, resolve } = require('path');
 
 function parseEnvFile(filePath) {
-  if (!existsSync(filePath)) return {}
-  const content = readFileSync(filePath, 'utf8')
-  const vars = {}
+  if (!existsSync(filePath)) return {};
+  const content = readFileSync(filePath, 'utf8');
+  const vars = {};
   for (const line of content.split(/\r?\n/)) {
-    const trimmed = line.trim()
-    if (!trimmed || trimmed.startsWith('#')) continue
-    const sep = trimmed.indexOf('=')
-    if (sep === -1) continue
-    const key = trimmed.slice(0, sep).trim()
-    let val = trimmed.slice(sep + 1).trim()
-    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
-      val = val.slice(1, -1)
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const sep = trimmed.indexOf('=');
+    if (sep === -1) continue;
+    const key = trimmed.slice(0, sep).trim();
+    let val = trimmed.slice(sep + 1).trim();
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
     }
-    vars[key] = val
+    vars[key] = val;
   }
-  return vars
+  return vars;
 }
 
-const appDir = process.cwd()
-const rootDir = resolve(appDir, '../..')
+const appDir = process.cwd();
+const rootDir = resolve(appDir, '../..');
 const env = {
   ...parseEnvFile(resolve(rootDir, '.env')),
   ...parseEnvFile(resolve(rootDir, '.env.local')),
   ...parseEnvFile(resolve(appDir, '.env')),
   ...parseEnvFile(resolve(appDir, '.env.local')),
   ...process.env,
-}
+};
 
 // Inject into process.env for electron-builder to pick up
 for (const [key, val] of Object.entries(env)) {
   if (key.startsWith('AI_IMPORT_')) {
-    process.env[key] = val
+    process.env[key] = val;
   }
 }
 
-mkdirSync(resolve(appDir, 'build'), { recursive: true })
+mkdirSync(resolve(appDir, 'build'), { recursive: true });
 writeFileSync(
   resolve(appDir, 'build/desktop-env.json'),
   JSON.stringify(
@@ -66,40 +69,39 @@ writeFileSync(
       AI_IMPORT_KEEP_SERVER_ALIVE_MS:
         env.AI_IMPORT_KEEP_SERVER_ALIVE_MS ?? '300000',
       AI_IMPORT_SERVICE_URL: env.AI_IMPORT_SERVICE_URL ?? '',
-      AI_IMPORT_SERVICE_SECRET: env.AI_IMPORT_SERVICE_SECRET ?? '',
     },
     null,
     2
   ),
   'utf8'
-)
+);
 
 function ensureRuntimeExecutableBits(runtimeDir) {
-  if (process.platform === 'win32' || !existsSync(runtimeDir)) return
+  if (process.platform === 'win32' || !existsSync(runtimeDir)) return;
 
   for (const entry of readdirSync(runtimeDir)) {
-    const filePath = join(runtimeDir, entry)
-    const stats = statSync(filePath)
+    const filePath = join(runtimeDir, entry);
+    const stats = statSync(filePath);
     if (stats.isDirectory()) {
-      ensureRuntimeExecutableBits(filePath)
-      continue
+      ensureRuntimeExecutableBits(filePath);
+      continue;
     }
 
-    const extension = extname(entry)
+    const extension = extname(entry);
     if (!extension || extension === '.dylib' || extension === '.so') {
-      chmodSync(filePath, 0o755)
+      chmodSync(filePath, 0o755);
     }
   }
 }
 
-ensureRuntimeExecutableBits(resolve(appDir, 'bin/llama.cpp'))
+ensureRuntimeExecutableBits(resolve(appDir, 'bin/llama.cpp'));
 
 // Now run electron-builder with the rest of the arguments
-const { spawn } = require('child_process')
+const { spawn } = require('child_process');
 const builder = spawn('electron-builder', process.argv.slice(2), {
   stdio: 'inherit',
   shell: true,
-})
+});
 builder.on('close', code => {
-  process.exit(code ?? 0)
-})
+  process.exit(code ?? 0);
+});

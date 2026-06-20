@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { Password, PasswordInput, DatabaseAdapter } from './types';
 
+export const SEARCH_DEBOUNCE_MS = 250;
+
 export interface PasswordState {
   passwords: Password[];
   filteredPasswords: Password[];
@@ -31,6 +33,16 @@ export interface PasswordState {
 }
 
 export function createPasswordStore(adapter: DatabaseAdapter) {
+  let latestSearchRequest = 0;
+  let pendingSearch: ReturnType<typeof setTimeout> | null = null;
+
+  const cancelPendingSearch = () => {
+    if (pendingSearch !== null) {
+      clearTimeout(pendingSearch);
+      pendingSearch = null;
+    }
+  };
+
   return create<PasswordState>((set, get) => ({
     passwords: [],
     filteredPasswords: [],
@@ -56,11 +68,20 @@ export function createPasswordStore(adapter: DatabaseAdapter) {
 
     setSearchQuery: searchQuery => {
       set({ searchQuery });
-      if (searchQuery.trim()) {
-        get().searchPasswords(searchQuery);
-      } else {
+      cancelPendingSearch();
+
+      if (!searchQuery.trim()) {
+        latestSearchRequest += 1;
         get().applyFilters();
+        return;
       }
+
+      pendingSearch = setTimeout(() => {
+        pendingSearch = null;
+        void get()
+          .searchPasswords(searchQuery)
+          .catch(() => undefined);
+      }, SEARCH_DEBOUNCE_MS);
     },
 
     setCategories: categories => set({ categories }),
@@ -123,10 +144,14 @@ export function createPasswordStore(adapter: DatabaseAdapter) {
 
     searchPasswords: async query => {
       if (!query.trim()) {
+        cancelPendingSearch();
+        latestSearchRequest += 1;
         get().applyFilters();
         return;
       }
+      const requestId = ++latestSearchRequest;
       const results = await adapter.searchPasswords(query);
+      if (requestId !== latestSearchRequest) return;
       set({ filteredPasswords: results });
     },
 

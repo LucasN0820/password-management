@@ -8,6 +8,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
 :root {
   --background: #f8f7f2;
   --foreground: #1f1e1b;

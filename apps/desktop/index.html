@@ -1,42 +1,15 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" href="/icon-32.png" />
+    <link rel="apple-touch-icon" href="/icon-512.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vault</title>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="/icon-32.png" />
-  <link rel="apple-touch-icon" href="/icon-512.png" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Vault</title>
-  <style>
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-    }
-
-    html.spotlight-window,
-    body.spotlight-window {
-      background: transparent !important;
-    }
-  </style>
-  <script>
-    const isSpotlightWindow =
-      window.location.hash === '#/search' || window.location.pathname === '/search';
-
-    if (isSpotlightWindow) {
-      document.documentElement.classList.add('spotlight-window');
-    }
-  </script>
-</head>
-
-<body>
-  <script>
-    if (document.documentElement.classList.contains('spotlight-window')) {
-      document.body.classList.add('spotlight-window');
-    }
-  </script>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

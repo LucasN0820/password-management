@@ -1,8 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { existsSync, mkdirSync, statSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   app,
   BrowserWindow,
@@ -11,15 +10,15 @@ import {
   ipcMain,
   nativeImage,
   screen,
+  session,
   shell,
 } from 'electron';
-import { z } from 'zod';
+import type { z } from 'zod';
 import {
   createDrizzleAdapter,
   createEncryptedAdapter,
   type DatabaseAdapter,
   type PasswordDatabase,
-  type PasswordInput,
 } from '@repo/db';
 import { stopLlamaServer } from './ai-import/llama-runtime';
 import { runLocalImportWorkflow } from './ai-import/local-import-workflow';
@@ -32,19 +31,39 @@ import {
   removeLocalModel,
   setDefaultLocalModel,
 } from './ai-import/model-cache';
+import {
+  RemoteImportPublicError,
+  runRemoteImportWorkflow,
+} from './ai-import/remote-import-workflow';
 import { createDesktopDatabase } from './db';
-import type {
-  ImportFileDescriptor,
-  ImportPasswordInput,
-  ImportWorkflowResult,
-} from './import/types';
+import type { ImportFileDescriptor } from './import/types';
+import {
+  importPasswordsSchema,
+  modelIdSchema,
+  noInputSchema,
+  optionalModelIdSchema,
+  passwordBatchSchema,
+  passwordIdSchema,
+  passwordInputSchema,
+  runImportWorkflowSchema,
+  searchQuerySchema,
+  updatePasswordSchema,
+  withIpcHandler,
+} from './ipc-schema';
 import { getLocalAiImportConfig, getServiceEnvConfig } from './settings';
 import { getOrCreateDesktopVaultKey } from './vault-key';
+import {
+  addContentSecurityPolicyHeader,
+  attachNavigationGuards,
+  SECURE_WEB_PREFERENCES,
+  shouldEnableDevTools,
+} from './window-security';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const isDev = !app.isPackaged;
+const developmentRendererUrl = 'http://localhost:5173';
 
 let mainWindow: BrowserWindow | null;
 let searchWindow: BrowserWindow | null;
@@ -55,17 +74,19 @@ let currentModelDownloadAbortController: AbortController | null = null;
 let currentModelDownloadId: string | null = null;
 let currentModelDownloadProgress: LocalModelDownloadProgress | null = null;
 
+function registerIpcHandler<Schema extends z.ZodType, Result>(
+  name: string,
+  schema: Schema,
+  fn: (input: z.output<Schema>) => Result | Promise<Result>
+) {
+  const handler = withIpcHandler(name, schema, fn);
+  ipcMain.handle(name, (_event, ...args: unknown[]) =>
+    handler(args.length > 1 ? args : args[0])
+  );
+}
+
 const userDataPath = app.getPath('userData');
 const dbPath = join(userDataPath, 'passwords.db');
-const importPasswordSchema = z.object({
-  title: z.string(),
-  username: z.string(),
-  password: z.string().min(1),
-  url: z.string().nullable(),
-  notes: z.string().nullable(),
-});
-const importPasswordsSchema = z.array(importPasswordSchema);
-
 function sendModelDownloadProgress(progress: LocalModelDownloadProgress) {
   currentModelDownloadProgress = ['completed', 'cancelled', 'failed'].includes(
     progress.status
@@ -98,6 +119,23 @@ function initDatabase() {
   }
 }
 
+function installContentSecurityPolicy() {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders:
+        details.resourceType === 'mainFrame'
+          ? addContentSecurityPolicyHeader(details.responseHeaders, isDev)
+          : details.responseHeaders,
+    });
+  });
+}
+
+function getRendererEntryUrl() {
+  return isDev
+    ? `${developmentRendererUrl}/`
+    : pathToFileURL(join(__dirname, '../dist/index.html')).toString();
+}
+
 function createWindow() {
   const iconPath = isDev
     ? join(__dirname, '../public/icon-512.png')
@@ -124,23 +162,25 @@ function createWindow() {
     minHeight: 600,
     icon: appIcon,
     webPreferences: {
+      ...SECURE_WEB_PREFERENCES,
       preload: join(__dirname, '../dist-electron/preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
+      devTools: shouldEnableDevTools(app.isPackaged),
     },
     titleBarStyle: 'hiddenInset',
     show: false,
   });
 
+  attachNavigationGuards(mainWindow.webContents, getRendererEntryUrl());
+
   if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
+    mainWindow.loadURL(developmentRendererUrl);
   } else {
     mainWindow.loadFile(join(__dirname, '../dist/index.html'));
   }
 
   mainWindow.once('ready-to-show', () => {
     mainWindow?.show();
-    if (isDev) {
+    if (shouldEnableDevTools(app.isPackaged)) {
       mainWindow?.webContents.openDevTools();
     }
   });
@@ -166,9 +206,9 @@ function createSearchWindow() {
     x: Math.round((width - windowWidth) / 2),
     y: 10,
     webPreferences: {
+      ...SECURE_WEB_PREFERENCES,
       preload: join(__dirname, '../dist-electron/preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
+      devTools: shouldEnableDevTools(app.isPackaged),
     },
     frame: false,
     show: false,
@@ -180,8 +220,10 @@ function createSearchWindow() {
     hasShadow: false,
   });
 
+  attachNavigationGuards(searchWindow.webContents, getRendererEntryUrl());
+
   if (isDev) {
-    searchWindow.loadURL('http://localhost:5173/#/search');
+    searchWindow.loadURL(`${developmentRendererUrl}/#/search`);
   } else {
     searchWindow.loadFile(join(__dirname, '../dist/index.html'), {
       hash: '/search',
@@ -205,16 +247,18 @@ function createSearchWindow() {
 function registerGlobalShortcuts() {
   const searchShortcut =
     process.platform === 'darwin' ? 'Cmd+Shift+P' : 'Ctrl+Shift+P';
-  const debugShortcut = process.platform === 'darwin' ? 'F12' : 'Fn+F12';
 
   globalShortcut.register(searchShortcut, () => {
     createSearchWindow();
   });
 
-  globalShortcut.register(debugShortcut, () => {
-    mainWindow?.webContents.toggleDevTools();
-    searchWindow?.webContents.toggleDevTools();
-  });
+  if (shouldEnableDevTools(app.isPackaged)) {
+    const debugShortcut = process.platform === 'darwin' ? 'F12' : 'Fn+F12';
+    globalShortcut.register(debugShortcut, () => {
+      mainWindow?.webContents.toggleDevTools();
+      searchWindow?.webContents.toggleDevTools();
+    });
+  }
 }
 
 function unregisterGlobalShortcuts() {
@@ -222,6 +266,7 @@ function unregisterGlobalShortcuts() {
 }
 
 app.whenReady().then(() => {
+  installContentSecurityPolicy();
   initDatabase();
   createWindow();
   registerGlobalShortcuts();
@@ -248,135 +293,158 @@ app.on('will-quit', () => {
 });
 
 // IPC Handlers
-ipcMain.handle('get-passwords', () => {
+registerIpcHandler('get-passwords', noInputSchema, () => {
   if (!passwordAdapter) {
     return [];
   }
   return passwordAdapter.getPasswords();
 });
 
-ipcMain.handle('get-password-by-id', (_, id: number) => {
+registerIpcHandler('get-password-by-id', passwordIdSchema, id => {
   if (!passwordAdapter) {
     return null;
   }
   return passwordAdapter.getPasswordById(id);
 });
 
-ipcMain.handle('add-password', (_, data: PasswordInput) => {
+registerIpcHandler('add-password', passwordInputSchema, data => {
   if (!passwordAdapter) {
     return null;
   }
   return passwordAdapter.addPassword(data);
 });
 
-ipcMain.handle('add-passwords', (_, data: PasswordInput[]) => {
+registerIpcHandler('add-passwords', passwordBatchSchema, data => {
   if (!passwordAdapter) {
     return null;
   }
   return passwordAdapter.addPasswords(data);
 });
 
-ipcMain.handle('update-password', (_, id: number, data: PasswordInput) => {
+registerIpcHandler('update-password', updatePasswordSchema, ([id, data]) => {
   if (!passwordAdapter) {
     return null;
   }
   return passwordAdapter.updatePassword(id, data);
 });
 
-ipcMain.handle('delete-password', (_, id: number) => {
+registerIpcHandler('delete-password', passwordIdSchema, id => {
   if (!passwordAdapter) {
     return false;
   }
   return passwordAdapter.deletePassword(id);
 });
 
-ipcMain.handle('search-passwords', (_, query: string) => {
+registerIpcHandler('search-passwords', searchQuerySchema, query => {
   if (!passwordAdapter) {
     return [];
   }
   return passwordAdapter.searchPasswords(query);
 });
 
-ipcMain.handle('get-categories', () => {
+registerIpcHandler('get-categories', noInputSchema, () => {
   if (!passwordAdapter) {
     return [];
   }
   return passwordAdapter.getCategories();
 });
 
-ipcMain.handle('get-local-import-model-status', async () =>
+registerIpcHandler('get-local-import-model-status', noInputSchema, async () =>
   getLocalModelStatus(getLocalAiImportConfig())
 );
 
-ipcMain.handle('get-local-import-model-library-status', async () =>
-  getLocalModelLibraryStatus(getLocalAiImportConfig())
+registerIpcHandler(
+  'get-local-import-model-library-status',
+  noInputSchema,
+  async () => getLocalModelLibraryStatus(getLocalAiImportConfig())
 );
 
-ipcMain.handle(
+registerIpcHandler(
   'get-local-import-model-download-progress',
+  noInputSchema,
   () => currentModelDownloadProgress
 );
 
-ipcMain.handle('prepare-local-import-model', async (_, modelId?: string) => {
-  if (currentModelDownloadAbortController) {
-    throw new Error(
-      `A model download is already running: ${currentModelDownloadId}`
-    );
-  }
-
-  const config = getLocalAiImportConfig();
-  const abortController = new AbortController();
-  currentModelDownloadAbortController = abortController;
-  currentModelDownloadId = modelId ?? null;
-
-  try {
-    await prepareLocalModel(
-      config,
-      modelId,
-      abortController.signal,
-      sendModelDownloadProgress
-    );
-  } catch (error) {
-    // Cancellation is a user action, not a failure worth propagating.
-    if (!abortController.signal.aborted) {
-      throw error;
+registerIpcHandler(
+  'prepare-local-import-model',
+  optionalModelIdSchema,
+  async modelId => {
+    if (currentModelDownloadAbortController) {
+      throw new Error(
+        `A model download is already running: ${currentModelDownloadId}`
+      );
     }
-  } finally {
-    currentModelDownloadAbortController = null;
-    currentModelDownloadId = null;
-    currentModelDownloadProgress = null;
+
+    const config = getLocalAiImportConfig();
+    const abortController = new AbortController();
+    currentModelDownloadAbortController = abortController;
+    currentModelDownloadId = modelId ?? null;
+
+    try {
+      await prepareLocalModel(
+        config,
+        modelId,
+        abortController.signal,
+        sendModelDownloadProgress
+      );
+    } catch (error) {
+      // Cancellation is a user action, not a failure worth propagating.
+      if (!abortController.signal.aborted) {
+        throw error;
+      }
+    } finally {
+      currentModelDownloadAbortController = null;
+      currentModelDownloadId = null;
+      currentModelDownloadProgress = null;
+    }
+
+    return getLocalModelLibraryStatus(config);
   }
+);
 
-  return getLocalModelLibraryStatus(config);
-});
-
-ipcMain.handle('set-default-local-import-model', async (_, modelId: string) => {
-  await setDefaultLocalModel(modelId);
-  return getLocalModelLibraryStatus(getLocalAiImportConfig());
-});
-
-ipcMain.handle('cancel-local-import-model-download', async () => {
-  currentModelDownloadAbortController?.abort();
-  return getLocalModelLibraryStatus(getLocalAiImportConfig());
-});
-
-ipcMain.handle('remove-local-import-model', async (_, modelId: string) => {
-  if (currentModelDownloadId === modelId) {
-    throw new Error('Cancel the active download before removing this model.');
+registerIpcHandler(
+  'set-default-local-import-model',
+  modelIdSchema,
+  async modelId => {
+    await setDefaultLocalModel(modelId);
+    return getLocalModelLibraryStatus(getLocalAiImportConfig());
   }
+);
 
-  stopLlamaServer();
-  await removeLocalModel(modelId);
-  return getLocalModelLibraryStatus(getLocalAiImportConfig());
-});
+registerIpcHandler(
+  'cancel-local-import-model-download',
+  noInputSchema,
+  async () => {
+    currentModelDownloadAbortController?.abort();
+    return getLocalModelLibraryStatus(getLocalAiImportConfig());
+  }
+);
 
-ipcMain.handle('open-local-import-model-folder', async () => {
-  const modelsDir = getLocalModelsDir();
-  mkdirSync(modelsDir, { recursive: true });
-  await shell.openPath(modelsDir);
-});
+registerIpcHandler(
+  'remove-local-import-model',
+  modelIdSchema,
+  async modelId => {
+    if (currentModelDownloadId === modelId) {
+      throw new Error('Cancel the active download before removing this model.');
+    }
 
-ipcMain.handle('select-import-files', async () => {
+    stopLlamaServer();
+    await removeLocalModel(modelId);
+    return getLocalModelLibraryStatus(getLocalAiImportConfig());
+  }
+);
+
+registerIpcHandler(
+  'open-local-import-model-folder',
+  noInputSchema,
+  async () => {
+    const modelsDir = getLocalModelsDir();
+    mkdirSync(modelsDir, { recursive: true });
+    await shell.openPath(modelsDir);
+  }
+);
+
+registerIpcHandler('select-import-files', noInputSchema, async () => {
   const browserWindow =
     BrowserWindow.getFocusedWindow() ?? mainWindow ?? undefined;
   const options = {
@@ -412,99 +480,45 @@ ipcMain.handle('select-import-files', async () => {
 let currentImportJobId: string | null = null;
 let currentImportAbortController: AbortController | null = null;
 
-async function runRemoteImportWorkflow(
-  files: ImportFileDescriptor[],
-  abortController: AbortController
-) {
-  const { url: serviceUrl, secret } = getServiceEnvConfig();
-
-  if (!serviceUrl || !secret) {
-    throw new Error('Env not found.');
-  }
-
-  const formData = new FormData();
-  for (const file of files) {
-    const buffer = await readFile(file.path);
-    const blob = new Blob([buffer]);
-    formData.append('files', blob, file.name);
-  }
-
-  const createResponse = await fetch(`${serviceUrl}/import/jobs`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${secret}`,
-    },
-    body: formData,
-    signal: abortController.signal,
-  });
-
-  if (!createResponse.ok) {
-    const error = await createResponse
-      .json()
-      .catch(() => ({ error: { message: 'Failed to create import job' } }));
-    throw new Error(error.error?.message || 'Failed to create import job');
-  }
-
-  const { jobId } = (await createResponse.json()) as { jobId: string };
-  currentImportJobId = jobId;
-
-  while (!abortController.signal.aborted) {
-    const statusResponse = await fetch(`${serviceUrl}/import/jobs/${jobId}`, {
-      headers: {
-        Authorization: `Bearer ${secret}`,
-      },
-      signal: abortController.signal,
-    });
-
-    if (!statusResponse.ok) {
-      throw new Error('Failed to get import job status');
-    }
-
-    const job = (await statusResponse.json()) as {
-      status: string;
-      result?: ImportWorkflowResult;
-      error?: { code: string; message: string };
-    };
-
-    if (job.status === 'completed') {
-      if (!job.result) {
-        throw new Error('Import job completed without a result');
-      }
-      return job.result;
-    }
-    if (job.status === 'failed') {
-      throw new Error(job.error?.message || 'Import job failed');
-    }
-    if (job.status === 'cancelled') {
-      throw new Error('Import was cancelled');
-    }
-
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-
-  throw new Error('Import was cancelled');
-}
-
-interface InlineInterface {
-  modelId?: string;
-}
-ipcMain.handle(
+registerIpcHandler(
   'run-import-workflow',
-  async (_, files: ImportFileDescriptor[], options?: InlineInterface) => {
+  runImportWorkflowSchema,
+  async ([files, options]) => {
     const abortController = new AbortController();
     currentImportAbortController = abortController;
     currentImportJobId = null;
 
     try {
       const config = getLocalAiImportConfig();
-      return config.provider === 'remote-service'
-        ? await runRemoteImportWorkflow(files, abortController)
-        : await runLocalImportWorkflow(
+      if (config.provider === 'remote-service') {
+        const { url: serviceUrl, secret } = getServiceEnvConfig();
+        if (!serviceUrl || !secret) {
+          throw new RemoteImportPublicError('AI_IMPORT_NOT_CONFIGURED');
+        }
+        try {
+          return await runRemoteImportWorkflow({
             files,
-            abortController.signal,
-            options?.modelId,
-            sendModelDownloadProgress
-          );
+            serviceUrl,
+            secret,
+            signal: abortController.signal,
+            onJobCreated: jobId => {
+              currentImportJobId = jobId;
+            },
+          });
+        } catch (error) {
+          console.error('[AI import] Remote workflow failed:', error);
+          if (error instanceof RemoteImportPublicError) {
+            throw error;
+          }
+          throw new RemoteImportPublicError('AI_IMPORT_REMOTE_FAILED');
+        }
+      }
+      return await runLocalImportWorkflow(
+        files,
+        abortController.signal,
+        options?.modelId,
+        sendModelDownloadProgress
+      );
     } finally {
       currentImportJobId = null;
       currentImportAbortController = null;
@@ -512,7 +526,7 @@ ipcMain.handle(
   }
 );
 
-ipcMain.handle('cancel-import-workflow', async () => {
+registerIpcHandler('cancel-import-workflow', noInputSchema, async () => {
   const { url: serviceUrl, secret } = getServiceEnvConfig();
   const jobId = currentImportJobId;
 
@@ -533,15 +547,15 @@ ipcMain.handle('cancel-import-workflow', async () => {
   currentImportAbortController = null;
 });
 
-ipcMain.handle(
+registerIpcHandler(
   'save-imported-passwords',
-  async (_, candidates: ImportPasswordInput[]) => {
+  importPasswordsSchema,
+  async candidates => {
     if (!passwordAdapter) {
       return { saved: 0 };
     }
-    const parsedCandidates = importPasswordsSchema.parse(candidates);
     await passwordAdapter.addPasswords(
-      parsedCandidates.map(record => {
+      candidates.map(record => {
         return {
           title: record.title,
           username: record.username,
@@ -556,6 +570,6 @@ ipcMain.handle(
       })
     );
 
-    return { saved: parsedCandidates.length };
+    return { saved: candidates.length };
   }
 );

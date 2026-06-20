@@ -1,6 +1,11 @@
-import { type ReactNode , useEffect, useState } from 'react';
+import { type ReactNode, useEffect, useState } from 'react';
 import { I18nextProvider } from 'react-i18next';
-import { changeLanguage, detectAndSetLanguage,i18n, supportedLanguages } from '@repo/i18n';
+import {
+  changeLanguage,
+  detectAndSetLanguage,
+  i18n,
+  supportedLanguages,
+} from '@repo/i18n';
 import { LanguageLoader } from '@repo/ui/primitives';
 
 interface I18nProviderProps {
@@ -12,8 +17,10 @@ export function I18nProvider({ children }: I18nProviderProps) {
 
   useEffect(() => {
     detectAndSetLanguage()
-      .then(() => { setReady(true); })
-      .catch((error) => {
+      .then(() => {
+        setReady(true);
+      })
+      .catch(error => {
         console.error('Failed to detect/set language:', error);
         setReady(true); // Ensure app renders even if language detection fails
       });
@@ -27,4 +34,4 @@ export function I18nProvider({ children }: I18nProviderProps) {
 }
 
 // Re-export for convenience
-export { changeLanguage,supportedLanguages };
+export { changeLanguage, supportedLanguages };

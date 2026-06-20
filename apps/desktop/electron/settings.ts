@@ -1,10 +1,23 @@
-import { existsSync, readFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { app } from 'electron';
+import { app, safeStorage } from 'electron';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const serviceSecretFileName = 'ai-import-service-secret.json';
+const serviceSecretVersion = 1;
+
+interface StoredServiceSecret {
+  version: typeof serviceSecretVersion;
+  encryptedSecret: string;
+}
 
 function parseEnvFile(filePath: string): Record<string, string> {
   const content = readFileSync(filePath, 'utf8');
@@ -52,7 +65,9 @@ function findWorkspaceRoot(startDir: string) {
     const packageJsonPath = join(current, 'package.json');
     if (existsSync(packageJsonPath)) {
       try {
-        const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
+        const packageJson = JSON.parse(
+          readFileSync(packageJsonPath, 'utf8')
+        ) as {
           workspaces?: unknown;
         };
         if (packageJson.workspaces) {
@@ -72,11 +87,13 @@ function findWorkspaceRoot(startDir: string) {
 }
 
 function getCandidateWorkspaceRoots() {
-  return [...new Set([
+  return [
+    ...new Set([
       findWorkspaceRoot(process.cwd()),
       findWorkspaceRoot(app.getAppPath()),
       findWorkspaceRoot(__dirname),
-    ])];
+    ]),
+  ];
 }
 
 function getRootEnvPaths() {
@@ -94,98 +111,176 @@ function getPackagedDesktopEnv() {
   return readJsonConfigFile(join(process.resourcesPath, 'desktop-env.json'));
 }
 
+function getServiceSecretPath() {
+  return join(app.getPath('userData'), serviceSecretFileName);
+}
+
+function readStoredServiceSecret(): StoredServiceSecret | null {
+  const path = getServiceSecretPath();
+  if (!existsSync(path)) {return null;}
+
+  try {
+    const parsed = JSON.parse(
+      readFileSync(path, 'utf8')
+    ) as Partial<StoredServiceSecret>;
+    if (
+      parsed.version !== serviceSecretVersion ||
+      typeof parsed.encryptedSecret !== 'string'
+    ) {
+      return null;
+    }
+    return parsed as StoredServiceSecret;
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredServiceSecret(secret: string) {
+  const path = getServiceSecretPath();
+  const directory = dirname(path);
+  if (!existsSync(directory)) {mkdirSync(directory, { recursive: true });}
+
+  const stored: StoredServiceSecret = {
+    version: serviceSecretVersion,
+    encryptedSecret: safeStorage.encryptString(secret).toString('base64'),
+  };
+  const temporaryPath = `${path}.tmp`;
+  writeFileSync(temporaryPath, JSON.stringify(stored, null, 2), {
+    encoding: 'utf8',
+    mode: 0o600,
+  });
+  renameSync(temporaryPath, path);
+}
+
+function getPlaintextSecretSeed() {
+  if (process.env.AI_IMPORT_SERVICE_SECRET) {
+    return process.env.AI_IMPORT_SERVICE_SECRET;
+  }
+
+  // Development-only migration path. Packaged builds never read a plaintext
+  // secret from desktop-env.json or ship one in application resources.
+  if (!app.isPackaged) {
+    for (const filePath of getRootEnvPaths()) {
+      if (!existsSync(filePath)) {continue;}
+      const secret = parseEnvFile(filePath).AI_IMPORT_SERVICE_SECRET;
+      if (secret) {return secret;}
+    }
+  }
+  return undefined;
+}
+
+function getEncryptedServiceSecret() {
+  const stored = readStoredServiceSecret();
+  const seed = getPlaintextSecretSeed();
+  if (!stored && !seed) {return undefined;}
+
+  if (!safeStorage.isEncryptionAvailable()) {
+    console.warn(
+      'AI import service credentials are unavailable because secure storage is locked.'
+    );
+    return undefined;
+  }
+
+  try {
+    // An explicitly supplied environment value also provides a safe rotation
+    // mechanism. It is encrypted immediately and is never copied to JSON.
+    if (seed) {
+      writeStoredServiceSecret(seed);
+      // Remove the plaintext value after it has been persisted securely.
+      // eslint-disable-next-line no-restricted-syntax/noDeleteOperator
+      delete process.env.AI_IMPORT_SERVICE_SECRET;
+      return seed;
+    }
+    return safeStorage.decryptString(
+      Buffer.from(stored!.encryptedSecret, 'base64')
+    );
+  } catch {
+    console.warn('AI import service credentials could not be decrypted.');
+    return undefined;
+  }
+}
+
 export function getServiceEnvConfig(): {
   url: string | undefined;
   secret: string | undefined;
 } {
   let url = process.env.AI_IMPORT_SERVICE_URL;
-  let secret = process.env.AI_IMPORT_SERVICE_SECRET;
 
   const packagedEnv = getPackagedDesktopEnv();
   if (!url && packagedEnv.AI_IMPORT_SERVICE_URL) {
     url = packagedEnv.AI_IMPORT_SERVICE_URL;
   }
-  if (!secret && packagedEnv.AI_IMPORT_SERVICE_SECRET) {
-    secret = packagedEnv.AI_IMPORT_SERVICE_SECRET;
-  }
 
   for (const filePath of getRootEnvPaths()) {
-    if (url && secret) {break;}
-    if (!existsSync(filePath)) {continue;}
-
-    const parsed = parseEnvFile(filePath);
-    if (!url && parsed.AI_IMPORT_SERVICE_URL) {
-      url = parsed.AI_IMPORT_SERVICE_URL;
-    }
-    if (!secret && parsed.AI_IMPORT_SERVICE_SECRET) {
-      secret = parsed.AI_IMPORT_SERVICE_SECRET;
-    }
+    if (url || !existsSync(filePath)) {continue;}
+    url = parseEnvFile(filePath).AI_IMPORT_SERVICE_URL;
   }
 
-  return { url, secret };
+  return { url, secret: getEncryptedServiceSecret() };
 }
 
 export interface LocalAiImportConfig {
-  provider: 'local-llama' | 'remote-service'
-  modelRepo: string
-  modelQuant: string
-  modelFile: string | undefined
-  modelSha256: string | undefined
-  modelDownloadUrl: string | undefined
-  modelPath: string | undefined
-  llamaServerPath: string | undefined
-  contextSize: number
-  maxTokens: number
-  keepServerAliveMs: number
+  provider: 'local-llama' | 'remote-service';
+  modelRepo: string;
+  modelQuant: string;
+  modelFile: string | undefined;
+  modelSha256: string | undefined;
+  modelDownloadUrl: string | undefined;
+  modelPath: string | undefined;
+  llamaServerPath: string | undefined;
+  llamaServerSha256: string | undefined;
+  contextSize: number;
+  maxTokens: number;
+  keepServerAliveMs: number;
 }
 
 function readMergedEnv() {
-  const merged: Record<string, string> = {}
+  const merged: Record<string, string> = {};
 
   for (const filePath of getRootEnvPaths()) {
-    if (!existsSync(filePath)) {continue}
-    Object.assign(merged, parseEnvFile(filePath))
+    if (!existsSync(filePath)) {continue;}
+    Object.assign(merged, parseEnvFile(filePath));
   }
 
   return {
     ...merged,
     ...getPackagedDesktopEnv(),
     ...process.env,
-  } as Record<string, string | undefined>
+  } as Record<string, string | undefined>;
 }
 
 function readNumberEnv(
   env: Record<string, string | undefined>,
   key: string,
-  fallback: number,
+  fallback: number
 ) {
-  const value = Number(env[key])
-  return Number.isFinite(value) && value > 0 ? value : fallback
+  const value = Number(env[key]);
+  return Number.isFinite(value) && value > 0 ? value : fallback;
 }
 
 export function getLocalAiImportConfig(): LocalAiImportConfig {
-  const env = readMergedEnv()
+  const env = readMergedEnv();
   const provider =
     env.AI_IMPORT_PROVIDER === 'remote-service'
       ? 'remote-service'
-      : 'local-llama'
+      : 'local-llama';
 
   return {
     provider,
-    modelRepo:
-      env.AI_IMPORT_MODEL_REPO ?? 'ggml-org/gemma-4-26B-A4B-it-GGUF',
+    modelRepo: env.AI_IMPORT_MODEL_REPO ?? 'ggml-org/gemma-4-26B-A4B-it-GGUF',
     modelQuant: env.AI_IMPORT_MODEL_QUANT ?? 'Q4_K_M',
     modelFile: env.AI_IMPORT_MODEL_FILE || undefined,
     modelSha256: env.AI_IMPORT_MODEL_SHA256 || undefined,
     modelDownloadUrl: env.AI_IMPORT_MODEL_DOWNLOAD_URL || undefined,
     modelPath: env.AI_IMPORT_MODEL_PATH || undefined,
     llamaServerPath: env.AI_IMPORT_LLAMA_SERVER_PATH || undefined,
+    llamaServerSha256: env.AI_IMPORT_LLAMA_SERVER_SHA256 || undefined,
     contextSize: readNumberEnv(env, 'AI_IMPORT_CONTEXT_SIZE', 8192),
     maxTokens: readNumberEnv(env, 'AI_IMPORT_MAX_TOKENS', 2000),
     keepServerAliveMs: readNumberEnv(
       env,
       'AI_IMPORT_KEEP_SERVER_ALIVE_MS',
-      300000,
+      300000
     ),
-  }
+  };
 }

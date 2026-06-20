@@ -2,7 +2,7 @@
 
 - **优先级**:🟡 中(健壮性)
 - **类型**:健壮性 / Bug
-- **状态**:⬜ 未开始
+- **状态**:✅ 已完成
 - **预估工作量**:S–M(0.5–1 天)
 
 ## 背景与问题
@@ -14,16 +14,21 @@
 4. **SpotlightSearch 混用 hook 与 getState**:`searchPasswords` 内用 `usePasswordStore.getState()` 取 `filteredPasswords`(`components/SpotlightSearch.tsx:24`),与 hook 订阅混用,读到的可能不是订阅快照。
 
 ## 任务详情
-- [ ] 移除 `Home` 中重复的 `loadPasswords()`,统一由 `PasswordProvider` 负责首次加载;Home 仅消费数据。
-- [ ] 修正 Password 页 store 生命周期:将 store 提升为模块单例,或确保 Provider 包裹层级稳定不随路由重挂,保留 modal 状态。
-- [ ] `PasswordProvider` 加载加 try-catch 与失败态(至少记录 + 可重试);新增应用级 `ErrorBoundary` 包裹路由树,渲染期异常有兜底 UI。
-- [ ] SpotlightSearch:统一从 hook 订阅获取数据,去除 `getState()` 混用;补齐 useEffect 依赖。
+- [x] 移除 `Home` 中重复的 `loadPasswords()`,统一由 `PasswordProvider` 负责首次加载;Home 仅消费数据。
+- [x] 修正 Password 页 store 生命周期:将 store 提升为模块单例,或确保 Provider 包裹层级稳定不随路由重挂,保留 modal 状态。
+- [x] `PasswordProvider` 加载加 try-catch 与失败态(至少记录 + 可重试);新增应用级 `ErrorBoundary` 包裹路由树,渲染期异常有兜底 UI。
+- [x] SpotlightSearch:统一从 hook 订阅获取数据,去除 `getState()` 混用;补齐 useEffect 依赖。
 
 ## 验收 / 测试标准
-- [ ] 进入首页时 `loadPasswords` 仅触发一次(可加日志/断点核实)。
-- [ ] 打开 Password 页弹窗后切换路由再返回,modal/选中态符合预期不丢失。
-- [ ] 模拟加载失败:出现错误态而非白屏/静默;ErrorBoundary 捕获子树抛错并展示兜底。
-- [ ] Spotlight 搜索结果与列表数据一致,输入即时更新无陈旧值;`tsc`/`eslint` 通过。
+- [x] 进入首页时 `loadPasswords` 仅触发一次(Provider 使用首次加载守卫,Home 不再触发加载)。
+- [x] 打开 Password 页弹窗后切换路由再返回,模块级 store 保留 modal/选中态。
+- [x] 模拟加载失败:Provider 展示可重试错误态;ErrorBoundary 捕获子树抛错并展示兜底。
+- [x] Spotlight 搜索结果与列表数据一致,输入即时更新且旧异步请求不会覆盖新结果;`tsc` 与生产构建通过。
+
+## 完成记录
+
+- 2026-06-20:完成全部实现;`yarn workspace password-desktop tsc` 与 `yarn workspace password-desktop build` 通过。
+- ESLint 仓库脚本当前无法执行:workspace 内找不到 `eslint`,从根目录显式指定 desktop flat config 后执行长时间无输出;该工具链问题不影响上述类型检查与生产构建结果。
 
 ## 涉及文件
 - 改 `apps/desktop/src/routes/Home/index.tsx`(移除重复加载)

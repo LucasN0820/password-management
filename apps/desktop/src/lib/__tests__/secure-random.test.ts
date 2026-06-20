@@ -1,17 +1,19 @@
+/* eslint-disable @typescript-eslint/no-misused-spread -- Password alphabets and outputs are intentionally ASCII-only. */
 import { randomBytes as nodeRandomBytes } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import {
   generateSecurePassword,
   LOWERCASE,
   NUMBERS,
-  SYMBOLS,
-  UPPERCASE,
   type PasswordGeneratorOptions,
   type RandomBytesProvider,
+  SYMBOLS,
+  UPPERCASE,
 } from '../secure-random';
 
-const cryptoProvider: RandomBytesProvider = length =>
-  new Uint8Array(nodeRandomBytes(length));
+const cryptoProvider: RandomBytesProvider = length => {
+  return new Uint8Array(nodeRandomBytes(length));
+};
 
 /** Cycles through a fixed byte sequence — used to exercise rejection sampling. */
 function providerFromBytes(bytes: number[]): RandomBytesProvider {
@@ -77,7 +79,10 @@ describe('generateSecurePassword (desktop)', () => {
       },
       cryptoProvider
     );
-    const allowed = new Set([...UPPERCASE, ...NUMBERS]);
+    const allowed = new Set([
+      ...UPPERCASE,
+      ...NUMBERS,
+    ]);
     for (const ch of pw) {
       expect(allowed.has(ch)).toBe(true);
     }
@@ -136,7 +141,9 @@ describe('generateSecurePassword (desktop)', () => {
         },
         cryptoProvider
       );
-      for (const ch of pw) counts.set(ch, (counts.get(ch) ?? 0) + 1);
+      for (const ch of pw) {
+        counts.set(ch, (counts.get(ch) ?? 0) + 1);
+      }
     }
 
     expect(counts.size).toBe(NUMBERS.length);
