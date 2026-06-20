@@ -33,6 +33,8 @@
     "@types/better-sqlite3": "^7.6.13",
     "autoprefixer": "^10.4.24",
     "better-sqlite3": "^12.6.2",
+    "electron-log": "^5.2.4",
+    "electron-updater": "^6.3.9",
     "framer-motion": "^12.34.0",
     "lucide-react": "^0.563.0",
     "postcss": "^8.5.6",

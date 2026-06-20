@@ -448,5 +448,20 @@
     "offlineTitle": "Couldn't reach the breach service",
     "offlineHint": "Some passwords couldn't be checked. Showing partial results; try again when you're online.",
     "recheck": "Check again"
+  },
+  "update": {
+    "title": "App updates",
+    "settingsHint": "Check for and install the latest desktop version.",
+    "checkForUpdates": "Check for updates",
+    "checking": "Checking for updates…",
+    "available": "A new version is available",
+    "downloading": "Downloading update… {{percent}}%",
+    "downloaded": "Update ready to install",
+    "download": "Download",
+    "restartToInstall": "Restart & install",
+    "later": "Later",
+    "upToDate": "You're on the latest version",
+    "error": "Couldn't check for updates. Try again later.",
+    "devOnly": "Updates are only available in the installed app."
   }
 }

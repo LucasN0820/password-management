@@ -448,5 +448,20 @@
     "offlineTitle": "无法连接泄露检测服务",
     "offlineHint": "部分密码无法检测。已显示部分结果,联网后请重试。",
     "recheck": "重新检测"
+  },
+  "update": {
+    "title": "应用更新",
+    "settingsHint": "检查并安装最新的桌面版本。",
+    "checkForUpdates": "检查更新",
+    "checking": "正在检查更新…",
+    "available": "发现新版本",
+    "downloading": "正在下载更新… {{percent}}%",
+    "downloaded": "更新已就绪，可安装",
+    "download": "下载",
+    "restartToInstall": "重启并安装",
+    "later": "稍后",
+    "upToDate": "已是最新版本",
+    "error": "无法检查更新，请稍后再试。",
+    "devOnly": "仅在已安装的应用中可用。"
   }
 }
