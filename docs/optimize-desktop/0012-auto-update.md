@@ -76,4 +76,4 @@
 - 渲染层 `UpdateNotifier.tsx`(挂载于 `App.tsx`)在 available/downloading/downloaded 三态弹出可关闭浮层;设置页新增「检查更新」卡片与按钮,toast 反馈;`@repo/i18n` en/zh 补 `update.*` 文案。
 - 构建侧:`package.json` 加 `electron-updater`/`electron-log` 并在 `vite.config.mts` 标记 external(同 better-sqlite3);`electron-builder.yml` 各 `artifactName` 去除空格并改用 `Password-Vault-*`,避免 GitHub 资源名空格替换破坏 generic feed 的文件解析。
 - 验证:desktop `yarn tsc`、`yarn lint`、`yarn build`(renderer + main + preload)均通过。**未执行**:`yarn dev` 运行时走查、`yarn dist` 打包产物核对、低→高版本端到端更新、混合 tag 回归,均需在已打包环境人工验证(故对应验收项未勾选)。
-- 注意:`electron-builder.yml` 的 `productName` 仍为 `Password Volt`(原有拼写),与 `artifactName` 的 `Password-Vault` 不一致;是否一并改名待定(改动会影响已安装应用的显示名/安装目录)。
+- 命名统一:`electron-builder.yml` 的 `productName` 由 `Password Volt` 更正为 `Password Vault`,与 `artifactName`(`Password-Vault-*`)一致;同步更新了发布工作流的 release 标题、`vault-key.ts` 用户提示与发布文档中的产物名示例。

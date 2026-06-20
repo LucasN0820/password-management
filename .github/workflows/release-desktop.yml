@@ -249,7 +249,7 @@ jobs:
             exit 1
           fi
 
-          release_title="Password Volt Desktop ${RELEASE_VERSION}"
+          release_title="Password Vault Desktop ${RELEASE_VERSION}"
           release_notes="Desktop release ${RELEASE_VERSION}."
 
           if gh release view "$TAG_NAME" >/dev/null 2>&1; then
