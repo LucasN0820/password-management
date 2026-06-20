@@ -5,6 +5,7 @@ import type {
   LocalModelLibraryStatus,
   LocalModelStatus,
 } from './ai-import/model-cache';
+import type { AutoUpdateStatus } from './auto-updater';
 import { copyToClipboard } from './clipboard';
 import type {
   ImportCandidateDraft,
@@ -139,6 +140,24 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     return Promise.resolve();
   },
+  checkForUpdates: (): Promise<AutoUpdateStatus> =>
+    invoke('auto-update:check'),
+  downloadUpdate: (): Promise<AutoUpdateStatus> =>
+    invoke('auto-update:download'),
+  quitAndInstallUpdate: (): Promise<void> =>
+    invoke('auto-update:quit-and-install'),
+  onAutoUpdateStatus: (callback: (status: AutoUpdateStatus) => void) => {
+    const listener = (
+      _event: Electron.IpcRendererEvent,
+      status: AutoUpdateStatus
+    ) => {
+      callback(status);
+    };
+    ipcRenderer.on('auto-update-status', listener);
+    return () => {
+      ipcRenderer.removeListener('auto-update-status', listener);
+    };
+  },
 });
 
 declare global {
@@ -182,6 +201,12 @@ declare global {
         text: string,
         options?: ClipboardCopyOptions
       ) => Promise<void>;
+      checkForUpdates: () => Promise<AutoUpdateStatus>;
+      downloadUpdate: () => Promise<AutoUpdateStatus>;
+      quitAndInstallUpdate: () => Promise<void>;
+      onAutoUpdateStatus: (
+        callback: (status: AutoUpdateStatus) => void
+      ) => () => void;
     };
   }
 }
@@ -197,3 +222,4 @@ export type {
   LocalModelLibraryStatus,
   LocalModelStatus,
 };
+export type { AutoUpdateState,AutoUpdateStatus } from './auto-updater';

@@ -1,6 +1,6 @@
 # Desktop 打包与发布流程
 
-本文档说明 Password Volt 桌面端从源码到用户可安装包的完整构建链路，涵盖本地打包和 CI 自动发布两种场景。
+本文档说明 Password Vault 桌面端从源码到用户可安装包的完整构建链路，涵盖本地打包和 CI 自动发布两种场景。
 
 ---
 
@@ -84,9 +84,9 @@ files:
 
 | 平台 | 格式 | 架构 | 产物命名 |
 |------|------|------|---------|
-| macOS | DMG, ZIP | x64, arm64 | `Password Volt-1.0.0-mac-{arch}.dmg` |
-| Windows | NSIS 安装包 | x64, arm64 | `Password Volt-1.0.0-win-{arch}-setup.exe` |
-| Linux | AppImage, DEB | x64 (AppImage 还支持 arm64) | `Password Volt-1.0.0-linux-{arch}.AppImage` |
+| macOS | DMG, ZIP | x64, arm64 | `Password-Vault-1.0.0-mac-{arch}.dmg` |
+| Windows | NSIS 安装包 | x64, arm64 | `Password-Vault-1.0.0-win-{arch}-setup.exe` |
+| Linux | AppImage, DEB | x64 (AppImage 还支持 arm64) | `Password-Vault-1.0.0-linux-{arch}.AppImage` |
 
 所有产物输出到 `apps/desktop/release/` 目录。
 
@@ -178,8 +178,8 @@ GH_TOKEN=ghp_xxxx yarn dist:mac --publish always
 apps/desktop/release/
   ├── mac/                    # macOS .app 目录
   ├── mac-arm64/              # macOS arm64 .app 目录
-  ├── Password Volt-1.0.0-mac-x64.dmg
-  ├── Password Volt-1.0.0-mac-arm64.dmg
+  ├── Password-Vault-1.0.0-mac-x64.dmg
+  ├── Password-Vault-1.0.0-mac-arm64.dmg
   ├── ...
   └── builder-effective-config.yaml  # electron-builder 实际使用的合并配置
 ```

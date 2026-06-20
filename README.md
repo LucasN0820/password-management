@@ -198,12 +198,19 @@ yarn eas:android       # production 构建 + 自动提交 Google Play（internal
 | Windows | NSIS 安装包 | x64 · arm64 |
 | Linux | AppImage + .deb | x64 · arm64（.deb 仅 x64） |
 
-**自动发布**：推送 `desktop-v*` tag 触发 `.github/workflows/release-desktop.yml`（亦可手动 `workflow_dispatch`），在 macOS / Windows / Linux 三平台并行构建（自动生成各平台图标）→ 产物发布到 [GitHub Releases](https://github.com/LucasN0820/password-management/releases)。已安装的应用通过内置自动更新（GitHub provider）检测并提示更新。
+**自动发布**：推送 `desktop-v*` tag 触发 `.github/workflows/release-desktop.yml`（亦可手动 `workflow_dispatch`），在 macOS / Windows / Linux 三平台并行构建（自动生成各平台图标）→ 产物（含 `latest*.yml` 更新元数据）发布到 [GitHub Releases](https://github.com/LucasN0820/password-management/releases)。
 
 ```bash
-git tag desktop-v1.1.0
-git push origin desktop-v1.1.0
+# 1. 先提升版本号（自动更新依据 package.json 的 version 判断是否有新版）
+#    编辑 apps/desktop/package.json 的 "version"，例如 1.1.0 → 1.2.0
+# 2. 打 tag 并推送（tag 版本需与 package.json 对齐）
+git tag desktop-v1.2.0
+git push origin desktop-v1.2.0
 ```
+
+> ⚠️ 仅打 tag 不够：electron-updater 比较的是 `latest.yml` 里的 `version`（即构建时 `package.json` 的 `version`）与运行中应用的版本，发版前务必先 bump 版本号，否则旧版本不会收到更新。
+
+**应用内自动更新**：已实现，基于 electron-updater。应用启动时自动检查一次（设置页亦有「检查更新」按钮）；发现新版会提示用户，**手动点击下载**，下载完成后提示「重启并安装」。由于本仓库同时发布 `desktop-v*` 与 `mobile-v*` 两类 Release，更新逻辑会先经 GitHub API 解析出最新的 `desktop-v*` 发布，再以 generic feed 指向其资源目录，避免被移动端发布干扰（详见 `apps/desktop/electron/auto-updater.ts`）。
 
 **本地命令**
 

@@ -4,6 +4,7 @@ import {
   FolderOpen,
   Languages,
   Loader2,
+  RefreshCw,
   ShieldCheck,
   Trash2,
   X,
@@ -53,6 +54,7 @@ export default function SettingsPage() {
   const [busyModelId, setBusyModelId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] =
     useState<LocalModelDownloadProgress | null>(null);
+  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
 
   const refreshLibrary = async () => {
     const status = await window.electronAPI.getLocalImportModelLibraryStatus();
@@ -170,6 +172,43 @@ export default function SettingsPage() {
 
   const handleOpenModelFolder = async () => {
     await window.electronAPI.openLocalImportModelFolder();
+  };
+
+  const handleCheckForUpdates = async () => {
+    setIsCheckingUpdate(true);
+    try {
+      const status = await window.electronAPI.checkForUpdates();
+      switch (status.state) {
+        case 'dev-disabled': {
+          toast({ title: t('update.devOnly') });
+          break;
+        }
+        case 'available':
+        case 'downloading':
+        case 'downloaded': {
+          toast({
+            title: t('update.available'),
+            description: status.version ? `v${status.version}` : undefined,
+          });
+          break;
+        }
+        case 'error': {
+          toast({ title: t('update.error'), variant: 'destructive' });
+          break;
+        }
+        case 'idle':
+        case 'checking':
+        case 'not-available':
+        default: {
+          toast({ title: t('update.upToDate') });
+          break;
+        }
+      }
+    } catch {
+      toast({ title: t('update.error'), variant: 'destructive' });
+    } finally {
+      setIsCheckingUpdate(false);
+    }
   };
 
   const handleSelectLanguage = (code: string) => {
@@ -451,6 +490,35 @@ export default function SettingsPage() {
               })}
             </div>
           </CardContent>
+        </Card>
+
+        <Card className='rounded-lg border-border bg-card'>
+          <CardHeader className='flex flex-row items-start justify-between gap-4'>
+            <div>
+              <CardTitle className='flex items-center gap-2'>
+                <RefreshCw className='h-4 w-4 text-clay' />
+                {t('update.title')}
+              </CardTitle>
+              <CardDescription className='mt-1'>
+                {t('update.settingsHint')}
+              </CardDescription>
+            </div>
+            <Button
+              size='sm'
+              variant='outline'
+              disabled={isCheckingUpdate}
+              onClick={() => {
+                void handleCheckForUpdates();
+              }}
+            >
+              {isCheckingUpdate ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : (
+                <RefreshCw className='h-4 w-4' />
+              )}
+              {t('update.checkForUpdates')}
+            </Button>
+          </CardHeader>
         </Card>
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 - **优先级**:🟢 较低(体验 / 发布)
 - **类型**:发布 / 体验
-- **状态**:⬜ 未开始
+- **状态**:✅ 已完成(代码),🟦 端到端打包验证待人工
 - **预估工作量**:M(1–1.5 天)
 
 ## 背景与问题
@@ -28,24 +28,24 @@
 
 ## 任务详情
 
-- [ ] 依赖:`apps/desktop/package.json` 新增 `electron-updater@^6`、`electron-log@^5`(对应 Electron 29.4.6 / electron-builder 24.12.0)。
-- [ ] 新增 `apps/desktop/electron/auto-updater.ts`:
+- [x] 依赖:`apps/desktop/package.json` 新增 `electron-updater@^6`、`electron-log@^5`(对应 Electron 29.4.6 / electron-builder 24.12.0)。
+- [x] 新增 `apps/desktop/electron/auto-updater.ts`:
   - dev 短路:`!app.isPackaged` 时不启用(electron-updater 未打包会抛错),设置页手动检查返回“仅打包后可用”。
   - 解析最新 desktop Release(绕开 mobile tag):调 GitHub API `GET /repos/LucasN0820/password-management/releases`(公开仓库,带 `User-Agent`),过滤 `tag_name` 以 `desktop-v` 开头、非 draft/prerelease,按 semver 取最高得 `<tag>`;`autoUpdater.setFeedURL({ provider: 'generic', url: '.../releases/download/<tag>' })`。找不到则广播 `not-available` 安全退出。
   - 配置:`autoDownload = false`、`autoInstallOnAppQuit = true`、`logger = electron-log`。
   - 事件 → 统一频道 `auto-update-status` 广播(复用 `webContents.send` 范式):`checking` / `available` / `not-available` / `downloading`(percent…)/ `downloaded` / `error`。
   - IPC(经 `registerIpcHandler` + `noInputSchema`):`auto-update:check`、`auto-update:download`、`auto-update:quit-and-install`。
-- [ ] 接线 `apps/desktop/electron/main.ts`:`app.whenReady()` 内 `createWindow()` 之后调 `setupAutoUpdater(() => mainWindow)`;IPC 区注册 `registerAutoUpdaterIpc()`。
-- [ ] preload `apps/desktop/electron/preload.ts`:仿 `onLocalImportModelDownloadProgress` 暴露 `onAutoUpdateStatus`、`checkForUpdates`、`downloadUpdate`、`quitAndInstallUpdate`,并补 `Window.electronAPI` 类型。
-- [ ] 渲染层 UI:
+- [x] 接线 `apps/desktop/electron/main.ts`:`app.whenReady()` 内 `createWindow()` 之后调 `setupAutoUpdater(() => mainWindow)`;IPC 区注册 `registerAutoUpdaterIpc()`。
+- [x] preload `apps/desktop/electron/preload.ts`:仿 `onLocalImportModelDownloadProgress` 暴露 `onAutoUpdateStatus`、`checkForUpdates`、`downloadUpdate`、`quitAndInstallUpdate`,并补 `Window.electronAPI` 类型。
+- [x] 渲染层 UI:
   - 新增 `apps/desktop/src/components/UpdateNotifier.tsx`:订阅状态;`available` 弹提示含「下载」、`downloading` 显进度、`downloaded` 含「重启安装」;文案走 i18n;在 `src/App.tsx` 挂载(邻 `<Toaster />`)。
   - `src/routes/Settings/index.tsx`:新增「检查更新」按钮 → `checkForUpdates()`,toast 反馈“已是最新 / 发现新版 / 仅打包后可用”。
-- [ ] i18n:`@repo/i18n` en/zh 新增 `update.*` 文案(available / download / downloading / downloaded / restartToInstall / upToDate / checking / checkForUpdates / error / devOnly)。
-- [ ] 文档:更新 `README.md` 修正“自动更新”描述,并在发版步骤补充“先 bump `package.json` version”。
+- [x] i18n:`@repo/i18n` en/zh 新增 `update.*` 文案(available / download / downloading / downloaded / restartToInstall / upToDate / checking / checkForUpdates / error / devOnly)。
+- [x] 文档:更新 `README.md` 修正“自动更新”描述,并在发版步骤补充“先 bump `package.json` version”。
 
 ## 验收 / 测试标准
 
-- [ ] `cd apps/desktop && yarn tsc && yarn build` 通过;根 `yarn lint` 通过。
+- [x] `cd apps/desktop && yarn tsc && yarn build` 通过;`yarn lint` 通过。
 - [ ] dev(`yarn dev`)下不报错;设置页「检查更新」提示“仅打包后可用”。
 - [ ] `yarn dist:<platform>` 后 `apps/desktop/release/` 生成安装包与 `latest*.yml`。
 - [ ] 端到端:安装低版本(如 `1.0.0`)→ 发布更高 `desktop-v1.2.0` Release → 启动旧版应用出现「发现新版本」→「下载」见进度 →「重启安装」后版本升级。
@@ -71,4 +71,9 @@
 
 ## 完成记录
 
-- (未完成)
+- 新增 `electron/auto-updater.ts`:通过 GitHub API 解析最新 `desktop-v*` 发布(过滤 draft/prerelease,数值比较 major.minor.patch 取最高),以 generic feed 指向该 Release 资源目录,绕开同仓库 `mobile-v*` 对默认 GitHub provider 的干扰;`autoDownload=false` + `autoInstallOnAppQuit=true`,事件经 `auto-update-status` 频道推送主窗口;IPC `auto-update:check/download/quit-and-install` 复用 `withIpcHandler` + `noInputSchema`。dev(未打包)短路返回 `dev-disabled`。
+- `main.ts` 在 `whenReady` 接入 `setupAutoUpdater(() => mainWindow)`(启动 3s 后自动检查一次)并注册 IPC;`preload.ts` 暴露 `checkForUpdates/downloadUpdate/quitAndInstallUpdate/onAutoUpdateStatus` 及类型。
+- 渲染层 `UpdateNotifier.tsx`(挂载于 `App.tsx`)在 available/downloading/downloaded 三态弹出可关闭浮层;设置页新增「检查更新」卡片与按钮,toast 反馈;`@repo/i18n` en/zh 补 `update.*` 文案。
+- 构建侧:`package.json` 加 `electron-updater`/`electron-log` 并在 `vite.config.mts` 标记 external(同 better-sqlite3);`electron-builder.yml` 各 `artifactName` 去除空格并改用 `Password-Vault-*`,避免 GitHub 资源名空格替换破坏 generic feed 的文件解析。
+- 验证:desktop `yarn tsc`、`yarn lint`、`yarn build`(renderer + main + preload)均通过。**未执行**:`yarn dev` 运行时走查、`yarn dist` 打包产物核对、低→高版本端到端更新、混合 tag 回归,均需在已打包环境人工验证(故对应验收项未勾选)。
+- 命名统一:`electron-builder.yml` 的 `productName` 由 `Password Volt` 更正为 `Password Vault`,与 `artifactName`(`Password-Vault-*`)一致;同步更新了发布工作流的 release 标题、`vault-key.ts` 用户提示与发布文档中的产物名示例。

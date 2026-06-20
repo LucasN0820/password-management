@@ -3,6 +3,7 @@ import { SidebarProvider } from '@repo/ui/primitives/sidebar';
 import { Toaster } from '@repo/ui/primitives/toaster';
 import { AppSidebar } from './components/AppSidebar';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { UpdateNotifier } from './components/UpdateNotifier';
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           </div>
         </SidebarProvider>
         <Toaster />
+        <UpdateNotifier />
       </div>
     </ErrorBoundary>
   );

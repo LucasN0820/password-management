@@ -37,7 +37,7 @@ interface LegacyStoredVaultKey {
 export class SecureStorageUnavailableError extends Error {
   constructor() {
     super(
-      'Secure storage is unavailable. Unlock your operating system keychain and restart Password Volt.'
+      'Secure storage is unavailable. Unlock your operating system keychain and restart Password Vault.'
     );
     this.name = 'SecureStorageUnavailableError';
   }

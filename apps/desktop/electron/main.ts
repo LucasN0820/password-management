@@ -35,6 +35,7 @@ import {
   RemoteImportPublicError,
   runRemoteImportWorkflow,
 } from './ai-import/remote-import-workflow';
+import { registerAutoUpdaterIpc, setupAutoUpdater } from './auto-updater';
 import { createDesktopDatabase } from './db';
 import type { ImportFileDescriptor } from './import/types';
 import {
@@ -270,6 +271,7 @@ app.whenReady().then(() => {
   initDatabase();
   createWindow();
   registerGlobalShortcuts();
+  setupAutoUpdater(() => mainWindow);
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
@@ -573,3 +575,5 @@ registerIpcHandler(
     return { saved: candidates.length };
   }
 );
+
+registerAutoUpdaterIpc();
