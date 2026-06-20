@@ -38,7 +38,6 @@ jobs:
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
-          packager: npm
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Get yarn cache directory path
@@ -56,9 +55,12 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      # Build the "direct" profile: same APK as production but on the `direct`
+      # EAS Update channel, which the app uses to enable GitHub-APK self-update
+      # only for sideloaded installs (Play installs stay on `production`).
       - name: Build Android
         working-directory: apps/mobile
-        run: eas build --platform android --profile production --non-interactive
+        run: eas build --platform android --profile direct --non-interactive
 
       # - name: Build iOS
       #   working-directory: apps/mobile
@@ -68,7 +70,7 @@ jobs:
         id: build-url
         working-directory: apps/mobile
         run: |
-          URL=$(eas build:list --platform android --status finished \
+          URL=$(eas build:list --platform android --profile direct --status finished \
             --json --limit 1 --non-interactive | jq -r '.[0].artifacts.buildUrl')
           echo "url=$URL" >> $GITHUB_OUTPUT
 

@@ -1,7 +1,12 @@
 import Constants from 'expo-constants';
 import * as Haptics from 'expo-haptics';
 import { type Href, useRouter } from 'expo-router';
-import { Archive, ChevronRight, ShieldCheck } from 'lucide-react-native';
+import {
+  Archive,
+  ChevronRight,
+  RefreshCw,
+  ShieldCheck,
+} from 'lucide-react-native';
 import { useMemo } from 'react';
 import {
   Pressable,
@@ -13,6 +18,7 @@ import {
   View,
 } from 'react-native';
 import { useTranslation } from '@repo/i18n';
+import { useAppUpdateCheck } from '@/features/app-update';
 import { getDeviceLanguage } from '@/features/settings/device-language';
 import { useSettingsStore } from '@/features/settings/settings-store';
 import {
@@ -146,6 +152,7 @@ export function SettingsScreen() {
   const router = useRouter();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const c = Colors[scheme];
+  const { check: checkForUpdates, isChecking } = useAppUpdateCheck();
 
   const themeMode = useSettingsStore(s => s.themeMode);
   const language = useSettingsStore(s => s.language);
@@ -186,7 +193,6 @@ export function SettingsScreen() {
         value: ms,
         label: formatDuration(ms, t('settings.immediately')),
       })),
-     
     [t]
   );
 
@@ -196,7 +202,6 @@ export function SettingsScreen() {
         value: ms,
         label: formatDuration(ms, t('settings.never')),
       })),
-     
     [t]
   );
 
@@ -329,6 +334,38 @@ export function SettingsScreen() {
       </Section>
 
       <Section title={t('settings.about')} colors={c}>
+        <Pressable
+          onPress={() => {
+            selection();
+            void checkForUpdates();
+          }}
+          disabled={isChecking}
+          accessibilityRole="button"
+          accessibilityLabel={t('update.checkForUpdates')}
+          accessibilityState={{ disabled: isChecking, busy: isChecking }}
+          style={styles.navRow}
+        >
+          <RefreshCw size={20} color={c.accentBlue} />
+          <View style={styles.rowText}>
+            <Text
+              style={[
+                styles.rowLabel,
+                { color: c.foreground, fontFamily: fonts.body },
+              ]}
+            >
+              {isChecking ? t('update.checking') : t('update.checkForUpdates')}
+            </Text>
+            <Text
+              style={[
+                styles.rowHint,
+                { color: c.mutedForeground, fontFamily: fonts.caption },
+              ]}
+            >
+              {t('update.settingsHintMobile')}
+            </Text>
+          </View>
+          <ChevronRight size={18} color={c.textTertiary} />
+        </Pressable>
         <Row label={t('settings.version')} colors={c} last>
           <Text style={[styles.value, { color: c.mutedForeground, fontFamily: fonts.mono }]}>
             {version}

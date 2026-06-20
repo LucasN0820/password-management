@@ -37,6 +37,11 @@
       "ios": {
         "resourceClass": "m-medium"
       }
+    },
+    "direct": {
+      "extends": "production",
+      "channel": "direct",
+      "distribution": "internal"
     }
   },
   "submit": {
