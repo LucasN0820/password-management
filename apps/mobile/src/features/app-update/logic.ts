@@ -24,13 +24,19 @@ function numericParts(version: string) {
     .map(part => Number.parseInt(part, 10));
 }
 
+function segment(parts: number[], index: number) {
+  const value = parts[index];
+  // `?? 0` alone wouldn't catch NaN from a malformed (non-tag) version string.
+  return Number.isFinite(value) ? value : 0;
+}
+
 export function compareVersions(left: string, right: string) {
   const leftParts = numericParts(left);
   const rightParts = numericParts(right);
   const length = Math.max(leftParts.length, rightParts.length);
 
   for (let index = 0; index < length; index = index + 1) {
-    const difference = (leftParts[index] ?? 0) - (rightParts[index] ?? 0);
+    const difference = segment(leftParts, index) - segment(rightParts, index);
     if (difference !== 0) return Math.sign(difference);
   }
 

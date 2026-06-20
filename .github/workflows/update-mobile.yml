@@ -32,14 +32,17 @@ jobs:
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
-          packager: npm
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Publish production update
+      # Publish to both branches so Play builds (channel `production`) and
+      # sideloaded builds (channel `direct`) both receive the OTA update.
+      - name: Publish OTA update
         working-directory: apps/mobile
         env:
           UPDATE_MESSAGE: ${{ inputs.message }}
-        run: eas update --branch production --message "$UPDATE_MESSAGE" --non-interactive
+        run: |
+          eas update --branch production --message "$UPDATE_MESSAGE" --non-interactive
+          eas update --branch direct --message "$UPDATE_MESSAGE" --non-interactive

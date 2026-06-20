@@ -1,6 +1,5 @@
 import { fetch } from 'expo/fetch';
 import Constants from 'expo-constants';
-import { File, Paths } from 'expo-file-system';
 import * as LegacyFileSystem from 'expo-file-system/legacy';
 import * as IntentLauncher from 'expo-intent-launcher';
 import * as Updates from 'expo-updates';
@@ -15,6 +14,11 @@ const RELEASES_URL =
   'https://api.github.com/repos/LucasN0820/password-management/releases?per_page=30';
 const APK_MIME_TYPE = 'application/vnd.android.package-archive';
 const FLAG_GRANT_READ_URI_PERMISSION = 1;
+// Only builds distributed as a sideloaded APK (the `direct` EAS Update channel)
+// may self-update from GitHub Releases. Play Store installs are signed with a
+// different key, so prompting them to sideload would fail to install — they
+// receive native updates through Google Play instead.
+const DIRECT_INSTALL_CHANNEL = 'direct';
 
 export type AppUpdateResult =
   | { type: 'ota' }
@@ -67,7 +71,7 @@ async function performCheck(): Promise<AppUpdateResult> {
     otaError = error;
   }
 
-  if (Platform.OS === 'android') {
+  if (Platform.OS === 'android' && Updates.channel === DIRECT_INSTALL_CHANNEL) {
     try {
       const release = await fetchLatestBinaryRelease();
       const currentVersion =
@@ -100,16 +104,33 @@ export async function applyOtaUpdate() {
   await Updates.reloadAsync();
 }
 
-export async function downloadAndInstallApk(release: MobileRelease) {
+export async function downloadAndInstallApk(
+  release: MobileRelease,
+  onProgress?: (fraction: number) => void
+) {
   if (Platform.OS !== 'android') {
     throw new Error('APK updates are only supported on Android.');
   }
 
-  const file = new File(Paths.cache, `password-vault-${release.version}.apk`);
-  const downloaded = await File.downloadFileAsync(release.downloadUrl, file, {
-    idempotent: true,
-  });
-  const contentUri = await LegacyFileSystem.getContentUriAsync(downloaded.uri);
+  const targetUri = `${LegacyFileSystem.cacheDirectory ?? ''}password-vault-${release.version}.apk`;
+  const download = LegacyFileSystem.createDownloadResumable(
+    release.downloadUrl,
+    targetUri,
+    {},
+    progress => {
+      const total = progress.totalBytesExpectedToWrite;
+      if (total > 0) {
+        onProgress?.(progress.totalBytesWritten / total);
+      }
+    }
+  );
+
+  const result = await download.downloadAsync();
+  if (!result?.uri) {
+    throw new Error('APK download failed.');
+  }
+
+  const contentUri = await LegacyFileSystem.getContentUriAsync(result.uri);
 
   await IntentLauncher.startActivityAsync('android.intent.action.VIEW', {
     data: contentUri,

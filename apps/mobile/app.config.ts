@@ -18,7 +18,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   runtimeVersion: { policy: 'fingerprint' },
   updates: {
     url: 'https://u.expo.dev/aed44e7d-8d68-4974-86b2-70e8534d16ce',
-    checkAutomatically: 'ON_LOAD',
+    // Updates are checked/fetched manually (see src/features/app-update) so we
+    // can prompt before reloading. ON_ERROR_RECOVERY keeps the SDK's automatic
+    // behaviour limited to recovering from a broken JS bundle, and avoids a
+    // redundant background fetch racing the manual check on startup.
+    checkAutomatically: 'ON_ERROR_RECOVERY',
     fallbackToCacheTimeout: 0,
   },
   orientation: 'portrait',

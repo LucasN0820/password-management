@@ -193,8 +193,6 @@ export function SettingsScreen() {
         value: ms,
         label: formatDuration(ms, t('settings.immediately')),
       })),
-
-     
     [t]
   );
 
@@ -204,8 +202,6 @@ export function SettingsScreen() {
         value: ms,
         label: formatDuration(ms, t('settings.never')),
       })),
-
-     
     [t]
   );
 

@@ -13,12 +13,30 @@ interface CheckOptions {
   interactive?: boolean;
 }
 
+// Remember what the automatic (startup) check already surfaced this session so
+// it doesn't re-prompt for the same update on every remount. Manual checks from
+// Settings always prompt.
+let lastAutoPromptedSignature: string | null = null;
+
+function resultSignature(result: AppUpdateResult): string {
+  return result.type === 'binary'
+    ? `binary:${result.release.version}`
+    : result.type;
+}
+
 function useUpdatePrompts() {
   const { t } = useTranslation();
   const showToast = useToastStore(state => state.show);
 
   return useCallback(
     (result: AppUpdateResult, interactive: boolean) => {
+      const actionable = result.type === 'ota' || result.type === 'binary';
+      if (actionable && !interactive) {
+        const signature = resultSignature(result);
+        if (signature === lastAutoPromptedSignature) return;
+        lastAutoPromptedSignature = signature;
+      }
+
       if (result.type === 'ota') {
         Alert.alert(t('update.downloaded'), t('update.otaReadyHint'), [
           { text: t('update.later'), style: 'cancel' },
@@ -40,7 +58,15 @@ function useUpdatePrompts() {
               text: t('update.download'),
               onPress: () => {
                 showToast(t('update.downloadingApk'));
-                void downloadAndInstallApk(result.release).catch(() => {
+                let lastPercent = -1;
+                void downloadAndInstallApk(result.release, fraction => {
+                  const percent = Math.round(fraction * 100);
+                  if (percent === lastPercent) return;
+                  if (percent >= lastPercent + 5 || percent === 100) {
+                    lastPercent = percent;
+                    showToast(t('update.downloading', { percent }));
+                  }
+                }).catch(() => {
                   Alert.alert(t('update.title'), t('update.installError'));
                 });
               },

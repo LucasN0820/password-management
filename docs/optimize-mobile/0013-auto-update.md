@@ -9,11 +9,13 @@
 
 移动端已完成两层更新能力:
 
-- **OTA 热更**:`expo-updates` 已配置 EAS Update URL、`fingerprint` runtime、启动自动检查和设置页手动检查。发现更新后先下载，再提示用户重启应用。
-- **Android 直装更新**:从 GitHub Releases 查询最新稳定的 `mobile-v*` APK，比较版本后提示下载，并通过 Android 系统安装器打开 APK。
-- **发布入口**:`update-mobile.yml` 提供手动触发的 production OTA 发布；原生 APK 仍由 `release-mobile.yml` 发布。
+- **OTA 热更**:`expo-updates` 已配置 EAS Update URL、`fingerprint` runtime。更新由代码**手动**检查/下载（启动一次 + 设置页手动），下载后提示重启;`checkAutomatically` 设为 `ON_ERROR_RECOVERY`，避免 SDK 后台自动拉取与手动检查竞争。
+- **Android 直装更新**:从 GitHub Releases 查询最新稳定的 `mobile-v*` APK，比较版本后带进度下载，并通过系统安装器打开 APK。**仅对 `direct` EAS Update channel 的侧载构建启用**(`Updates.channel === 'direct'`):Google Play 安装包由 Play 重签名,签名与 GitHub APK 不一致,直接侧载会安装失败,故 Play 渠道(channel `production`)不走此路径,改由 Play 自身更新。
+- **发布入口**:`update-mobile.yml` 手动触发 OTA,**同时发布到 `production` 与 `direct` 两个 branch**,使 Play 与侧载用户都能收到热更;侧载 APK 由 `release-mobile.yml` 以 `--profile direct` 构建发布。
 
 iOS 当前尚未上架，因此只启用 OTA；等 App Store 分发落地后再补商店版本检查。
+
+> **渠道隔离(关键)**:`eas.json` 新增 `direct` profile(`extends: production` + `channel: direct`)。侧载 APK 走 `direct` channel、Play 走 `production` channel,二者以 `Updates.channel`(原生构建属性,OTA 后仍稳定)区分,从而把"侧载自更新"只开给真正侧载的用户。
 
 当前分发渠道(决定方案):
 
