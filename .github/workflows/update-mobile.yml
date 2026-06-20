@@ -1,0 +1,45 @@
+name: Publish Mobile OTA Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Short description of the OTA update'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack prepare yarn@4.13.0 --activate
+
+      - name: Setup EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          packager: npm
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Publish production update
+        working-directory: apps/mobile
+        env:
+          UPDATE_MESSAGE: ${{ inputs.message }}
+        run: eas update --branch production --message "$UPDATE_MESSAGE" --non-interactive

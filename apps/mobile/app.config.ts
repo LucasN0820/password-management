@@ -15,12 +15,19 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   name: APP_NAME,
   scheme: APP_SLUG,
   version: packageJson.version,
+  runtimeVersion: { policy: 'fingerprint' },
+  updates: {
+    url: 'https://u.expo.dev/aed44e7d-8d68-4974-86b2-70e8534d16ce',
+    checkAutomatically: 'ON_LOAD',
+    fallbackToCacheTimeout: 0,
+  },
   orientation: 'portrait',
   icon: asset('./assets/images/icon.png'),
   userInterfaceStyle: 'automatic',
   ios: {
     supportsTablet: true,
     bundleIdentifier: APP_PACKAGE,
+    buildNumber: '1',
   },
   android: {
     adaptiveIcon: {
@@ -29,6 +36,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     predictiveBackGestureEnabled: true,
     package: APP_PACKAGE,
+    versionCode: 1,
+    permissions: ['android.permission.REQUEST_INSTALL_PACKAGES'],
   },
   web: {
     favicon: asset('./assets/images/favicon.png'),
