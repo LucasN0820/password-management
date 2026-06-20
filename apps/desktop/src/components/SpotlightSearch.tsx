@@ -3,41 +3,46 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Password } from '@repo/db';
 import { useTranslation } from '@repo/i18n';
 import { cn } from '@repo/ui/lib/utils';
+import { useCopyToClipboard } from '../hooks/useCopyToClipboard';
 import { usePasswordStore } from '../store/passwordStore';
 
 export default function SpotlightSearch() {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
-  const [results, setResults] = useState<Password[]>([]);
+  const [searchFailed, setSearchFailed] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { passwords, searchPasswords: storeSearch } = usePasswordStore();
+  const passwords = usePasswordStore(state => state.passwords);
+  const filteredPasswords = usePasswordStore(state => state.filteredPasswords);
+  const storeSearch = usePasswordStore(state => state.searchPasswords);
+  const { copyToClipboard } = useCopyToClipboard();
+  const results = !query.trim() || searchFailed ? passwords : filteredPasswords;
 
-  const searchPasswords = useCallback(
-    async (searchQuery: string) => {
-      if (!searchQuery.trim()) {
-        setResults(passwords);
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  useEffect(() => {
+    const normalizedQuery = query.trim();
+    setSearchFailed(false);
+
+    if (!normalizedQuery) {
+      return;
+    }
+
+    let isCurrentSearch = true;
+    void storeSearch(normalizedQuery).catch(error => {
+      if (!isCurrentSearch) {
         return;
       }
-      try {
-        await storeSearch(searchQuery);
-        const { filteredPasswords } = usePasswordStore.getState();
-        setResults(filteredPasswords);
-      } catch {
-        setResults(passwords);
-      }
-    },
-    [passwords, storeSearch]
-  );
+      console.error('Failed to search passwords:', error);
+      setSearchFailed(true);
+    });
 
-  useEffect(() => {
-    searchPasswords('');
-    inputRef.current?.focus();
-  }, [searchPasswords]);
-
-  useEffect(() => {
-    searchPasswords(query);
-  }, [query, searchPasswords]);
+    return () => {
+      isCurrentSearch = false;
+    };
+  }, [query, storeSearch]);
 
   useEffect(() => {
     setSelectedIndex(0);
@@ -52,34 +57,41 @@ export default function SpotlightSearch() {
     }
   }, [selectedIndex, results]);
 
-  const handleSelect = useCallback((password: Password) => {
-    navigator.clipboard
-      .writeText(password.password)
-      .then(() => { window.close(); })
-      .catch(console.error);
-  }, []);
+  const handleSelect = useCallback(
+    (password: Password) => {
+      copyToClipboard(password.password, 'spotlight-password')
+        .then(() => {
+          window.close();
+        })
+        .catch(console.error);
+    },
+    [copyToClipboard]
+  );
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       switch (e.key) {
         case 'ArrowDown': {
           e.preventDefault();
-          if (results.length > 0)
-            {setSelectedIndex(prev => (prev + 1) % results.length);}
+          if (results.length > 0) {
+            setSelectedIndex(prev => (prev + 1) % results.length);
+          }
           break;
         }
         case 'ArrowUp': {
           e.preventDefault();
-          if (results.length > 0)
-            {setSelectedIndex(
+          if (results.length > 0) {
+            setSelectedIndex(
               prev => (prev - 1 + results.length) % results.length
-            );}
+            );
+          }
           break;
         }
         case 'Enter': {
           e.preventDefault();
-          if (results.length > 0 && results[selectedIndex])
-            {handleSelect(results[selectedIndex]);}
+          if (results.length > 0 && results[selectedIndex]) {
+            handleSelect(results[selectedIndex]);
+          }
           break;
         }
         case 'Escape': {
@@ -93,11 +105,14 @@ export default function SpotlightSearch() {
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (['ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(e.key))
-        {handleKeyDown(e);}
+      if (['ArrowUp', 'ArrowDown', 'Enter', 'Escape'].includes(e.key)) {
+        handleKeyDown(e);
+      }
     };
     document.addEventListener('keydown', handler);
-    return () => { document.removeEventListener('keydown', handler); };
+    return () => {
+      document.removeEventListener('keydown', handler);
+    };
   }, [handleKeyDown]);
 
   return (
@@ -113,7 +128,9 @@ export default function SpotlightSearch() {
             placeholder={t('spotlight.searchPlaceholder')}
             value={query}
             className='flex-1 bg-transparent text-lg text-foreground placeholder:text-text-tertiary outline-none'
-            onChange={e => { setQuery(e.target.value); }}
+            onChange={e => {
+              setQuery(e.target.value);
+            }}
           />
           <kbd className='shrink-0 rounded-md border border-border bg-surface px-2 py-1 font-mono text-[10px] text-muted-foreground'>
             Esc
@@ -134,54 +151,60 @@ export default function SpotlightSearch() {
               </div>
             ) : (
               <div className='space-y-0.5'>
-                {results.map((password, index) => 
-                  { return <div
-                    key={password.id}
-                    data-selected-index={index}
-                    className={cn(
-                      'flex cursor-pointer items-center gap-3 rounded-md px-4 py-3 transition-colors duration-100',
-                      selectedIndex === index
-                        ? 'bg-selected-bg'
-                        : 'hover:bg-accent'
-                    )}
-                    onClick={() => { handleSelect(password); }}
-                  >
+                {results.map((password, index) => {
+                  return (
                     <div
+                      key={password.id}
+                      data-selected-index={index}
                       className={cn(
-                        'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md',
-                        selectedIndex === index ? 'bg-clay-soft' : 'bg-surface'
+                        'flex cursor-pointer items-center gap-3 rounded-md px-4 py-3 transition-colors duration-100',
+                        selectedIndex === index
+                          ? 'bg-selected-bg'
+                          : 'hover:bg-accent'
                       )}
+                      onClick={() => {
+                        handleSelect(password);
+                      }}
                     >
-                      {password.icon ? (
-                        <img
-                          src={password.icon}
-                          alt={password.title}
-                          className='w-full h-full object-cover'
-                        />
-                      ) : password.url ? (
-                        <Globe className='h-4 w-4 text-muted-foreground' />
-                      ) : (
-                        <Lock className='h-4 w-4 text-muted-foreground' />
+                      <div
+                        className={cn(
+                          'flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-md',
+                          selectedIndex === index
+                            ? 'bg-clay-soft'
+                            : 'bg-surface'
+                        )}
+                      >
+                        {password.icon ? (
+                          <img
+                            src={password.icon}
+                            alt={password.title}
+                            className='w-full h-full object-cover'
+                          />
+                        ) : password.url ? (
+                          <Globe className='h-4 w-4 text-muted-foreground' />
+                        ) : (
+                          <Lock className='h-4 w-4 text-muted-foreground' />
+                        )}
+                      </div>
+                      <div className='flex-1 min-w-0'>
+                        <div className='text-sm font-semibold text-foreground truncate'>
+                          {password.title}
+                        </div>
+                        <div className='text-xs text-muted-foreground truncate'>
+                          {password.username || t('home.noUsername')}
+                        </div>
+                      </div>
+                      {password.isFavorite && (
+                        <Star className='h-3.5 w-3.5 shrink-0 fill-current text-clay' />
+                      )}
+                      {selectedIndex === index && (
+                        <kbd className='shrink-0 rounded-md bg-ink px-2 py-0.5 font-mono text-[10px] text-white'>
+                          ↵ {t('generator.copy')}
+                        </kbd>
                       )}
                     </div>
-                    <div className='flex-1 min-w-0'>
-                      <div className='text-sm font-semibold text-foreground truncate'>
-                        {password.title}
-                      </div>
-                      <div className='text-xs text-muted-foreground truncate'>
-                        {password.username || t('home.noUsername')}
-                      </div>
-                    </div>
-                    {password.isFavorite && (
-                      <Star className='h-3.5 w-3.5 shrink-0 fill-current text-clay' />
-                    )}
-                    {selectedIndex === index && (
-                      <kbd className='shrink-0 rounded-md bg-ink px-2 py-0.5 font-mono text-[10px] text-white'>
-                        ↵ Copy
-                      </kbd>
-                    )}
-                  </div> }
-                )}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -211,7 +234,7 @@ export default function SpotlightSearch() {
           </div>
           {results.length > 0 && (
             <span className='text-text-tertiary'>
-              {results.length} passwords
+              {t('spotlight.resultCount', { count: results.length })}
             </span>
           )}
         </div>

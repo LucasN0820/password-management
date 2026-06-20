@@ -1,9 +1,10 @@
-import { type ChildProcess,spawn } from 'node:child_process';
-import { chmodSync, existsSync, statSync } from 'node:fs';
+import { type ChildProcess, spawn } from 'node:child_process';
+import { chmodSync, existsSync, realpathSync, statSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { join } from 'node:path';
 import { app } from 'electron';
 import type { LocalAiImportConfig } from '../settings';
+import { assertFileSha256 } from './file-integrity';
 import {
   ensureLocalModel,
   type LocalModelDownloadProgressHandler,
@@ -17,6 +18,15 @@ interface RunningServer {
 }
 
 let runningServer: RunningServer | null = null;
+
+const BUNDLED_SERVER_SHA256: Record<string, string> = {
+  'darwin-arm64':
+    'b33b16f8fd7f1f55d99f9f1229ff17a2a19a24a38da62fe22329f15eadc28a80',
+  'darwin-x64':
+    '47a7e075eac46750b32d7bb8bb5396fea3c84ea12088eb8594e3da1f02beaf7b',
+  'win32-x64':
+    '4d3d13c5d80c6ef63fd979a2c5e32474cc07d1dadd716644ab3fa68fca11e155',
+};
 
 function appendStartupOutput(current: string, chunk: Buffer) {
   const next = `${current}${chunk.toString('utf8')}`;
@@ -73,7 +83,7 @@ function getBundledServerPath() {
   return join(app.getAppPath(), 'bin', 'llama.cpp', executable);
 }
 
-function resolveServerPath(config: LocalAiImportConfig) {
+export async function resolveVerifiedServerPath(config: LocalAiImportConfig) {
   const serverPath = config.llamaServerPath ?? getBundledServerPath();
 
   if (!existsSync(serverPath)) {
@@ -86,11 +96,35 @@ function resolveServerPath(config: LocalAiImportConfig) {
     );
   }
 
+  const canonicalPath = realpathSync(serverPath);
+  const allowlistedPath = realpathSync(
+    config.llamaServerPath ?? getBundledServerPath()
+  );
+  if (canonicalPath !== allowlistedPath) {
+    throw new Error(
+      'llama.cpp server path is outside the configured allowlist.'
+    );
+  }
+
+  const expectedSha256 = config.llamaServerPath
+    ? config.llamaServerSha256
+    : BUNDLED_SERVER_SHA256[`${process.platform}-${process.arch}`];
+  if (!expectedSha256) {
+    throw new Error(
+      'No trusted SHA256 is configured for this llama.cpp server binary.'
+    );
+  }
+  await assertFileSha256(
+    canonicalPath,
+    expectedSha256,
+    'llama.cpp server binary'
+  );
+
   if (process.platform !== 'win32') {
     try {
-      const {mode} = statSync(serverPath);
+      const { mode } = statSync(serverPath);
       if ((mode & 0o111) === 0) {
-        chmodSync(serverPath, mode | 0o755);
+        chmodSync(serverPath, 0o500);
       }
     } catch (error) {
       const message =
@@ -105,7 +139,7 @@ function resolveServerPath(config: LocalAiImportConfig) {
     }
   }
 
-  return serverPath;
+  return canonicalPath;
 }
 
 async function delay(ms: number, signal?: AbortSignal) {
@@ -198,7 +232,7 @@ export async function getLlamaServerBaseUrl(
     }
   }
 
-  const serverPath = resolveServerPath(config);
+  const serverPath = await resolveVerifiedServerPath(config);
   const port = await findAvailablePort();
   const baseUrl = `http://127.0.0.1:${port}`;
   const args = [
@@ -271,7 +305,9 @@ export async function getLlamaServerBaseUrl(
 }
 
 export function releaseLlamaServer(config: LocalAiImportConfig) {
-  if (!runningServer) {return;}
+  if (!runningServer) {
+    return;
+  }
 
   if (runningServer.keepAliveTimer) {
     clearTimeout(runningServer.keepAliveTimer);
@@ -283,7 +319,9 @@ export function releaseLlamaServer(config: LocalAiImportConfig) {
 }
 
 export function stopLlamaServer() {
-  if (!runningServer) {return;}
+  if (!runningServer) {
+    return;
+  }
 
   const server = runningServer;
   runningServer = null;

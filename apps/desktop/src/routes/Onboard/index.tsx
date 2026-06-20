@@ -6,12 +6,13 @@ import {
   Loader2,
   Save,
   Sparkles,
-  Trash2,
   Upload,
   XCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useShallow } from 'zustand/react/shallow';
+import { useTranslation } from '@repo/i18n';
 import {
   Button,
   Card,
@@ -19,8 +20,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  Input,
-  Label,
   Select,
   SelectContent,
   SelectItem,
@@ -28,22 +27,18 @@ import {
   SelectValue,
   toast,
 } from '@repo/ui';
+import { formatBytes } from '@/lib/format';
 import { useImportStore } from '@/store/importStore';
 import { usePasswordStore } from '@/store/passwordStore';
 import type { LocalModelLibraryStatus } from '../../../electron/preload';
-
-function formatBytes(bytes: number) {
-  if (bytes < 1024) {return `${bytes} B`;}
-  if (bytes < 1024 * 1024) {return `${(bytes / 1024).toFixed(1)} KB`;}
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
+import { CandidateList } from './candidate-list';
 
 export default function OnboardPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const {
     stage,
     files,
-    candidates,
     warnings,
     fileResults,
     error,
@@ -51,18 +46,35 @@ export default function OnboardPage() {
     selectFiles,
     setSelectedModelId,
     runImport,
-    updateCandidate,
-    removeCandidate,
     saveCandidates,
     reset,
-  } = useImportStore();
+  } = useImportStore(
+    useShallow(state => {
+      return {
+        stage: state.stage,
+        files: state.files,
+        warnings: state.warnings,
+        fileResults: state.fileResults,
+        error: state.error,
+        selectedModelId: state.selectedModelId,
+        selectFiles: state.selectFiles,
+        setSelectedModelId: state.setSelectedModelId,
+        runImport: state.runImport,
+        saveCandidates: state.saveCandidates,
+        reset: state.reset,
+      };
+    })
+  );
+  const candidateIds = useImportStore(
+    useShallow(state => state.candidates.map(candidate => candidate.id))
+  );
+  const selectedCount = useImportStore(
+    state => state.candidates.filter(candidate => candidate.selected).length
+  );
   const [modelLibrary, setModelLibrary] =
     useState<LocalModelLibraryStatus | null>(null);
   const loadPasswords = usePasswordStore(state => state.loadPasswords);
 
-  const selectedCount = candidates.filter(
-    candidate => candidate.selected
-  ).length;
   const availableModels = useMemo(
     () => modelLibrary?.models.filter(model => model.exists) ?? [],
     [modelLibrary]
@@ -88,11 +100,13 @@ export default function OnboardPage() {
 
   const handleRunImport = async () => {
     const success = await runImport();
-    if (!success) {return;}
+    if (!success) {
+      return;
+    }
 
     toast({
-      title: 'Extraction finished',
-      description: 'Review the imported credentials before saving them.',
+      title: t('aiImport.extractionFinished'),
+      description: t('aiImport.extractionFinishedHint'),
     });
   };
 
@@ -101,17 +115,14 @@ export default function OnboardPage() {
       const saved = await saveCandidates();
       await loadPasswords();
       toast({
-        title: 'Credentials saved',
-        description: `${saved} imported entries were added to the vault.`,
+        title: t('aiImport.credentialsSaved'),
+        description: t('aiImport.credentialsSavedHint', { count: saved }),
       });
       navigate('/password');
-    } catch (saveError) {
+    } catch {
       toast({
-        title: 'Save failed',
-        description:
-          saveError instanceof Error
-            ? saveError.message
-            : 'Unable to save imported credentials.',
+        title: t('aiImport.saveFailed'),
+        description: t('aiImport.saveFailedHint'),
         variant: 'destructive',
       });
     }
@@ -120,8 +131,8 @@ export default function OnboardPage() {
   const handleCancel = () => {
     reset();
     toast({
-      title: 'Import canceled',
-      description: 'The current onboarding session was discarded.',
+      title: t('aiImport.importCanceled'),
+      description: t('aiImport.importCanceledHint'),
     });
   };
 
@@ -133,81 +144,90 @@ export default function OnboardPage() {
             <div className='max-w-2xl'>
               <div className='mb-4 inline-flex items-center gap-2 rounded-full border border-clay/25 bg-clay-soft px-3 py-1 text-sm font-semibold text-clay'>
                 <Bot className='h-4 w-4' />
-                AI Onboard MVP
+                {t('aiImport.onboardEyebrow')}
               </div>
               <h1 className='font-heading text-[48px] font-medium leading-tight tracking-tight text-foreground'>
-                Import passwords from mixed files and review them before saving.
+                {t('aiImport.onboardTitle')}
               </h1>
               <p className='mt-3 max-w-xl text-base text-muted-foreground'>
-                Choose password exports or notes. The desktop app parses them
-                locally, asks the bundled llama.cpp model to extract likely
-                credentials, and lets you fix anything before it reaches the
-                database.
+                {t('aiImport.onboardDescription')}
               </p>
             </div>
             <div className='hidden min-w-[260px] rounded-lg border border-border bg-card p-5 lg:block'>
               <div className='mb-2 flex items-center gap-2 text-sm font-semibold text-foreground'>
                 <Sparkles className='h-4 w-4 text-clay' />
-                Supported right now
+                {t('aiImport.supportedTitle')}
               </div>
               <p className='text-sm leading-6 text-muted-foreground'>
-                CSV, PDF, DOCX, Markdown, and TXT. Image OCR is not enabled for
-                the local text provider yet.
+                {t('aiImport.supportedDescription')}
               </p>
             </div>
           </div>
 
           <div className='mt-8 flex flex-wrap gap-3'>
-            <Button variant='outline' disabled={availableModels.length === 0} onClick={handleSelectFiles}>
+            <Button
+              variant='outline'
+              disabled={availableModels.length === 0}
+              onClick={handleSelectFiles}
+            >
               <Upload className='h-4 w-4' />
-              Choose Files
+              {t('aiImport.chooseFiles')}
             </Button>
             <Button
-              disabled={files.length === 0 || stage === 'processing' || availableModels.length === 0 || !activeModelId}
+              disabled={
+                files.length === 0 ||
+                stage === 'processing' ||
+                availableModels.length === 0 ||
+                !activeModelId
+              }
               onClick={handleRunImport}
             >
               {stage === 'processing' ? (
                 <>
                   <Loader2 className='h-4 w-4 animate-spin' />
-                  Extracting
+                  {t('aiImport.extracting')}
                 </>
               ) : (
                 <>
                   <Sparkles className='h-4 w-4' />
-                  Start AI Import
+                  {t('aiImport.startImport')}
                 </>
               )}
             </Button>
             <Button variant='ghost' onClick={handleCancel}>
               <XCircle className='h-4 w-4' />
-              Cancel
+              {t('aiImport.cancel')}
             </Button>
           </div>
 
           <div className='mt-5 flex flex-wrap items-center gap-3 rounded-lg border border-border bg-card px-4 py-3'>
             <div className='flex items-center gap-2 text-sm font-semibold text-foreground'>
               <HardDrive className='h-4 w-4 text-clay' />
-              Choose model
+              {t('aiImport.chooseModel')}
             </div>
             <Select
               value={activeModelId}
-              onValueChange={value => { setSelectedModelId(value); }}
+              onValueChange={value => {
+                setSelectedModelId(value);
+              }}
             >
               <SelectTrigger className='w-[280px]'>
-                <SelectValue placeholder='Default local model' />
+                <SelectValue placeholder={t('aiImport.defaultModel')} />
               </SelectTrigger>
               <SelectContent>
-                {
-                  availableModels.length > 0 ? (
-                    availableModels.map(model => 
-                      { return <SelectItem key={model.id} value={model.id}>
+                {availableModels.length > 0 ? (
+                  availableModels.map(model => {
+                    return (
+                      <SelectItem key={model.id} value={model.id}>
                         {model.displayName}
-                      </SelectItem> }
-                    )
-                  ) : (
-                    <div className='text-sm text-muted-foreground p-2'>No local models available</div>
-                  )
-                }
+                      </SelectItem>
+                    );
+                  })
+                ) : (
+                  <div className='text-sm text-muted-foreground p-2'>
+                    {t('aiImport.noLocalModels')}
+                  </div>
+                )}
               </SelectContent>
             </Select>
           </div>
@@ -222,10 +242,9 @@ export default function OnboardPage() {
         <section className='grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)]'>
           <Card className='gap-0 overflow-hidden rounded-lg border-border bg-card'>
             <CardHeader className='border-b border-border/70'>
-              <CardTitle>Selected Files</CardTitle>
+              <CardTitle>{t('aiImport.selectedFiles')}</CardTitle>
               <CardDescription>
-                Files stay on this device. Only selected text excerpts are sent
-                to the local llama.cpp runtime.
+                {t('aiImport.selectedFilesHint')}
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-3 pt-6'>
@@ -259,8 +278,10 @@ export default function OnboardPage() {
                       {result ? (
                         <div className='mt-3 text-xs text-muted-foreground'>
                           {result.status === 'processed'
-                            ? `${result.candidateCount} credentials detected`
-                            : (result.warning ?? 'Failed to process')}
+                            ? t('aiImport.credentialsDetected', {
+                                count: result.candidateCount,
+                              })
+                            : t('aiImport.fileProcessingFailed')}
                         </div>
                       ) : null}
                     </div>
@@ -268,7 +289,7 @@ export default function OnboardPage() {
                 })
               ) : (
                 <div className='rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground'>
-                  No files selected yet.
+                  {t('aiImport.noFilesSelected')}
                 </div>
               )}
             </CardContent>
@@ -278,14 +299,13 @@ export default function OnboardPage() {
             <CardHeader className='border-b border-border/70'>
               <div className='flex items-center justify-between gap-4'>
                 <div>
-                  <CardTitle>Review Extracted Credentials</CardTitle>
+                  <CardTitle>{t('aiImport.reviewExtractedTitle')}</CardTitle>
                   <CardDescription>
-                    Edit any field, uncheck entries you do not want, then save
-                    the rest.
+                    {t('aiImport.reviewExtractedHint')}
                   </CardDescription>
                 </div>
                 <div className='rounded-full bg-surface px-3 py-1 text-sm text-muted-foreground'>
-                  {selectedCount} selected
+                  {t('aiImport.selectedCount', { count: selectedCount })}
                 </div>
               </div>
             </CardHeader>
@@ -297,15 +317,14 @@ export default function OnboardPage() {
                   </div>
                   <div>
                     <div className='text-base font-semibold text-foreground'>
-                      Parsing files and extracting credentials
+                      {t('aiImport.processingTitle')}
                     </div>
                     <div className='mt-1 text-sm text-muted-foreground'>
-                      This MVP runs the import workflow locally, then brings
-                      back editable results for review.
+                      {t('aiImport.processingHint')}
                     </div>
                   </div>
                 </div>
-              ) : candidates.length > 0 ? (
+              ) : candidateIds.length > 0 ? (
                 <>
                   {warnings.length > 0 ? (
                     <div className='rounded-lg border border-clay/25 bg-clay-soft px-4 py-3 text-sm text-clay-dark'>
@@ -313,129 +332,7 @@ export default function OnboardPage() {
                     </div>
                   ) : null}
 
-                  <div className='space-y-4'>
-                    {candidates.map(candidate => 
-                      { return <div
-                        key={candidate.id}
-                        className='rounded-lg border border-border bg-background p-5'
-                      >
-                        <div className='mb-4 flex flex-wrap items-center justify-between gap-3'>
-                          <label className='flex items-center gap-3 text-sm font-medium text-foreground'>
-                            <input
-                              checked={candidate.selected}
-                              className='h-4 w-4 rounded border-border accent-[var(--clay)]'
-                              type='checkbox'
-                              onChange={event =>
-                                { updateCandidate(candidate.id, {
-                                  selected: event.target.checked,
-                                }); }
-                              }
-                            />
-                            Save this credential
-                          </label>
-                          <div className='flex items-center gap-3 text-xs text-muted-foreground'>
-                            <span>
-                              Confidence{' '}
-                              {Math.round(candidate.confidence * 100)}%
-                            </span>
-                            <Button
-                              size='icon-xs'
-                              type='button'
-                              variant='ghost'
-                              onClick={() => { removeCandidate(candidate.id); }}
-                            >
-                              <Trash2 className='h-3.5 w-3.5' />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div className='grid gap-4 md:grid-cols-2'>
-                          <div className='space-y-2'>
-                            <Label htmlFor={`${candidate.id}-title`}>
-                              Title
-                            </Label>
-                            <Input
-                              id={`${candidate.id}-title`}
-                              value={candidate.title}
-                              onChange={event =>
-                                { updateCandidate(candidate.id, {
-                                  title: event.target.value,
-                                }); }
-                              }
-                            />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor={`${candidate.id}-url`}>
-                              Website
-                            </Label>
-                            <Input
-                              id={`${candidate.id}-url`}
-                              placeholder='https://example.com'
-                              value={candidate.url ?? ''}
-                              onChange={event =>
-                                { updateCandidate(candidate.id, {
-                                  url: event.target.value,
-                                }); }
-                              }
-                            />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor={`${candidate.id}-username`}>
-                              Username / Email
-                            </Label>
-                            <Input
-                              id={`${candidate.id}-username`}
-                              value={candidate.username}
-                              onChange={event =>
-                                { updateCandidate(candidate.id, {
-                                  username: event.target.value,
-                                }); }
-                              }
-                            />
-                          </div>
-                          <div className='space-y-2'>
-                            <Label htmlFor={`${candidate.id}-password`}>
-                              Password
-                            </Label>
-                            <Input
-                              id={`${candidate.id}-password`}
-                              value={candidate.password}
-                              onChange={event =>
-                                { updateCandidate(candidate.id, {
-                                  password: event.target.value,
-                                }); }
-                              }
-                            />
-                          </div>
-                          <div className='space-y-2 md:col-span-2'>
-                            <Label htmlFor={`${candidate.id}-notes`}>
-                              Notes
-                            </Label>
-                            <textarea
-                              className='min-h-[88px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none transition focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50'
-                              id={`${candidate.id}-notes`}
-                              value={candidate.notes ?? ''}
-                              onChange={event =>
-                                { updateCandidate(candidate.id, {
-                                  notes: event.target.value,
-                                }); }
-                              }
-                            />
-                          </div>
-                        </div>
-
-                        <div className='mt-4 rounded-lg border border-border bg-card px-4 py-3 text-sm text-muted-foreground'>
-                          <div className='mb-1 text-xs font-semibold uppercase tracking-[0.16em] text-text-tertiary'>
-                            Evidence
-                          </div>
-                          <div>
-                            {candidate.sourceExcerpt ||
-                              `Detected from ${candidate.sourceFile}`}
-                          </div>
-                        </div>
-                      </div> }
-                    )}
-                  </div>
+                  <CandidateList candidateIds={candidateIds} />
 
                   <div className='flex flex-wrap justify-end gap-3 border-t border-border pt-4'>
                     <Button
@@ -444,11 +341,11 @@ export default function OnboardPage() {
                       onClick={handleCancel}
                     >
                       <XCircle className='h-4 w-4' />
-                      Cancel
+                      {t('aiImport.cancel')}
                     </Button>
                     <Button type='button' onClick={handleSave}>
                       <Save className='h-4 w-4' />
-                      Save Selected
+                      {t('aiImport.saveSelectedDesktop')}
                     </Button>
                   </div>
                 </>
@@ -459,11 +356,10 @@ export default function OnboardPage() {
                   </div>
                   <div>
                     <div className='text-base font-semibold text-foreground'>
-                      Start by choosing files to import
+                      {t('aiImport.emptyTitle')}
                     </div>
                     <div className='mt-1 text-sm text-muted-foreground'>
-                      The imported results will appear here for manual
-                      confirmation and edits.
+                      {t('aiImport.emptyHint')}
                     </div>
                   </div>
                 </div>

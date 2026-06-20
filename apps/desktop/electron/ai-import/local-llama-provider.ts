@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   buildCredentialMessages,
+  extractJson,
   type ImportCandidateDraft,
   type ImportWorkflowContext,
   parseCredentialCandidates,
@@ -11,14 +12,47 @@ import {
 import type { LocalAiImportConfig } from '../settings';
 
 const llamaResponseSchema = z.object({
-  choices: z.array(
-    z.object({
-      message: z.object({
-        content: z.string().nullable(),
-      }),
-    })
-  ),
+  choices: z
+    .array(
+      z.object({
+        message: z.object({
+          content: z.string().nullable(),
+        }),
+      })
+    )
+    .min(1),
 });
+
+const strictCredentialResponseSchema = z
+  .object({
+    candidates: z.array(
+      z
+        .object({
+          title: z.string(),
+          username: z.string(),
+          password: z.string(),
+          url: z.string().nullable(),
+          notes: z.string().nullable(),
+          confidence: z.number().min(0).max(1),
+          sourceExcerpt: z.string(),
+        })
+        .strict()
+    ),
+  })
+  .strict();
+
+const LOCAL_LLM_REQUEST_TIMEOUT_MS = 30_000;
+const LOCAL_LLM_MAX_ATTEMPTS = 3;
+
+export function parseLocalLlamaContent(content: string) {
+  return strictCredentialResponseSchema.parse(JSON.parse(extractJson(content)));
+}
+
+function requestSignal(signal?: AbortSignal) {
+  const timeoutSignal = AbortSignal.timeout(LOCAL_LLM_REQUEST_TIMEOUT_MS);
+  if (!signal) {return timeoutSignal;}
+  return AbortSignal.any([signal, timeoutSignal]);
+}
 
 async function createJsonCompletion(
   baseUrl: string,
@@ -39,7 +73,7 @@ async function createJsonCompletion(
       max_tokens: config.maxTokens,
       stream: false,
     }),
-    signal,
+    signal: requestSignal(signal),
   });
 
   if (!response.ok) {
@@ -57,7 +91,29 @@ async function createJsonCompletion(
     throw new Error('Local llama.cpp returned empty content');
   }
 
+  parseLocalLlamaContent(content);
+
   return content;
+}
+
+async function createJsonCompletionWithRetry(
+  baseUrl: string,
+  config: LocalAiImportConfig,
+  messages: ReturnType<typeof buildCredentialMessages>,
+  signal?: AbortSignal
+) {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= LOCAL_LLM_MAX_ATTEMPTS; attempt = attempt + 1) {
+    if (signal?.aborted) {throw new Error('Local extraction was cancelled');}
+    try {
+      return await createJsonCompletion(baseUrl, config, messages, signal);
+    } catch (error) {
+      lastError = error;
+      if (signal?.aborted || attempt === LOCAL_LLM_MAX_ATTEMPTS) {break;}
+      await new Promise(resolve => setTimeout(resolve, 250 * attempt));
+    }
+  }
+  throw lastError;
 }
 
 async function extractCredentialsFromTextFile(
@@ -76,7 +132,7 @@ async function extractCredentialsFromTextFile(
   }
 
   try {
-    const content = await createJsonCompletion(
+    const content = await createJsonCompletionWithRetry(
       baseUrl,
       config,
       buildCredentialMessages(file),
@@ -110,8 +166,9 @@ export function createLocalLlamaExtractor(
   config: LocalAiImportConfig,
   signal?: AbortSignal
 ) {
-  return async (file: ParsedImportFile, context: ImportWorkflowContext) =>
-    { return file.kind === 'image'
+  return async (file: ParsedImportFile, context: ImportWorkflowContext) => {
+    return file.kind === 'image'
       ? extractCredentialsFromImageFile(file)
-      : extractCredentialsFromTextFile(file, baseUrl, config, context, signal) };
+      : extractCredentialsFromTextFile(file, baseUrl, config, context, signal);
+  };
 }

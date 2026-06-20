@@ -1,12 +1,15 @@
 import {
+  Check,
   Download,
   FolderOpen,
+  Languages,
   Loader2,
   ShieldCheck,
   Trash2,
   X,
 } from 'lucide-react';
-import { type KeyboardEvent,useEffect, useState } from 'react';
+import { type KeyboardEvent, useEffect, useState } from 'react';
+import { useTranslation } from '@repo/i18n';
 import {
   Button,
   Card,
@@ -17,27 +20,34 @@ import {
   Checkbox,
   toast,
 } from '@repo/ui';
+import { formatBytes } from '@/lib/format';
 import type {
   LocalModelDownloadProgress,
   LocalModelLibraryStatus,
 } from '../../../electron/preload';
 
-function formatBytes(bytes?: number) {
-  if (bytes === undefined) {return 'Unknown size';}
-  if (bytes < 1024 * 1024 * 1024) {
-    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  }
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
-}
+const LANGUAGE_OPTIONS = [
+  { code: 'en', nativeName: 'English', short: 'EN' },
+  { code: 'zh', nativeName: '中文', short: '中' },
+] as const;
 
-function formatDuration(seconds?: number) {
-  if (!seconds || !Number.isFinite(seconds)) {return null;}
-  if (seconds < 60) {return `${Math.ceil(seconds)}s remaining`;}
+function formatDuration(
+  seconds: number | undefined,
+  t: (key: string, options?: Record<string, unknown>) => string
+) {
+  if (!seconds || !Number.isFinite(seconds)) {
+    return null;
+  }
+  if (seconds < 60) {
+    return t('settings.secondsRemaining', { count: Math.ceil(seconds) });
+  }
   const minutes = Math.ceil(seconds / 60);
-  return `${minutes}m remaining`;
+  return t('settings.minutesRemaining', { count: minutes });
 }
 
 export default function SettingsPage() {
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.language?.split('-')[0] ?? 'en';
   const [libraryStatus, setLibraryStatus] =
     useState<LocalModelLibraryStatus | null>(null);
   const [busyModelId, setBusyModelId] = useState<string | null>(null);
@@ -85,23 +95,21 @@ export default function SettingsPage() {
       const model = status.models.find(item => item.id === modelId);
       if (model?.exists) {
         toast({
-          title: 'Local model ready',
-          description: `${model.displayName} is ready for AI Import.`,
+          title: t('settings.modelReady'),
+          description: t('settings.modelReadyHint', {
+            name: model.displayName,
+          }),
         });
       } else {
         toast({
-          title: 'Download cancelled',
-          description: 'The model download was cancelled.',
+          title: t('settings.downloadCancelled'),
+          description: t('settings.downloadCancelledHint'),
         });
       }
-    } catch (error) {
-      const message =
-        error instanceof Error
-          ? error.message
-          : 'Unable to prepare the local AI model.';
+    } catch {
       toast({
-        title: 'Model setup failed',
-        description: message,
+        title: t('settings.modelSetupFailed'),
+        description: t('settings.modelSetupFailedHint'),
         variant: 'destructive',
       });
     } finally {
@@ -125,16 +133,13 @@ export default function SettingsPage() {
       const status = await window.electronAPI.removeLocalImportModel(modelId);
       setLibraryStatus(status);
       toast({
-        title: 'Model removed',
-        description: 'The downloaded model file was removed from this device.',
+        title: t('settings.modelRemoved'),
+        description: t('settings.modelRemovedHint'),
       });
-    } catch (error) {
+    } catch {
       toast({
-        title: 'Unable to remove model',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'The local model could not be removed.',
+        title: t('settings.removeModelFailed'),
+        description: t('settings.removeModelFailedHint'),
         variant: 'destructive',
       });
     } finally {
@@ -149,16 +154,13 @@ export default function SettingsPage() {
         await window.electronAPI.setDefaultLocalImportModel(modelId);
       setLibraryStatus(status);
       toast({
-        title: 'Default model updated',
-        description: 'AI Import will use this model by default.',
+        title: t('settings.defaultModelUpdated'),
+        description: t('settings.defaultModelUpdatedHint'),
       });
-    } catch (error) {
+    } catch {
       toast({
-        title: 'Unable to set default',
-        description:
-          error instanceof Error
-            ? error.message
-            : 'Unable to set the default local model.',
+        title: t('settings.defaultModelFailed'),
+        description: t('settings.defaultModelFailedHint'),
         variant: 'destructive',
       });
     } finally {
@@ -168,6 +170,14 @@ export default function SettingsPage() {
 
   const handleOpenModelFolder = async () => {
     await window.electronAPI.openLocalImportModelFolder();
+  };
+
+  const handleSelectLanguage = (code: string) => {
+    if (code === currentLanguage) {
+      return;
+    }
+    // i18n persists the choice to localStorage via its languageChanged hook.
+    void i18n.changeLanguage(code);
   };
 
   const handleModelCardKeyDown = (
@@ -189,24 +199,73 @@ export default function SettingsPage() {
         <section className='border-b border-border pb-8'>
           <div className='mb-4 inline-flex items-center gap-2 rounded-full border border-clay/25 bg-clay-soft px-3 py-1 text-sm font-semibold text-clay'>
             <ShieldCheck className='h-4 w-4' />
-            Runtime Configuration
+            {t('settings.runtimeConfiguration')}
           </div>
           <h1 className='font-heading text-[44px] font-medium leading-tight tracking-tight text-foreground'>
-            Settings
+            {t('settings.title')}
           </h1>
           <p className='mt-3 max-w-2xl text-base text-muted-foreground'>
-            Download and choose one supported local GGUF model for private AI
-            Import.
+            {t('settings.desktopSubtitle')}
           </p>
         </section>
 
         <Card className='rounded-lg border-border bg-card'>
+          <CardHeader>
+            <CardTitle className='flex items-center gap-2'>
+              <Languages className='h-4 w-4 text-clay' />
+              {t('settings.language')}
+            </CardTitle>
+            <CardDescription className='mt-1'>
+              {t('settings.languageHint')}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div
+              role='radiogroup'
+              aria-label={t('settings.language')}
+              className='grid gap-3 sm:grid-cols-2'
+            >
+              {LANGUAGE_OPTIONS.map(option => {
+                const isActive = currentLanguage === option.code;
+                return (
+                  <button
+                    key={option.code}
+                    type='button'
+                    role='radio'
+                    aria-checked={isActive}
+                    className={`flex items-center justify-between gap-3 rounded-lg border bg-background p-4 text-left transition-colors ${
+                      isActive
+                        ? 'border-clay ring-1 ring-clay/25'
+                        : 'border-border hover:border-clay/60 hover:bg-accent/30'
+                    }`}
+                    onClick={() => {
+                      handleSelectLanguage(option.code);
+                    }}
+                  >
+                    <span className='flex items-center gap-3'>
+                      <span className='flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-clay-soft text-sm font-semibold text-clay'>
+                        {option.short}
+                      </span>
+                      <span className='text-sm font-semibold text-foreground'>
+                        {option.nativeName}
+                      </span>
+                    </span>
+                    {isActive ? (
+                      <Check className='h-4 w-4 shrink-0 text-clay' />
+                    ) : null}
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className='rounded-lg border-border bg-card'>
           <CardHeader className='flex flex-row items-start justify-between gap-4'>
             <div>
-              <CardTitle>Model Library</CardTitle>
+              <CardTitle>{t('settings.modelLibrary')}</CardTitle>
               <CardDescription className='mt-1'>
-                Download supported catalog models or switch the default
-                extractor.
+                {t('settings.modelLibraryHint')}
               </CardDescription>
             </div>
             <Button
@@ -217,7 +276,7 @@ export default function SettingsPage() {
               }}
             >
               <FolderOpen className='h-4 w-4' />
-              Open Folder
+              {t('settings.openFolder')}
             </Button>
           </CardHeader>
           <CardContent className='space-y-4'>
@@ -248,7 +307,8 @@ export default function SettingsPage() {
                     )
                   : 0;
                 const remaining = formatDuration(
-                  activeProgress?.estimatedSecondsRemaining
+                  activeProgress?.estimatedSecondsRemaining,
+                  t
                 );
 
                 return (
@@ -302,7 +362,9 @@ export default function SettingsPage() {
                       <div className='mt-3 text-xs text-muted-foreground'>
                         {formatBytes(catalogModel.sizeBytes)}
                         {catalogModel.minMemoryGb
-                          ? ` · ${catalogModel.minMemoryGb}GB+ memory`
+                          ? ` · ${t('settings.memoryRequired', {
+                              count: catalogModel.minMemoryGb,
+                            })}`
                           : ''}
                       </div>
                       <div className='mt-4 min-h-12'>
@@ -317,7 +379,7 @@ export default function SettingsPage() {
                             <div className='flex justify-between gap-2 text-xs text-muted-foreground'>
                               <span>
                                 {activeProgress?.status === 'verifying'
-                                  ? 'Verifying download'
+                                  ? t('settings.verifyingDownload')
                                   : `${Math.round(progressPercent)}% · ${formatBytes(
                                       activeProgress?.downloadedBytes
                                     )}`}
@@ -328,7 +390,7 @@ export default function SettingsPage() {
                                     ? `${formatBytes(
                                         activeProgress.bytesPerSecond
                                       )}/s`
-                                    : 'Starting')}
+                                    : t('settings.starting'))}
                               </span>
                             </div>
                           </div>
@@ -346,14 +408,16 @@ export default function SettingsPage() {
                           }}
                         >
                           <X className='h-4 w-4' />
-                          Cancel
+                          {t('modal.cancel')}
                         </Button>
                       ) : isReady ? (
                         <Button
                           disabled={isBusy}
                           size='icon'
-                          title={`Remove ${catalogModel.displayName}`}
                           variant='ghost'
+                          title={t('settings.removeNamedModel', {
+                            name: catalogModel.displayName,
+                          })}
                           onClick={event => {
                             event.stopPropagation();
                             void handleRemoveModel(catalogModel.id);
@@ -378,7 +442,7 @@ export default function SettingsPage() {
                           ) : (
                             <Download className='h-4 w-4' />
                           )}
-                          Download
+                          {t('settings.download')}
                         </Button>
                       )}
                     </div>

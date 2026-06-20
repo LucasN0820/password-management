@@ -46,92 +46,104 @@ const initialState = {
   error: null as string | null,
 };
 
-export const useImportStore = create<ImportState>((set, get) => { return {
-  ...initialState,
-  selectFiles: async () => {
-    const files = await window.electronAPI.selectImportFiles();
-    set({
-      files,
-      error: files.length > 0 ? null : get().error,
-    });
-  },
-  setSelectedModelId: modelId => {
-    set({ selectedModelId: modelId });
-  },
-  runImport: async () => {
-    const {files} = get();
-    if (files.length === 0) {
-      set({ error: 'Select at least one file before starting import.' });
-      return false;
-    }
-
-    set({
-      stage: 'processing',
-      error: null,
-      warnings: [],
-      candidates: [],
-      fileResults: [],
-    });
-
-    try {
-      const {selectedModelId} = get();
-      const result = await window.electronAPI.runImportWorkflow(files, {
-        modelId: selectedModelId ?? undefined,
-      });
+export const useImportStore = create<ImportState>((set, get) => {
+  return {
+    ...initialState,
+    selectFiles: async () => {
+      const files = await window.electronAPI.selectImportFiles();
       set({
-        stage: 'review',
-        warnings: result.warnings,
-        fileResults: result.files,
-        candidates: result.candidates.map(candidate => { return {
-          ...candidate,
-          selected: true,
-        } }),
+        files,
+        error: files.length > 0 ? null : get().error,
       });
-      return true;
-    } catch (error) {
+    },
+    setSelectedModelId: modelId => {
+      set({ selectedModelId: modelId });
+    },
+    runImport: async () => {
+      const { files } = get();
+      if (files.length === 0) {
+        set({ error: 'Select at least one file before starting import.' });
+        return false;
+      }
+
       set({
-        stage: 'idle',
-        error: error instanceof Error ? error.message : 'Import failed',
+        stage: 'processing',
+        error: null,
+        warnings: [],
+        candidates: [],
+        fileResults: [],
       });
-      return false;
-    }
-  },
-  updateCandidate: (id, patch) => {
-    set(state => { return {
-      candidates: state.candidates.map(candidate =>
-        candidate.id === id ? { ...candidate, ...patch } : candidate
-      ),
-    } });
-  },
-  removeCandidate: id => {
-    set(state => { return {
-      candidates: state.candidates.filter(candidate => candidate.id !== id),
-    } });
-  },
-  saveCandidates: async () => {
-    const candidates = get().candidates.filter(candidate => candidate.selected);
-    if (candidates.length === 0) {
-      set({ error: 'Select at least one credential to save.' });
-      return 0;
-    }
 
-    const result = await window.electronAPI.saveImportedPasswords(
-      candidates.map(candidate => { return {
-        title: candidate.title.trim() || 'Imported Credential',
-        username: candidate.username.trim(),
-        password: candidate.password.trim(),
-        url: candidate.url?.trim() || null,
-        notes: candidate.notes?.trim() || null,
-      } })
-    );
+      try {
+        const { selectedModelId } = get();
+        const result = await window.electronAPI.runImportWorkflow(files, {
+          modelId: selectedModelId ?? undefined,
+        });
+        set({
+          stage: 'review',
+          warnings: result.warnings,
+          fileResults: result.files,
+          candidates: result.candidates.map(candidate => {
+            return {
+              ...candidate,
+              selected: true,
+            };
+          }),
+        });
+        return true;
+      } catch (error) {
+        set({
+          stage: 'idle',
+          error: error instanceof Error ? error.message : 'Import failed',
+        });
+        return false;
+      }
+    },
+    updateCandidate: (id, patch) => {
+      set(state => {
+        return {
+          candidates: state.candidates.map(candidate =>
+            candidate.id === id ? { ...candidate, ...patch } : candidate
+          ),
+        };
+      });
+    },
+    removeCandidate: id => {
+      set(state => {
+        return {
+          candidates: state.candidates.filter(candidate => candidate.id !== id),
+        };
+      });
+    },
+    saveCandidates: async () => {
+      const candidates = get().candidates.filter(
+        candidate => candidate.selected
+      );
+      if (candidates.length === 0) {
+        set({ error: 'Select at least one credential to save.' });
+        return 0;
+      }
 
-    set(initialState);
-    return result.saved;
-  },
-  reset: () => {
-    if (get().stage === 'processing') {
-      window.electronAPI.cancelImportWorkflow();
-    }
-    set(initialState);
-  },
-} });
+      const result = await window.electronAPI.saveImportedPasswords(
+        candidates.map(candidate => {
+          return {
+            title: candidate.title.trim() || 'Imported Credential',
+            username: candidate.username.trim(),
+            password: candidate.password.trim(),
+            url: candidate.url?.trim() || null,
+            notes: candidate.notes?.trim() || null,
+          };
+        })
+      );
+
+      set(initialState);
+      return result.saved;
+    },
+    reset: () => {
+      if (get().stage === 'processing') {
+        window.electronAPI.cancelImportWorkflow();
+      }
+      set(initialState);
+    },
+  };
+});

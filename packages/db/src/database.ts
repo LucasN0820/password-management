@@ -258,7 +258,7 @@ export function searchPasswords(
         like(passwords.title, searchTerm),
         like(passwords.username, searchTerm),
         like(passwords.url, searchTerm),
-        like(passwords.notes, searchTerm)
+        like(passwords.category, searchTerm)
       )
     )
     .orderBy(desc(passwords.favorite), desc(passwords.updated_at))

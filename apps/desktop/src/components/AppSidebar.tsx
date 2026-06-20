@@ -19,15 +19,14 @@ export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const navItems = useMemo(
-    () => { return [
+  const navItems = useMemo(() => {
+    return [
       { title: t('nav.home'), url: '/', icon: Home },
       { title: t('nav.passwords'), url: '/password', icon: Key },
       { title: t('nav.generator'), url: '/generator', icon: Shield },
-      { title: 'AI Import', url: '/onboard', icon: Bot },
-    ] },
-    [t]
-  );
+      { title: t('nav.aiImport'), url: '/onboard', icon: Bot },
+    ];
+  }, [t]);
 
   return (
     <Sidebar className='top-[25px] h-[calc(100svh-25px)] border-r border-sidebar-border bg-sidebar'>
@@ -100,7 +99,7 @@ export function AppSidebar() {
           onClick={() => navigate('/settings')}
         >
           <Settings className='h-4 w-4' />
-          <span>Settings</span>
+          <span>{t('nav.settings')}</span>
         </button>
       </SidebarFooter>
     </Sidebar>

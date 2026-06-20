@@ -7,6 +7,8 @@ import { Input } from '@repo/ui/primitives/input';
 import { Label } from '@repo/ui/primitives/label';
 import { Slider } from '@repo/ui/primitives/slider';
 import { Switch } from '@repo/ui/primitives/switch';
+import { useCopyToClipboard } from '@/hooks/useCopyToClipboard';
+import { calculateStrength } from '@/lib/password-strength';
 import { generateSecurePassword } from '@/lib/secure-random';
 import { usePasswordStore } from '@/store/passwordStore';
 
@@ -22,7 +24,6 @@ interface GeneratorSettings {
 export function PasswordGeneratorPage() {
   const { t } = useTranslation();
   const [password, setPassword] = useState('');
-  const [copied, setCopied] = useState(false);
   const [strength, setStrength] = useState(0);
   const [showSave, setShowSave] = useState(false);
   const [saveTitle, setSaveTitle] = useState('');
@@ -31,6 +32,8 @@ export function PasswordGeneratorPage() {
   const [saveNotes, setSaveNotes] = useState('');
   const { toast } = useToast();
   const { addPassword } = usePasswordStore();
+  const { copiedKey, copyToClipboard: copyText } = useCopyToClipboard();
+  const copied = copiedKey === 'generated-password';
 
   const [settings, setSettings] = useState<GeneratorSettings>({
     length: 16,
@@ -40,35 +43,6 @@ export function PasswordGeneratorPage() {
     includeSymbols: true,
     excludeSimilar: false,
   });
-
-  const calculateStrength = useCallback((pwd: string) => {
-    if (!pwd) {
-      return 0;
-    }
-    let score = 0;
-    if (pwd.length >= 8) {
-      score = score + 25;
-    }
-    if (pwd.length >= 12) {
-      score = score + 25;
-    }
-    if (pwd.length >= 16) {
-      score = score + 25;
-    }
-    if (/[a-z]/.test(pwd)) {
-      score = score + 10;
-    }
-    if (/[A-Z]/.test(pwd)) {
-      score = score + 10;
-    }
-    if (/\d/.test(pwd)) {
-      score = score + 10;
-    }
-    if (/[^a-z0-9]/i.test(pwd)) {
-      score = score + 15;
-    }
-    return Math.min(100, score);
-  }, []);
 
   const generatePassword = useCallback(() => {
     const pwd = generateSecurePassword(settings);
@@ -84,7 +58,7 @@ export function PasswordGeneratorPage() {
 
     setPassword(pwd);
     setStrength(calculateStrength(pwd));
-  }, [settings, calculateStrength, toast]);
+  }, [settings, toast]);
 
   useEffect(() => {
     generatePassword();
@@ -94,15 +68,11 @@ export function PasswordGeneratorPage() {
     if (!password) {
       return;
     }
-    await navigator.clipboard.writeText(password);
-    setCopied(true);
+    await copyText(password, 'generated-password');
     toast({
       title: t('generator.copied'),
       description: t('generator.copiedToClipboard'),
     });
-    setTimeout(() => {
-      setCopied(false);
-    }, 2000);
   };
 
   const savePassword = async () => {
@@ -110,7 +80,11 @@ export function PasswordGeneratorPage() {
       return;
     }
     await addPassword({
-      title: saveTitle || `Generated ${new Date().toLocaleDateString()}`,
+      title:
+        saveTitle ||
+        t('generator.generatedTitle', {
+          date: new Date().toLocaleDateString(),
+        }),
       username: saveUsername,
       password,
       url: saveUrl,
@@ -147,7 +121,9 @@ export function PasswordGeneratorPage() {
     <div className='h-full overflow-y-auto bg-background'>
       <div className='mx-auto max-w-5xl px-10 py-10'>
         {/* Header */}
-        <p className='mb-3 text-sm font-semibold text-clay'>Generator</p>
+        <p className='mb-3 text-sm font-semibold text-clay'>
+          {t('nav.generator')}
+        </p>
         <h1 className='mb-2 font-heading text-5xl font-medium tracking-tight text-foreground'>
           {t('generator.title')}
         </h1>

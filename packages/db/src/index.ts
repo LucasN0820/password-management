@@ -23,7 +23,7 @@ export {
 } from './database';
 
 export type { PasswordState } from './store';
-export { createPasswordStore } from './store';
+export { createPasswordStore, SEARCH_DEBOUNCE_MS } from './store';
 
 export type { RandomBytesProvider, VaultKeyProvider } from './encryption';
 export {

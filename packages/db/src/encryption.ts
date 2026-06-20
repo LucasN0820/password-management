@@ -204,20 +204,15 @@ export function createEncryptedAdapter(
         return [];
       }
 
-      const vaultKey = await getVaultKey();
-      const passwords = (await baseAdapter.getPasswords()).map(password =>
-        decryptPassword(password, vaultKey)
-      );
+      // Search only plaintext metadata in SQLite first. Password, notes and
+      // TOTP remain encrypted and are never decrypted merely to test a query.
+      const matches = await baseAdapter.searchPasswords(normalizedQuery);
+      if (matches.length === 0) {
+        return [];
+      }
 
-      return passwords.filter(password =>
-        [
-          password.title,
-          password.username,
-          password.url ?? '',
-          password.notes ?? '',
-          password.category,
-        ].some(value => value.toLowerCase().includes(normalizedQuery))
-      );
+      const vaultKey = await getVaultKey();
+      return matches.map(password => decryptPassword(password, vaultKey));
     },
     getCategories: () => baseAdapter.getCategories(),
   };
