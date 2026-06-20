@@ -1,287 +1,236 @@
-# 密码管理应用
+# Password Vault
 
-一个现代化的跨平台密码管理应用，支持安全存储、生成和管理密码。
+> 本地优先、主密码保护的跨平台密码管理器 —— 一个密码，掌管所有数字凭据。
 
-## 🚀 项目简介
+**官网（Landing）：https://www.vault.yoga**
 
-这是一个基于 React 技术栈开发的跨平台密码管理应用，提供简洁直观的用户界面和强大的密码管理功能。应用支持深色/浅色主题切换，提供乐观更新体验，并采用现代化的设计语言。项目包含移动端（React Native）和桌面端（Electron + React）两个版本。
+Password Vault 是一个以 **本地优先** 为核心理念的密码管理应用：所有凭据都加密存储在设备本地的 SQLite 数据库中，由主密码与设备生物识别保护。项目以 **Turborepo Monorepo** 组织，包含移动端、桌面端与官网三个应用，并通过共享包复用数据层、UI、国际化与 AI 导入能力。
 
-## 🛠️ 技术栈
+| 应用 | 技术栈 | 说明 |
+|------|--------|------|
+| 📱 **Mobile** (`apps/mobile`) | Expo · React Native | iOS / Android 客户端 |
+| 🖥️ **Desktop** (`apps/desktop`) | Electron · React · Vite | macOS / Windows / Linux 客户端 |
+| 🌐 **Landing** (`apps/landing`) | Next.js | 产品官网与下载入口 |
 
-### 移动端 (React Native)
+> 安装包通过 [GitHub Releases](https://github.com/LucasN0820/password-management/releases) 分发，官网亦提供各平台下载链接。
 
-#### 前端框架
+---
 
-- **React Native** - 跨平台移动应用开发框架
-- **TypeScript** - 类型安全的 JavaScript 超集
-- **Expo** - React Native 开发平台和工具链
+## ✨ 具体功能
 
-#### 路由与导航
+两端共享相同的加密数据层与核心理念，并各自针对平台特性做了优化。
 
-- **Expo Router** - 基于文件系统的路由
-- **React Navigation** - 原生导航体验
+### 📱 Mobile（Expo / React Native）
 
-#### 状态管理
+**密码管理**
+- 密码增删改查，删除支持撤销（Undo Snackbar）
+- 收藏 / 星标、实时搜索、分类筛选、多维度排序（名称 / 创建时间 / 更新时间）、下拉刷新
+- 详情页一键复制用户名 / 密码 / 网址 / TOTP，可选展示网站 Favicon
 
-- **Zustand** - 轻量级状态管理库
-- **TanStack Query** - 服务器状态管理和数据获取
+**密码生成器**
+- 随机密码模式：长度 4–64，可控大小写 / 数字 / 符号、排除易混淆字符
+- 口令短语（Passphrase）模式：词数、分隔符、大小写策略可配
+- 实时熵值 / 强度评估，会话内生成历史，一键保存到保险库
 
-#### UI 组件与样式
+**两步验证（TOTP）**
+- 内置 TOTP 验证码（RFC 6238），实时刷新 + 倒计时环
+- 摄像头扫描 `otpauth://` 二维码录入密钥，一键复制验证码
 
-- **BNA UI** - UI 组件库
-- **Lucide React Native** - 图标库
-- **NativeWind** - React Native 的 TailwindCSS 实现
+**安全审计**
+- 健康看板：弱密码 / 重复密码 / 过期密码检测，点击即可跳转修复
+- 数据泄露检查（可选开启）：对接 Have I Been Pwned，展示泄露次数
 
-#### 数据存储
+**导入与备份**
+- AI 导入：基于本地 LLM（`llama.rn`）解析 CSV / PDF / 图片，候选项预览后批量导入；支持多模型按需下载
+- 加密备份 / 恢复（PBKDF2 口令保护），CSV 导出
 
-- **SQLite** - 本地数据库存储
-- **Expo SecureStore** - 安全存储敏感信息
+**安全与隐私**
+- 应用锁：Face ID / Touch ID / 设备 PIN，支持自动锁定（30s / 1m / 5m）
+- 后台隐私遮罩、敏感页面截图防护、剪贴板自动清除（智能擦除）
 
-### 桌面端 (Electron + React)
+**个性化**
+- 主题（跟随系统 / 浅色 / 深色），多语言（简体中文 / 英文 / 跟随系统）
 
-#### 前端框架
+### 🖥️ Desktop（Electron / React）
 
-- **Electron** - 跨平台桌面应用框架
-- **React 18** - 用户界面库
-- **TypeScript** - 类型安全的 JavaScript 超集
-- **Vite** - 现代化构建工具
+**仪表盘与管理**
+- 首页概览：密码总数、收藏数、强密码数、最近添加，附快捷操作入口
+- 双栏式密码列表 + 详情，增删改查、复制反馈、显示 / 隐藏密码、收藏
 
-#### 路由与导航
+**快速访问**
+- 全局 Spotlight 快速搜索（`Ctrl/Cmd + Shift + P` 唤起悬浮窗），键盘上下导航、回车即复制
+- 内置快捷键：`Ctrl+N` 新建、`Ctrl+G` 生成器、`Esc` 关闭浮层
 
-- **React Router v7** - 客户端路由库
+**密码生成器**
+- 长度与字符集可配，实时强度指示，可直接保存到保险库
 
-#### 状态管理
+**AI 导入**
+- 支持 CSV / PDF / DOCX / Markdown / TXT，本地 LLaMA 或远程服务双模式
+- 模型库管理：下载进度与 ETA、设为默认、打开模型目录、移除模型
+- 导入候选可逐条预览、编辑、勾选后批量保存
 
-- **Zustand** - 轻量级状态管理库
+**体验与安全**
+- 多语言（中 / 英），大列表虚拟化渲染优化
+- 内容安全策略（CSP）、IPC 校验、剪贴板自动清除
+- 基于 GitHub Releases 的自动更新
 
-#### UI 组件与样式
+---
 
-- **Radix UI** - 无样式、可访问的 UI 原语
-- **Framer Motion** - 动画库
-- **Lucide React** - 图标库
-- **shadcn/ui** - 基于 Radix UI 的组件库
+## 🏗️ 技术架构
 
-#### 数据存储
+### Monorepo 结构
 
-- **better-sqlite3** - 高性能 SQLite 数据库
-- **Electron 原生存储 API** - 安全数据存储
-
-### 开发工具
-
-- **ESLint** - 代码质量检查
-- **Prettier** - 代码格式化
-- **TypeScript** - 静态类型检查
-- **TailwindCSS** - 原子化 CSS 框架
-
-## 📱 核心功能
-
-### 密码管理
-
-- ✅ 密码安全存储
-- ✅ 密码生成器（可配置长度和字符类型）
-- ✅ 密码强度评估
-- ✅ 密码分类和搜索
-
-### 用户体验
-
-- ✅ 深色/浅色主题切换
-- ✅ 乐观更新（即时 UI 反馈）
-- ✅ 离线优先设计
-- ✅ 原生手势和动画
-
-### 安全特性
-
-- ✅ 本地加密存储
-- ✅ 主密码保护
-- ✅ 自动锁定机制
-- ✅ 安全剪贴板操作
-
-## 🏗️ 项目结构
+由 **Turborepo** 编排，**Yarn 4.13.0**（Corepack）管理 workspaces：
 
 ```
 password-management/
 ├── apps/
-│   ├── mobile/                 # React Native 移动应用
-│   │   ├── src/
-│   │   │   ├── components/     # 可复用组件
-│   │   │   ├── screens/       # 页面组件
-│   │   │   ├── store/         # 状态管理
-│   │   │   └── hooks/         # 自定义 Hooks
-│   └── desktop/               # Electron + React 桌面应用
-│       ├── src/
-│       │   ├── components/     # 可复用组件
-│       │   ├── pages/         # 页面组件
-│       │   ├── store/         # 状态管理
-│       │   └── lib/           # 工具库
-├── packages/                  # 共享包
-└── docs/                     # 项目文档
+│   ├── mobile/        # Expo + React Native 移动端
+│   ├── desktop/       # Electron + React + Vite 桌面端
+│   └── landing/       # Next.js 官网
+├── packages/
+│   ├── db/            # @repo/db —— 加密 SQLite 数据层
+│   ├── ui/            # @repo/ui —— 共享 UI 组件
+│   ├── i18n/          # @repo/i18n —— 国际化
+│   └── ai-import-core/# @repo/ai-import-core —— AI 文档导入核心
+└── config/
+    ├── metadata/      # @repo/metadata —— 应用元数据（名称 / 包名）
+    ├── eslint/        # @repo/eslint-config —— 共享 ESLint 配置
+    └── ts/            # @repo/ts-config —— 共享 TypeScript 配置
 ```
 
-## 🎨 设计原则
+### 共享包
 
-- **移动优先** - 专为移动设备优化交互体验
-- **简洁直观** - 清晰的信息层次和操作流程
-- **安全可靠** - 多层安全保护用户数据
-- **性能优先** - 流畅的动画和快速的响应
+| 包 | 作用 |
+|----|------|
+| `@repo/db` | 基于 Drizzle ORM 的加密 SQLite 数据层（`@noble/ciphers`），统一两端表结构与状态 |
+| `@repo/ui` | Radix UI 原语 + Tailwind 工具 + 共享 Hooks 的组件库 |
+| `@repo/i18n` | 基于 i18next / react-i18next 的多语言能力（中 / 英） |
+| `@repo/ai-import-core` | AI 文档解析与候选提取核心（Zod 校验，Vitest 测试） |
+| `@repo/metadata` | 共享应用名 / Slug / 包名（`Password Vault` · `com.lucas.vault`） |
+| `@repo/eslint-config` · `@repo/ts-config` | 共享 ESLint（eslint-config-sheriff）与 TypeScript（strict）配置 |
 
-## 🚀 快速开始
+### 各端技术栈
 
-### 环境要求
+| 维度 | Mobile | Desktop | Landing |
+|------|--------|---------|---------|
+| 框架 | Expo · React Native 0.85 | Electron 29 · React 18 · Vite | Next.js 16 · React 19 |
+| 路由 | Expo Router（文件路由） | React Router v7 | App Router |
+| 状态 | Zustand · TanStack Query | Zustand | — |
+| UI | NativeWind · Lucide · Reanimated | TailwindCSS 4 · shadcn/ui · Radix · Framer Motion | TailwindCSS 4 |
+| 数据 | `expo-sqlite`（SQLCipher）· SecureStore | `better-sqlite3`（经 IPC） | — |
+| AI | `llama.rn`（设备端推理） | 本地 LLaMA / 远程服务 | — |
 
-- Node.js 18+
-- Expo CLI
-- iOS/Android 开发环境
-- Yarn v4.13.0
+### 关键设计
 
-### 安装依赖
+- **数据层**：两端共用 `@repo/db` 定义的 `passwords` 表结构；移动端经 `expo-sqlite`，桌面端经 `better-sqlite3` 并通过 Electron IPC 暴露给渲染进程。
+- **状态管理**：两端均使用 Zustand store（`src/store/passwordStore.ts`），接口一致。
+- **Electron 三进程**：`electron/main.ts`（SQLite、IPC、全局快捷键）→ `electron/preload.ts`（上下文隔离的 `electronAPI` 桥）→ `src/`（React 渲染进程）。
+- **路径别名**：两端均以 `@/*` 映射 `src/*`。
+
+### 开发命令
+
+| 命令 | 作用 |
+|------|------|
+| `yarn dev` | 以 Turbo 启动所有应用 |
+| `yarn build` | 构建所有包 |
+| `yarn lint` | 全仓 ESLint |
+| `yarn tsc` | 全仓 TypeScript 类型检查 |
+| `yarn format` | Prettier 格式化 |
+
+单独启动：
 
 ```bash
-yarn install
+cd apps/desktop && yarn dev   # Vite + Electron（端口 5173）
+cd apps/mobile  && yarn dev   # Expo（端口 8081）
+cd apps/landing && yarn dev   # Next.js（端口 3001）
 ```
 
-### 启动开发服务器
+> 环境要求：Node.js 22 · Yarn 4.13.0（Corepack）· 移动端需 iOS / Android 开发环境。CI 使用 `yarn install --immutable`。
 
-#### 移动端
+---
 
-```bash
-cd apps/mobile
-yarn dev
-```
+## 🚀 发版方式
 
-#### 桌面端
+### 📱 Mobile（EAS Build）
 
-```bash
-cd apps/desktop
-yarn dev
-```
+移动端使用 [EAS Build](https://docs.expo.dev/build/introduction/) 云端构建与提交，配置见 `apps/mobile/eas.json`。
 
-### 构建与发布
+**构建 Profile**
 
-#### 移动端 (Expo EAS)
-
-移动端使用 [EAS Build](https://docs.expo.dev/build/introduction/) 进行云端构建和发布。
-
-##### 构建配置
-
-项目在 `apps/mobile/eas.json` 中定义了以下构建 Profile：
-
-| Profile | 用途 | 分发方式 |
-|---------|------|---------|
-| `development` | 开发客户端，用于本地调试 | 内部分发 (internal) |
-| `development-simulator` | iOS 模拟器专用开发客户端 | 内部分发 |
+| Profile | 用途 | 分发 |
+|---------|------|------|
+| `development` | 开发客户端，本地调试 | 内部分发 |
+| `development-simulator` | iOS 模拟器开发客户端 | 内部分发 |
 | `preview` | 内部测试版本 | 内部分发 |
-| `production` | 正式发布版本（版本号自动递增） | 应用商店 |
+| `production` | 正式发布（版本号自动递增） | 应用商店 |
 
-##### 本地开发构建
+**自动发布**：推送 `mobile-v*` tag 触发 `.github/workflows/release-mobile.yml`（亦可在 Actions 页手动 `workflow_dispatch`），流程为 Node 22 + Yarn 4 → 用 `EXPO_TOKEN` 鉴权 → 以 `production` Profile 构建 Android APK → 创建 GitHub Release 并附带 APK。
+
+```bash
+git tag mobile-v1.0.0
+git push origin mobile-v1.0.0
+```
+
+**本地 / 手动命令**
 
 ```bash
 cd apps/mobile
 
-# 生成原生项目文件（首次或原生依赖变更时需要）
-yarn prebuild
+yarn prebuild          # 生成原生工程（首次或原生依赖变更）
+yarn ios | yarn android # 本地设备 / 模拟器运行
 
-# 在本地设备/模拟器运行
-yarn ios       # iOS
-yarn android   # Android
+yarn eas:ios           # production 构建 + 自动提交 App Store
+yarn eas:android       # production 构建 + 自动提交 Google Play（internal）
 ```
 
-##### EAS 云端构建与提交
+> 所需 Secret：`EXPO_TOKEN`。
+
+### 🖥️ Desktop（electron-builder）
+
+桌面端使用 [electron-builder](https://www.electron.build/) 打包，配置见 `apps/desktop/electron-builder.yml`（`appId: com.lucasni.password-desktop`）。
+
+**打包目标**
+
+| 平台 | 格式 | 架构 |
+|------|------|------|
+| macOS | DMG + ZIP | x64 · arm64 |
+| Windows | NSIS 安装包 | x64 · arm64 |
+| Linux | AppImage + .deb | x64 · arm64（.deb 仅 x64） |
+
+**自动发布**：推送 `desktop-v*` tag 触发 `.github/workflows/release-desktop.yml`（亦可手动 `workflow_dispatch`），在 macOS / Windows / Linux 三平台并行构建（自动生成各平台图标）→ 产物发布到 [GitHub Releases](https://github.com/LucasN0820/password-management/releases)。已安装的应用通过内置自动更新（GitHub provider）检测并提示更新。
 
 ```bash
-cd apps/mobile
-
-# 生产构建并自动提交到应用商店
-yarn eas:ios       # iOS 构建 + 提交到 App Store
-yarn eas:android   # Android 构建 + 提交到 Google Play (internal track)
+git tag desktop-v1.1.0
+git push origin desktop-v1.1.0
 ```
 
-以上命令会执行 `eas build --profile production --auto-submit --non-interactive --no-wait`，即：
-- 使用 `production` Profile 构建
-- 构建完成后自动提交到对应应用商店
-- 非交互模式运行（适用于 CI 环境）
-- 不等待构建完成即返回（可在 [Expo Dashboard](https://expo.dev) 查看构建状态）
-
-##### 手动 EAS 构建（自定义 Profile）
-
-```bash
-cd apps/mobile
-
-# 开发版本
-eas build --platform ios --profile development
-eas build --platform android --profile development
-
-# 内部预览版本
-eas build --platform ios --profile preview
-eas build --platform android --profile preview
-```
-
-#### 桌面端 (Electron Builder)
-
-桌面端使用 [electron-builder](https://www.electron.build/) 进行打包，支持 macOS、Windows 和 Linux 三个平台。
-
-##### 构建配置
-
-打包配置定义在 `apps/desktop/electron-builder.yml`：
-
-| 平台 | 输出格式 | 架构 |
-|------|---------|------|
-| macOS | DMG + ZIP | x64, arm64 |
-| Windows | NSIS 安装程序 | x64, arm64 |
-| Linux | AppImage + .deb | x64, arm64 |
-
-构建产物输出到 `apps/desktop/release/` 目录。
-
-##### 本地打包
+**本地命令**
 
 ```bash
 cd apps/desktop
 
-# 构建但不打包（生成 dist 目录用于调试）
-yarn pack
-
-# 构建并打包当前平台
-yarn dist
-
-# 指定平台打包
-yarn dist:mac     # macOS (DMG + ZIP)
-yarn dist:win     # Windows (NSIS 安装程序)
-yarn dist:linux   # Linux (AppImage + .deb)
+yarn pack          # 仅构建不打包（dir 模式，便于调试）
+yarn dist          # 构建并打包当前平台
+yarn dist:mac      # macOS（DMG + ZIP）
+yarn dist:win      # Windows（NSIS）
+yarn dist:linux    # Linux（AppImage + .deb）
 ```
 
-##### CI/CD 自动发布 (GitHub Actions)
-
-桌面端通过 GitHub Actions 工作流 (`.github/workflows/release-desktop.yml`) 实现自动构建和发布。
-
-**触发方式：**
-
-1. **Git Tag 触发** — 推送 `desktop-v*` 格式的 tag：
-   ```bash
-   git tag desktop-v1.0.0
-   git push origin desktop-v1.0.0
-   ```
-2. **手动触发** — 在 GitHub Actions 页面使用 `workflow_dispatch`
-
-**CI 流程：**
-
-1. 在 macOS、Windows、Linux 三个平台上并行构建
-2. 自动生成各平台所需的图标文件（从 `public/icon-512.png` 转换）
-3. 执行 `yarn dist:${platform} --publish always` 构建并发布
-4. 构建产物自动发布到 [GitHub Releases](https://github.com/LucasN0820/password-management/releases)
-
-**代码签名（可选）：**
-
-如需对发布包进行签名，在 GitHub 仓库 Secrets 中配置以下变量：
+**代码签名（可选）**：在仓库 Secrets 配置后启用。
 
 | Secret | 用途 |
 |--------|------|
-| `CSC_LINK` | macOS 签名证书 (base64) |
-| `CSC_KEY_PASSWORD` | macOS 证书密码 |
-| `WIN_CSC_LINK` | Windows 签名证书 (base64) |
-| `WIN_CSC_KEY_PASSWORD` | Windows 证书密码 |
+| `MAC_CERTS` · `MAC_CERTS_PASSWORD` | macOS 签名证书与密码 |
+| `WIN_CERTS` · `WIN_CERTS_PASSWORD` | Windows 签名证书与密码 |
 
-##### 自动更新
+> AI 导入相关配置（`AI_IMPORT_*`）可经环境变量在构建时注入。
 
-桌面端内置了基于 GitHub Releases 的自动更新机制。发布新版本后，已安装的应用会自动检测并提示用户更新。
+### 🌐 Landing（Next.js → Vercel）
+
+官网为 Next.js 应用，部署在 **Vercel**（集成 Vercel Analytics 与 Speed Insights），随 `main` 分支推送自动部署，线上地址 https://www.vault.yoga。`/download/[target]` 路由会从 GitHub Releases 拉取最新安装包。
+
+---
 
 ## 📄 许可证
 
@@ -289,8 +238,8 @@ MIT License
 
 ## 🤝 贡献
 
-欢迎提交 Issue 和 Pull Request 来改进这个项目。
+欢迎提交 Issue 与 Pull Request 改进本项目。
 
 ---
 
-_使用 ❤️ 和 TypeScript 构建_
+_使用 ❤️ 与 TypeScript 构建_
