@@ -38,6 +38,10 @@ jobs:
         uses: expo/expo-github-action@v8
         with:
           eas-version: latest
+          # Install the CLI with npm: the Enable Corepack step makes the global
+          # `yarn` resolve to Yarn 4 (Berry), which can't `yarn add` in the
+          # action's bare temp dir ("No project found").
+          packager: npm
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Get yarn cache directory path
