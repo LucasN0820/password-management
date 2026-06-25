@@ -1,0 +1,39 @@
+# EAS archives the whole monorepo from the git root, so this file must live at
+# the repo root to take effect (a .easignore under apps/mobile is not applied to
+# sibling workspaces). Only the mobile app is built via EAS.
+
+# Non-mobile workspaces — the desktop app ships ~156MB of llama.cpp binaries
+# under apps/desktop/bin that are irrelevant to the mobile build.
+apps/desktop
+
+# Shared config not needed at build time (keep config/metadata — it's a runtime
+# workspace dependency of the mobile app).
+config/eslint
+config/ts
+
+# Repo docs / design / examples
+docs
+design
+examples
+
+# Dev / tooling
+.claude
+.github
+.vscode
+*.md
+!README.md
+
+# Build cache & logs
+.turbo/
+coverage/
+*.log
+
+# Environment files
+.env*
+
+# Tests
+**/__tests__
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx

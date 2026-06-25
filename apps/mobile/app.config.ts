@@ -40,7 +40,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     predictiveBackGestureEnabled: true,
     package: APP_PACKAGE,
-    versionCode: 1,
+    // versionCode is managed remotely (eas.json appVersionSource: 'remote'), so
+    // a static value here is ignored — omit it to avoid the build-time warning.
     permissions: ['android.permission.REQUEST_INSTALL_PACKAGES'],
   },
   web: {
