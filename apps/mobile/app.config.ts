@@ -32,6 +32,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: APP_PACKAGE,
     buildNumber: '1',
+    // Keep the fingerprint runtime version stable between local EAS CLI
+    // evaluation and the EAS worker, where EAS_BUILD_PROFILE is set.
+    entitlements: {
+      'com.apple.developer.kernel.extended-virtual-addressing': true,
+      'com.apple.developer.kernel.increased-memory-limit': true,
+    },
   },
   android: {
     adaptiveIcon: {
@@ -95,7 +101,12 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'llama.rn',
       {
         enableEntitlements: true,
-        entitlementsProfile: ['development', 'preview', 'production'],
+        entitlementsProfile: [
+          'development',
+          'preview',
+          'production',
+          'direct',
+        ],
         forceCxx20: true,
         enableOpenCLAndHexagon: true,
       },
