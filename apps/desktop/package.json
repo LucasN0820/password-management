@@ -16,7 +16,7 @@
     "dist:mac": "yarn build && node scripts/build.js --mac",
     "dist:win": "yarn build && node scripts/build.js --win",
     "dist:linux": "yarn build && node scripts/build.js --linux",
-    "postinstall": "node -e \"if(!process.env.CI){require('child_process').execSync('electron-builder install-app-deps',{stdio:'inherit'})}\"",
+    "postinstall": "node -e \"if(!process.env.CI&&!process.env.EAS_BUILD){require('child_process').execSync('electron-builder install-app-deps',{stdio:'inherit'})}\"",
     "rebuild": "electron-rebuild",
     "preview": "vite preview",
     "tsc": "tsc --noEmit",

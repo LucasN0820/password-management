@@ -2,19 +2,20 @@
 # the repo root to take effect (a .easignore under apps/mobile is not applied to
 # sibling workspaces). Only the mobile app is built via EAS.
 
-# Non-mobile workspaces — the desktop app ships ~156MB of llama.cpp binaries
-# under apps/desktop/bin that are irrelevant to the mobile build.
-apps/desktop
+# Keep all Yarn workspaces in the archive. Yarn runs with --immutable on EAS,
+# so removing workspace directories changes the resolved lockfile.
 
-# Shared config not needed at build time (keep config/metadata — it's a runtime
-# workspace dependency of the mobile app).
-config/eslint
-config/ts
+# Keep config/* workspaces in the archive. apps/mobile depends on
+# @repo/eslint-config, @repo/ts-config, and @repo/metadata via workspace:*,
+# so Yarn must see those packages during EAS install.
 
-# Repo docs / design / examples
+# Large non-mobile assets that are not needed by the mobile build.
+apps/desktop/bin/
+apps/desktop/release/
+
+# Repo docs / design
 docs
 design
-examples
 
 # Dev / tooling
 .claude
@@ -22,6 +23,17 @@ examples
 .vscode
 *.md
 !README.md
+node_modules/
+apps/mobile/node_modules/
+.yarn/cache/
+.yarn/install-state.gz
+.expo/
+apps/mobile/.expo/
+
+# Locally generated native projects. EAS should regenerate them from
+# app.config.ts instead of uploading machine-local outputs.
+apps/mobile/ios/
+apps/mobile/android/
 
 # Build cache & logs
 .turbo/

@@ -1,7 +1,5 @@
-# Monorepo files not needed for EAS build
-apps/desktop
-config/eslint
-config/ts
+# Keep all Yarn workspaces in the archive. Yarn runs with --immutable on EAS,
+# so removing workspace directories changes the resolved lockfile.
 
 # Dev / tooling
 .claude
@@ -9,6 +7,10 @@ config/ts
 .vscode
 *.md
 !README.md
+node_modules/
+.expo/
+ios/
+android/
 
 # Build cache & logs
 .turbo/
