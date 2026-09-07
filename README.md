@@ -1,16 +1,23 @@
 # Password Vault
 
+[中文](README.md) · [English](README.en.md)
+
+<p align="center">
+  <img src="docs/assets/vault-1.png" alt="Password Vault mobile app poster" width="48%" />
+  <img src="docs/assets/vault-2.png" alt="Password Vault landing page poster" width="48%" />
+</p>
+
 > 本地优先、主密码保护的跨平台密码管理器 —— 一个密码，掌管所有数字凭据。
 
 **官网（Landing）：https://www.vault.yoga**
 
 Password Vault 是一个以 **本地优先** 为核心理念的密码管理应用：所有凭据都加密存储在设备本地的 SQLite 数据库中，由主密码与设备生物识别保护。项目以 **Turborepo Monorepo** 组织，包含移动端、桌面端与官网三个应用，并通过共享包复用数据层、UI、国际化与 AI 导入能力。
 
-| 应用 | 技术栈 | 说明 |
-|------|--------|------|
-| 📱 **Mobile** (`apps/mobile`) | Expo · React Native | iOS / Android 客户端 |
+| 应用                            | 技术栈                  | 说明                           |
+| ------------------------------- | ----------------------- | ------------------------------ |
+| 📱 **Mobile** (`apps/mobile`)   | Expo · React Native     | iOS / Android 客户端           |
 | 🖥️ **Desktop** (`apps/desktop`) | Electron · React · Vite | macOS / Windows / Linux 客户端 |
-| 🌐 **Landing** (`apps/landing`) | Next.js | 产品官网与下载入口 |
+| 🌐 **Landing** (`apps/landing`) | Next.js                 | 产品官网与下载入口             |
 
 > 安装包通过 [GitHub Releases](https://github.com/LucasN0820/password-management/releases) 分发，官网亦提供各平台下载链接。
 
@@ -23,53 +30,65 @@ Password Vault 是一个以 **本地优先** 为核心理念的密码管理应�
 ### 📱 Mobile（Expo / React Native）
 
 **密码管理**
+
 - 密码增删改查，删除支持撤销（Undo Snackbar）
 - 收藏 / 星标、实时搜索、分类筛选、多维度排序（名称 / 创建时间 / 更新时间）、下拉刷新
 - 详情页一键复制用户名 / 密码 / 网址 / TOTP，可选展示网站 Favicon
 
 **密码生成器**
+
 - 随机密码模式：长度 4–64，可控大小写 / 数字 / 符号、排除易混淆字符
 - 口令短语（Passphrase）模式：词数、分隔符、大小写策略可配
 - 实时熵值 / 强度评估，会话内生成历史，一键保存到保险库
 
 **两步验证（TOTP）**
+
 - 内置 TOTP 验证码（RFC 6238），实时刷新 + 倒计时环
 - 摄像头扫描 `otpauth://` 二维码录入密钥，一键复制验证码
 
 **安全审计**
+
 - 健康看板：弱密码 / 重复密码 / 过期密码检测，点击即可跳转修复
 - 数据泄露检查（可选开启）：对接 Have I Been Pwned，展示泄露次数
 
 **导入与备份**
+
 - AI 导入：基于本地 LLM（`llama.rn`）解析 CSV / PDF / 图片，候选项预览后批量导入；支持多模型按需下载
 - 加密备份 / 恢复（PBKDF2 口令保护），CSV 导出
 
 **安全与隐私**
+
 - 应用锁：Face ID / Touch ID / 设备 PIN，支持自动锁定（30s / 1m / 5m）
 - 后台隐私遮罩、敏感页面截图防护、剪贴板自动清除（智能擦除）
 
 **个性化**
+
 - 主题（跟随系统 / 浅色 / 深色），多语言（简体中文 / 英文 / 跟随系统）
 
 ### 🖥️ Desktop（Electron / React）
 
 **仪表盘与管理**
+
 - 首页概览：密码总数、收藏数、强密码数、最近添加，附快捷操作入口
 - 双栏式密码列表 + 详情，增删改查、复制反馈、显示 / 隐藏密码、收藏
 
 **快速访问**
+
 - 全局 Spotlight 快速搜索（`Ctrl/Cmd + Shift + P` 唤起悬浮窗），键盘上下导航、回车即复制
 - 内置快捷键：`Ctrl+N` 新建、`Ctrl+G` 生成器、`Esc` 关闭浮层
 
 **密码生成器**
+
 - 长度与字符集可配，实时强度指示，可直接保存到保险库
 
 **AI 导入**
+
 - 支持 CSV / PDF / DOCX / Markdown / TXT，本地 LLaMA 或远程服务双模式
 - 模型库管理：下载进度与 ETA、设为默认、打开模型目录、移除模型
 - 导入候选可逐条预览、编辑、勾选后批量保存
 
 **体验与安全**
+
 - 多语言（中 / 英），大列表虚拟化渲染优化
 - 内容安全策略（CSP）、IPC 校验、剪贴板自动清除
 - 基于 GitHub Releases 的自动更新
@@ -101,25 +120,25 @@ password-management/
 
 ### 共享包
 
-| 包 | 作用 |
-|----|------|
-| `@repo/db` | 基于 Drizzle ORM 的加密 SQLite 数据层（`@noble/ciphers`），统一两端表结构与状态 |
-| `@repo/ui` | Radix UI 原语 + Tailwind 工具 + 共享 Hooks 的组件库 |
-| `@repo/i18n` | 基于 i18next / react-i18next 的多语言能力（中 / 英） |
-| `@repo/ai-import-core` | AI 文档解析与候选提取核心（Zod 校验，Vitest 测试） |
-| `@repo/metadata` | 共享应用名 / Slug / 包名（`Password Vault` · `com.lucas.vault`） |
-| `@repo/eslint-config` · `@repo/ts-config` | 共享 ESLint（eslint-config-sheriff）与 TypeScript（strict）配置 |
+| 包                                        | 作用                                                                            |
+| ----------------------------------------- | ------------------------------------------------------------------------------- |
+| `@repo/db`                                | 基于 Drizzle ORM 的加密 SQLite 数据层（`@noble/ciphers`），统一两端表结构与状态 |
+| `@repo/ui`                                | Radix UI 原语 + Tailwind 工具 + 共享 Hooks 的组件库                             |
+| `@repo/i18n`                              | 基于 i18next / react-i18next 的多语言能力（中 / 英）                            |
+| `@repo/ai-import-core`                    | AI 文档解析与候选提取核心（Zod 校验，Vitest 测试）                              |
+| `@repo/metadata`                          | 共享应用名 / Slug / 包名（`Password Vault` · `com.lucas.vault`）                |
+| `@repo/eslint-config` · `@repo/ts-config` | 共享 ESLint（eslint-config-sheriff）与 TypeScript（strict）配置                 |
 
 ### 各端技术栈
 
-| 维度 | Mobile | Desktop | Landing |
-|------|--------|---------|---------|
-| 框架 | Expo · React Native 0.85 | Electron 29 · React 18 · Vite | Next.js 16 · React 19 |
-| 路由 | Expo Router（文件路由） | React Router v7 | App Router |
-| 状态 | Zustand · TanStack Query | Zustand | — |
-| UI | NativeWind · Lucide · Reanimated | TailwindCSS 4 · shadcn/ui · Radix · Framer Motion | TailwindCSS 4 |
-| 数据 | `expo-sqlite`（SQLCipher）· SecureStore | `better-sqlite3`（经 IPC） | — |
-| AI | `llama.rn`（设备端推理） | 本地 LLaMA / 远程服务 | — |
+| 维度 | Mobile                                  | Desktop                                           | Landing               |
+| ---- | --------------------------------------- | ------------------------------------------------- | --------------------- |
+| 框架 | Expo · React Native 0.85                | Electron 29 · React 18 · Vite                     | Next.js 16 · React 19 |
+| 路由 | Expo Router（文件路由）                 | React Router v7                                   | App Router            |
+| 状态 | Zustand · TanStack Query                | Zustand                                           | —                     |
+| UI   | NativeWind · Lucide · Reanimated        | TailwindCSS 4 · shadcn/ui · Radix · Framer Motion | TailwindCSS 4         |
+| 数据 | `expo-sqlite`（SQLCipher）· SecureStore | `better-sqlite3`（经 IPC）                        | —                     |
+| AI   | `llama.rn`（设备端推理）                | 本地 LLaMA / 远程服务                             | —                     |
 
 ### 关键设计
 
@@ -130,13 +149,13 @@ password-management/
 
 ### 开发命令
 
-| 命令 | 作用 |
-|------|------|
-| `yarn dev` | 以 Turbo 启动所有应用 |
-| `yarn build` | 构建所有包 |
-| `yarn lint` | 全仓 ESLint |
-| `yarn tsc` | 全仓 TypeScript 类型检查 |
-| `yarn format` | Prettier 格式化 |
+| 命令          | 作用                     |
+| ------------- | ------------------------ |
+| `yarn dev`    | 以 Turbo 启动所有应用    |
+| `yarn build`  | 构建所有包               |
+| `yarn lint`   | 全仓 ESLint              |
+| `yarn tsc`    | 全仓 TypeScript 类型检查 |
+| `yarn format` | Prettier 格式化          |
 
 单独启动：
 
@@ -158,12 +177,12 @@ cd apps/landing && yarn dev   # Next.js（端口 3001）
 
 **构建 Profile**
 
-| Profile | 用途 | 分发 |
-|---------|------|------|
-| `development` | 开发客户端，本地调试 | 内部分发 |
-| `development-simulator` | iOS 模拟器开发客户端 | 内部分发 |
-| `preview` | 内部测试版本 | 内部分发 |
-| `production` | 正式发布（版本号自动递增） | 应用商店 |
+| Profile                 | 用途                       | 分发     |
+| ----------------------- | -------------------------- | -------- |
+| `development`           | 开发客户端，本地调试       | 内部分发 |
+| `development-simulator` | iOS 模拟器开发客户端       | 内部分发 |
+| `preview`               | 内部测试版本               | 内部分发 |
+| `production`            | 正式发布（版本号自动递增） | 应用商店 |
 
 **自动发布**：推送 `mobile-v*` tag 触发 `.github/workflows/release-mobile.yml`（亦可在 Actions 页手动 `workflow_dispatch`），流程为 Node 22 + Yarn 4 → 用 `EXPO_TOKEN` 鉴权 → 以 `production` Profile 构建 Android APK → 创建 GitHub Release 并附带 APK。
 
@@ -192,11 +211,11 @@ yarn eas:android       # production 构建 + 自动提交 Google Play（internal
 
 **打包目标**
 
-| 平台 | 格式 | 架构 |
-|------|------|------|
-| macOS | DMG + ZIP | x64 · arm64 |
-| Windows | NSIS 安装包 | x64 · arm64 |
-| Linux | AppImage + .deb | x64 · arm64（.deb 仅 x64） |
+| 平台    | 格式            | 架构                       |
+| ------- | --------------- | -------------------------- |
+| macOS   | DMG + ZIP       | x64 · arm64                |
+| Windows | NSIS 安装包     | x64 · arm64                |
+| Linux   | AppImage + .deb | x64 · arm64（.deb 仅 x64） |
 
 **自动发布**：推送 `desktop-v*` tag 触发 `.github/workflows/release-desktop.yml`（亦可手动 `workflow_dispatch`），在 macOS / Windows / Linux 三平台并行构建（自动生成各平台图标）→ 产物（含 `latest*.yml` 更新元数据）发布到 [GitHub Releases](https://github.com/LucasN0820/password-management/releases)。
 
@@ -226,9 +245,9 @@ yarn dist:linux    # Linux（AppImage + .deb）
 
 **代码签名（可选）**：在仓库 Secrets 配置后启用。
 
-| Secret | 用途 |
-|--------|------|
-| `MAC_CERTS` · `MAC_CERTS_PASSWORD` | macOS 签名证书与密码 |
+| Secret                             | 用途                   |
+| ---------------------------------- | ---------------------- |
+| `MAC_CERTS` · `MAC_CERTS_PASSWORD` | macOS 签名证书与密码   |
 | `WIN_CERTS` · `WIN_CERTS_PASSWORD` | Windows 签名证书与密码 |
 
 > AI 导入相关配置（`AI_IMPORT_*`）可经环境变量在构建时注入。

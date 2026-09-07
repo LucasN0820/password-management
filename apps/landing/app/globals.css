@@ -14,6 +14,11 @@
   --shadow-feature: 0 12px 32px #1f1e1b12;
 }
 :root {
+  --font-body:
+    'Avenir Next', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  --font-display:
+    'Iowan Old Style', 'Palatino Linotype', 'Songti SC', 'SimSun', Georgia,
+    serif;
   --paper: #f8f7f2;
   --ink: #1f1e1b;
   --muted: #78736b;
@@ -114,6 +119,24 @@ a {
 .desktop-nav a:hover,
 .text-link:hover {
   color: #a64e35;
+}
+.language-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #9b958b;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.language-switcher button {
+  padding: 4px 2px;
+  color: inherit;
+  transition: color 0.2s;
+}
+.language-switcher button:hover,
+.language-switcher button[aria-pressed='true'] {
+  color: var(--ink);
 }
 .button {
   display: inline-flex;
@@ -880,6 +903,9 @@ h2 {
   .brand {
     font-size: 26px;
   }
+  .language-switcher {
+    margin-left: auto;
+  }
   .desktop-nav {
     display: none;
   }
@@ -1011,6 +1037,9 @@ h2 {
   }
 }
 @media (max-width: 380px) {
+  .language-switcher {
+    font-size: 10px;
+  }
   .button-small {
     padding: 11px 13px;
     gap: 10px;

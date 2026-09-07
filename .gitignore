@@ -4,6 +4,7 @@ dist-electron
 .turbo
 *.tsbuildinfo
 dist
+artifacts/
 .DS_Store
 Makefile
 # Anchored to the repo root so it only ignores the top-level ./assets/ scratch

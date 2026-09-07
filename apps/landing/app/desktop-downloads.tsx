@@ -1,13 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { useLocale } from './locale-context';
 
 type DesktopPlatform = 'mac-arm64' | 'mac-x64' | 'win-x64' | 'linux-x64';
 
 type DesktopDownload = {
   href: string;
   platform: DesktopPlatform;
-  subtitle: string;
   title: string;
 };
 
@@ -27,25 +27,21 @@ type NavigatorWithUserAgentData = Navigator & {
 const desktopDownloads: DesktopDownload[] = [
   {
     title: 'macOS Apple',
-    subtitle: '下载桌面端',
     href: '/download/desktop?platform=mac-arm64',
     platform: 'mac-arm64',
   },
   {
     title: 'macOS Intel',
-    subtitle: '下载桌面端',
     href: '/download/desktop?platform=mac-x64',
     platform: 'mac-x64',
   },
   {
     title: 'Windows',
-    subtitle: '下载桌面端',
     href: '/download/desktop?platform=win-x64',
     platform: 'win-x64',
   },
   {
     title: 'Linux',
-    subtitle: '下载桌面端',
     href: '/download/desktop?platform=linux-x64',
     platform: 'linux-x64',
   },
@@ -126,14 +122,17 @@ async function detectDesktopPlatform(): Promise<DesktopPlatform | null> {
 function DesktopDownloadButton({
   href,
   isRecommended,
+  recommendedLabel,
   subtitle,
   title,
 }: DesktopDownload & {
   isRecommended: boolean;
+  recommendedLabel: string;
+  subtitle: string;
 }) {
   return (
     <a
-      aria-label={`${title}${isRecommended ? '，推荐下载' : ''}`}
+      aria-label={`${title}${isRecommended ? ` · ${recommendedLabel}` : ''}`}
       className={`flex w-full min-w-0 items-center gap-3 rounded-xl border px-4 py-3 transition hover:-translate-y-0.5 ${
         isRecommended
           ? 'border-terra-mid bg-white/[0.11] shadow-[0_0_0_1px_rgba(232,168,142,0.3)] hover:border-terra-mid hover:bg-white/[0.14]'
@@ -156,7 +155,7 @@ function DesktopDownloadButton({
       </span>
       {isRecommended ? (
         <span className='rounded-full bg-terra-light px-2.5 py-1 text-[11px] font-semibold text-terra'>
-          推荐
+          {recommendedLabel}
         </span>
       ) : null}
     </a>
@@ -164,6 +163,7 @@ function DesktopDownloadButton({
 }
 
 export function DesktopDownloads() {
+  const { messages } = useLocale();
   const [recommendedPlatform, setRecommendedPlatform] =
     useState<DesktopPlatform | null>(null);
 
@@ -205,6 +205,8 @@ export function DesktopDownloads() {
         <DesktopDownloadButton
           {...item}
           isRecommended={item.platform === recommendedPlatform}
+          recommendedLabel={messages.download.recommended}
+          subtitle={messages.download.desktopSubtitle}
           key={item.href}
         />
       ))}

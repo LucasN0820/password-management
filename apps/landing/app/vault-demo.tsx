@@ -1,33 +1,39 @@
 'use client';
 
 import { useState } from 'react';
+import { useLocale } from './locale-context';
+
+const tabs = ['all', 'work', 'life'] as const;
+type Tab = (typeof tabs)[number];
 
 const accounts = [
   {
     name: 'Notion',
     account: 'hello@example.com',
     letter: 'N',
-    category: '工作',
+    category: 'work',
     tone: 'neutral',
   },
   {
     name: 'Figma',
     account: 'design@example.com',
     letter: 'F',
-    category: '工作',
+    category: 'work',
     tone: 'terra',
   },
   {
     name: 'Google',
     account: 'hello@example.com',
     letter: 'G',
-    category: '生活',
+    category: 'life',
     tone: 'green',
   },
 ];
 
 export function VaultDemo() {
-  const [filter, setFilter] = useState('全部');
+  const { messages } = useLocale();
+  const { demo } = messages;
+  const [filter, setFilter] = useState<Tab>('all');
   const [visible, setVisible] = useState(false);
   const [version, setVersion] = useState(0);
   const samples = ['kR9#mW2!pL7@xN4', 'tH4&nB8!vQ3#sJ6', 'wF7@cK2$rM9!dP5'];
@@ -40,36 +46,37 @@ export function VaultDemo() {
             <i />
             <i />
           </span>
-          <span>我的密码库</span>
-          <span className='demo-label'>交互演示</span>
+          <span>{demo.windowTitle}</span>
+          <span className='demo-label'>{demo.interactive}</span>
         </div>
         <div className='vault-content'>
           <div className='vault-title'>
             <div>
-              <span className='vault-greeting'>一切，都井井有条。</span>
+              <span className='vault-greeting'>{demo.greeting}</span>
               <h2>
-                我的密码<span>.</span>
+                {demo.title}
+                <span>.</span>
               </h2>
             </div>
             <span className='vault-count'>
-              03<span>个账号</span>
+              03<span>{demo.accountCount}</span>
             </span>
           </div>
-          <div className='vault-tabs' aria-label='演示账号分类'>
-            {['全部', '工作', '生活'].map(tab => (
+          <div className='vault-tabs' aria-label={demo.tabsLabel}>
+            {tabs.map(tab => (
               <button
                 key={tab}
                 type='button'
                 aria-pressed={filter === tab}
                 onClick={() => setFilter(tab)}
               >
-                {tab}
+                {demo.tabs[tab]}
               </button>
             ))}
           </div>
           <div className='account-list'>
             {accounts
-              .filter(item => filter === '全部' || item.category === filter)
+              .filter(item => filter === 'all' || item.category === filter)
               .map(item => (
                 <div className='account-row' key={item.name}>
                   <span className={`account-logo ${item.tone}`}>
@@ -79,7 +86,10 @@ export function VaultDemo() {
                     <strong>{item.name}</strong>
                     <span>{item.account}</span>
                   </span>
-                  <span className='account-password' aria-label='密码已隐藏'>
+                  <span
+                    className='account-password'
+                    aria-label={demo.passwordHidden}
+                  >
                     ••••••
                   </span>
                   <span className='account-arrow' aria-hidden='true'>
@@ -90,18 +100,18 @@ export function VaultDemo() {
           </div>
           <div className='vault-bottom'>
             <span>
-              <span className='status-dot' /> 本地密码库
+              <span className='status-dot' /> {demo.localVault}
             </span>
-            <span>有序，也安心。</span>
+            <span>{demo.calm}</span>
           </div>
         </div>
       </div>
       <div className='generator-card'>
         <div className='generator-heading'>
           <span>
-            <span aria-hidden='true'>✳</span> 密码生成器
+            <span aria-hidden='true'>✳</span> {demo.generator}
           </span>
-          <span className='strength'>强密码</span>
+          <span className='strength'>{demo.strongPassword}</span>
         </div>
         <div className='generated-password'>
           <code>
@@ -109,7 +119,7 @@ export function VaultDemo() {
           </code>
           <button
             type='button'
-            aria-label={visible ? '隐藏演示密码' : '显示演示密码'}
+            aria-label={visible ? demo.hidePassword : demo.showPassword}
             aria-pressed={visible}
             onClick={() => setVisible(value => !value)}
           >
@@ -132,7 +142,7 @@ export function VaultDemo() {
           <i />
         </div>
         <div className='generator-footer'>
-          <span>15 位字符 · 仅供演示</span>
+          <span>{demo.sampleNote}</span>
           <button
             type='button'
             onClick={() => {
@@ -140,7 +150,7 @@ export function VaultDemo() {
               setVisible(true);
             }}
           >
-            换一个 <span aria-hidden='true'>↻</span>
+            {demo.nextPassword} <span aria-hidden='true'>↻</span>
           </button>
         </div>
       </div>

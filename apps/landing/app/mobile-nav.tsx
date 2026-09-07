@@ -1,13 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-
-const navItems = [
-  { href: '#features', label: '产品' },
-  { href: '#security', label: '安全' },
-
-  { href: '#download', label: '下载' },
-];
+import { useLocale } from './locale-context';
 
 function MenuIcon({ open }: { open: boolean }) {
   return (
@@ -32,13 +26,23 @@ function MenuIcon({ open }: { open: boolean }) {
 
 export function MobileNav() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { messages } = useLocale();
+  const navItems = [
+    { href: '#features', label: messages.navigation.products },
+    { href: '#security', label: messages.navigation.security },
+    { href: '#download', label: messages.navigation.download },
+  ];
 
   return (
     <div className='relative md:hidden'>
       <button
         aria-controls='mobile-menu'
         aria-expanded={isMenuOpen}
-        aria-label={isMenuOpen ? '关闭菜单' : '打开菜单'}
+        aria-label={
+          isMenuOpen
+            ? messages.navigation.closeMenu
+            : messages.navigation.openMenu
+        }
         className='flex h-10 w-10 items-center justify-center rounded-lg border border-cream-3 bg-cream-2 text-charcoal transition hover:bg-white'
         onClick={() => setIsMenuOpen(open => !open)}
         type='button'
@@ -69,7 +73,7 @@ export function MobileNav() {
               href='#download'
               onClick={() => setIsMenuOpen(false)}
             >
-              下载应用
+              {messages.navigation.downloadApp}
             </a>
           </div>
         </div>

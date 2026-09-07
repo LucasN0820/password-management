@@ -1,25 +1,14 @@
 import type { Metadata } from 'next';
-import { DM_Sans, Source_Serif_4 } from 'next/font/google';
+import { headers } from 'next/headers';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { localeFromAcceptLanguage } from './i18n';
 import './globals.css';
 
-const body = DM_Sans({
-  subsets: ['latin'],
-  variable: '--font-body',
-  weight: ['400', '500', '600', '700'],
-});
-
-const display = Source_Serif_4({
-  subsets: ['latin'],
-  variable: '--font-display',
-  weight: ['400', '500', '600', '700'],
-});
-
 export const metadata: Metadata = {
-  title: 'Vault - 极简密码管理器',
+  title: 'Vault — 极简密码管理器 · A quiet password manager',
   description:
-    'Vault 以本地优先和主密码保护的方式，帮助你管理、生成和整理所有数字凭据。',
+    'Vault is a local-first password manager for storing, generating, and organizing digital credentials. Vault 是一款本地优先的密码管理器。',
   manifest: '/site.webmanifest',
   icons: {
     icon: [
@@ -31,16 +20,19 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const requestHeaders = await headers();
+  const locale = localeFromAcceptLanguage(
+    requestHeaders.get('accept-language')
+  );
+
   return (
-    <html lang='zh-CN'>
-      <body
-        className={`${body.variable} ${display.variable} min-h-screen font-sans antialiased`}
-      >
+    <html lang={locale === 'zh' ? 'zh-CN' : 'en'}>
+      <body className='min-h-screen font-sans antialiased'>
         {children}
         <Analytics />
         <SpeedInsights />
