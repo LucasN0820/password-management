@@ -5,8 +5,7 @@ import { useState } from 'react';
 const navItems = [
   { href: '#features', label: '产品' },
   { href: '#security', label: '安全' },
-  { href: '#pricing', label: '价格' },
-  { href: '#teams', label: '企业' },
+
   { href: '#download', label: '下载' },
 ];
 

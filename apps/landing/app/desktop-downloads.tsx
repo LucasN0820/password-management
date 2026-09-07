@@ -149,7 +149,7 @@ function DesktopDownloadButton({
         <MonitorIcon />
       </span>
       <span className='flex min-w-0 flex-1 flex-col gap-px'>
-        <span className='text-[11px] text-white/40'>{subtitle}</span>
+        <span className='text-[11px] text-white/65'>{subtitle}</span>
         <span className='[overflow-wrap:anywhere] font-serif text-base font-medium !text-[#faf9f7]'>
           {title}
         </span>
